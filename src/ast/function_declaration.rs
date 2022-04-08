@@ -1,9 +1,8 @@
 use std::slice::Iter;
 
-use super::{
-    super::lexer::Token,
-    statement::{parse_statement, Statement},
-};
+use crate::token::Token;
+
+use super::statement::{parse_statement, Statement};
 
 #[derive(Debug, PartialEq)]
 pub struct FunctionDeclaration {

@@ -1,6 +1,7 @@
 use std::slice::Iter;
 
-use super::super::lexer::Token;
+use crate::token::Token;
+
 use super::function_declaration::{parse_function_declaration, FunctionDeclaration};
 
 #[derive(Debug, PartialEq)]

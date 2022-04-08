@@ -1,6 +1,6 @@
 use std::slice::Iter;
 
-use super::super::lexer::Token;
+use crate::token::Token;
 
 pub type Expression = ConstantExpression;
 

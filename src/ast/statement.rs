@@ -1,9 +1,8 @@
 use std::slice::Iter;
 
-use super::{
-    super::lexer::Token,
-    expression::{parse_expression, Expression},
-};
+use crate::token::Token;
+
+use super::expression::{parse_expression, Expression};
 
 pub type Statement = ReturnStatement;
 

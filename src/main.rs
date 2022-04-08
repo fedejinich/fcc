@@ -1,9 +1,10 @@
-use lexer::Token;
+use token::Token;
 
 mod ast;
 mod file_reader;
 mod lexer;
 mod parser;
+mod token;
 
 fn main() {
     // let code = file_reader::read_file_to_string("return_2.c").unwrap();

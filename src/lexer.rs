@@ -1,22 +1,9 @@
+use crate::token::Token;
 use regex::Regex;
 use std::collections::HashMap;
 
 const KEYWORD_TOKEN: [(&str, Token); 2] =
     [("return", Token::ReturnKeyword), ("int", Token::IntKeyword)];
-
-#[derive(Debug, Clone, PartialEq)]
-pub enum Token {
-    OpenBrace,
-    CloseBrace,
-    OpenParenthesis,
-    CloseParenthesis,
-    Semicolon,
-    IntKeyword,
-    ReturnKeyword,
-    Identifier(String),
-    IntegerLiteral(u32),
-    Invalid(String),
-}
 
 pub fn lex(code_program: &[char], tokens: Vec<Token>) -> Vec<Token> {
     let result = match code_program {

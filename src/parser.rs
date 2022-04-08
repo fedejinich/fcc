@@ -1,6 +1,6 @@
 use crate::{
     ast::program::{parse_program, Program},
-    lexer::Token,
+    token::Token,
 };
 
 pub fn parse(token_vec: Vec<Token>) -> Program {
