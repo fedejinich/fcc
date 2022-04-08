@@ -1,4 +1,4 @@
-use super::function_declaration::FunctionDeclaration;
+use super::{ast_item::ASTItem, function_declaration::FunctionDeclaration};
 
 #[derive(Debug, PartialEq)]
 pub struct Program {
@@ -10,5 +10,11 @@ impl Program {
         Program {
             function_declaration,
         }
+    }
+}
+
+impl ASTItem for Program {
+    fn generate_assembly(&self) -> String {
+        self.function_declaration.generate_assembly()
     }
 }

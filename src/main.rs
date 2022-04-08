@@ -1,5 +1,10 @@
+use items::{
+    expression::Expression, function_declaration::FunctionDeclaration, program::Program,
+    statement::Statement,
+};
 use token::Token;
 
+mod assembler;
 mod file_reader;
 mod items;
 mod lexer;
@@ -28,4 +33,12 @@ fn main() {
         Token::Semicolon,
         Token::CloseBrace,
     ]);
+
+    let expression = Expression::new(2);
+    let statement = Statement::new(expression);
+    let function_declaration = FunctionDeclaration::new(String::from("main"), statement);
+
+    let program = Program::new(function_declaration);
+
+    assembler::generate(program, String::from("return_2.s"));
 }

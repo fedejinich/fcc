@@ -16,7 +16,7 @@ mod test {
                 Token::Semicolon,
                 Token::CloseBrace
             ],
-            lex_by_file_path("return_2.c")
+            lex_by_file_path("tests/resources/stage_1/valid/return_2.c")
         );
     }
 

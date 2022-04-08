@@ -1,3 +1,4 @@
+pub mod assembler;
 pub mod file_reader;
 pub mod items;
 pub mod lexer;
