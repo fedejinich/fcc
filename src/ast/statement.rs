@@ -4,8 +4,15 @@ use super::{super::lexer::Token, expression::{Expression, parse_expression}};
 
 pub type Statement = ReturnStatement;
 
+#[derive(Debug, PartialEq)]
 pub struct ReturnStatement {
     expression: Expression
+}
+
+impl Statement {
+    pub fn new(expression: Expression) -> Statement {
+        Statement { expression: expression }
+    }
 }
 
 pub fn parse_statement(mut tokens_iter: Iter<Token>) -> (Statement, Iter<Token>) {

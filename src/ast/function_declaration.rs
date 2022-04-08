@@ -2,9 +2,19 @@ use std::slice::Iter;
 
 use super::{super::lexer::Token, statement::{Statement, parse_statement}};
 
+#[derive(Debug, PartialEq)]
 pub struct FunctionDeclaration {
     name: String,
     statement: Statement
+}
+
+impl FunctionDeclaration {
+    pub fn new(name: String, statement: Statement) -> FunctionDeclaration {
+        FunctionDeclaration {
+            name: name,
+            statement: statement
+        }
+    }
 }
 
 pub fn parse_function_declaration(mut tokens_iter: Iter<Token>) -> FunctionDeclaration {
@@ -65,3 +75,5 @@ pub fn parse_function_declaration(mut tokens_iter: Iter<Token>) -> FunctionDecla
         statement: statement
     }
 }
+
+

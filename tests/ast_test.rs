@@ -1,10 +1,10 @@
 #[cfg(test)]
 mod test {
-    use fcc::{parser::{*, self}, lexer::Token};
+    use fcc::{parser::{*, self}, lexer::Token, ast::{expression::Expression, statement::Statement, function_declaration::FunctionDeclaration, program::Program}};
 
     #[test]
     fn parse() {
-        let _program = parser::parse(vec![
+        let program = parser::parse(vec![
             Token::IntKeyword,
             Token::Identifier(String::from("main")),
             Token::OpenParenthesis, 
@@ -16,6 +16,11 @@ mod test {
             Token::CloseBrace
         ]);
 
-        assert_eq!(1,1)
+        let expression = Expression::new(2);
+        let statement = Statement::new(expression);
+        let function_declaration = FunctionDeclaration::new(String::from("main"), statement);
+        let expected_program = Program::new(function_declaration);
+
+        assert_eq!(expected_program, program)
     }
 }
