@@ -1,8 +1,4 @@
-use std::slice::Iter;
-
-use crate::token::Token;
-
-use super::function_declaration::{parse_function_declaration, FunctionDeclaration};
+use super::function_declaration::FunctionDeclaration;
 
 #[derive(Debug, PartialEq)]
 pub struct Program {
@@ -14,14 +10,5 @@ impl Program {
         Program {
             function_declaration,
         }
-    }
-}
-
-// todo(fedejinich) lacks unit test
-pub fn parse_program(tokens_iter: Iter<Token>) -> Program {
-    let function_declaration = parse_function_declaration(tokens_iter);
-
-    Program {
-        function_declaration,
     }
 }
