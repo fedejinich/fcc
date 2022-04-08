@@ -11,20 +11,17 @@ pub struct ConstantExpression {
 
 impl ConstantExpression {
     pub fn new(constant: u32) -> ConstantExpression {
-        ConstantExpression { constant: constant }
+        ConstantExpression { constant }
     }
 }
 
+// todo(fedejinich) lacks unit test
 pub fn parse_expression(mut tokens_iter: Iter<Token>) -> (Expression, Iter<Token>) {
     let constant = match tokens_iter.next().unwrap() {
         Token::IntegerLiteral(num) => num,
         _ => panic!("expected IntegerLiteral"),
-    };
+    }
+    .clone();
 
-    (
-        ConstantExpression {
-            constant: constant.clone(),
-        },
-        tokens_iter,
-    )
+    (ConstantExpression { constant }, tokens_iter)
 }

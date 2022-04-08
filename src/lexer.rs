@@ -29,10 +29,9 @@ fn add(token: Token, mut token_list: Vec<Token>) -> Vec<Token> {
     token_list
 }
 
+// todo(fedejinich) duplicated logic
 fn identifier_or_num(code: String) -> (Token, usize) {
     let is_alpha_regex = Regex::new(r"[a-zA-Z]\w*").unwrap();
-    // let is_alpha_regex = Regex::new(r"[[:alpha:]]\w*").unwrap(); this succeeds,
-    // let is_alpha_regex = Regex::new(r"[:alpha:]\w*").unwrap(); but then this fails, why?
     let find_alpha_result = is_alpha_regex.find(code.as_str());
 
     if find_alpha_result.is_some() {

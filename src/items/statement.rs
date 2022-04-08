@@ -13,12 +13,11 @@ pub struct ReturnStatement {
 
 impl Statement {
     pub fn new(expression: Expression) -> Statement {
-        Statement {
-            expression: expression,
-        }
+        Statement { expression }
     }
 }
 
+// todo(fedejinich) lacks unit test
 pub fn parse_statement(tokens_iter: Iter<Token>) -> (Statement, Iter<Token>) {
     let tokens_iter = parse_next(Token::ReturnKeyword, tokens_iter);
 
@@ -26,10 +25,5 @@ pub fn parse_statement(tokens_iter: Iter<Token>) -> (Statement, Iter<Token>) {
 
     tokens_iter = parse_next(Token::Semicolon, tokens_iter);
 
-    (
-        ReturnStatement {
-            expression: expression,
-        },
-        tokens_iter,
-    )
+    (ReturnStatement { expression }, tokens_iter)
 }

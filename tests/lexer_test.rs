@@ -3,7 +3,7 @@ mod test {
     use fcc::{file_reader, lexer::lex, token::Token};
 
     #[test]
-    fn return_2() {
+    fn valid_return_2() {
         assert_eq!(
             vec![
                 Token::IntKeyword,
@@ -21,7 +21,7 @@ mod test {
     }
 
     #[test]
-    fn return_0() {
+    fn valid_return_0() {
         assert_eq!(
             vec![
                 Token::IntKeyword,
@@ -39,7 +39,7 @@ mod test {
     }
 
     #[test]
-    fn newlines() {
+    fn valid_newlines() {
         assert_eq!(
             vec![
                 Token::IntKeyword,
@@ -57,7 +57,7 @@ mod test {
     }
 
     #[test]
-    fn no_newlines() {
+    fn valid_no_newlines() {
         assert_eq!(
             vec![
                 Token::IntKeyword,
@@ -75,7 +75,7 @@ mod test {
     }
 
     #[test]
-    fn spaces() {
+    fn valid_spaces() {
         assert_eq!(
             vec![
                 Token::IntKeyword,
@@ -93,7 +93,7 @@ mod test {
     }
 
     #[test]
-    fn multi_digit() {
+    fn valid_multi_digit() {
         assert_eq!(
             vec![
                 Token::IntKeyword,
@@ -111,7 +111,7 @@ mod test {
     }
 
     #[test]
-    fn wrong_case() {
+    fn invalid_wrong_case() {
         assert_eq!(
             vec![
                 Token::IntKeyword,
@@ -129,7 +129,7 @@ mod test {
     }
 
     #[test]
-    fn exceed_keyword() {
+    fn invalid_exceed_keyword() {
         assert_eq!(
             vec![
                 Token::IntKeyword,
@@ -147,7 +147,7 @@ mod test {
     }
 
     #[test]
-    fn missing_paren() {
+    fn invalid_missing_paren() {
         assert_eq!(
             vec![
                 Token::IntKeyword,
@@ -164,7 +164,7 @@ mod test {
     }
 
     #[test]
-    fn missing_retval() {
+    fn invalid_missing_retval() {
         assert_eq!(
             vec![
                 Token::IntKeyword,
@@ -181,7 +181,7 @@ mod test {
     }
 
     #[test]
-    fn no_brace() {
+    fn invalid_no_brace() {
         assert_eq!(
             vec![
                 Token::IntKeyword,
@@ -198,7 +198,7 @@ mod test {
     }
 
     #[test]
-    fn no_semicolon() {
+    fn invalid_no_semicolon() {
         assert_eq!(
             vec![
                 Token::IntKeyword,
@@ -215,7 +215,7 @@ mod test {
     }
 
     #[test]
-    fn no_space() {
+    fn invalid_no_space() {
         assert_eq!(
             vec![
                 Token::IntKeyword,

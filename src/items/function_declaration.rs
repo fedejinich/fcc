@@ -12,19 +12,17 @@ pub struct FunctionDeclaration {
 
 impl FunctionDeclaration {
     pub fn new(name: String, statement: Statement) -> FunctionDeclaration {
-        FunctionDeclaration {
-            name: name,
-            statement: statement,
-        }
+        FunctionDeclaration { name, statement }
     }
 }
 
-pub fn parse_function_declaration(mut tokens_iter: Iter<Token>) -> FunctionDeclaration {
+// todo(fedejinich) lacks unit test
+pub fn parse_function_declaration(tokens_iter: Iter<Token>) -> FunctionDeclaration {
     let mut tokens_iter = parse_next(Token::IntKeyword, tokens_iter);
 
     let token = tokens_iter.next().unwrap().clone();
 
-    let function_name = match token {
+    let name = match token {
         Token::Identifier(name) => name,
         _ => panic!("expected Token::Identifier"),
     };
@@ -39,8 +37,5 @@ pub fn parse_function_declaration(mut tokens_iter: Iter<Token>) -> FunctionDecla
 
     parse_next(Token::CloseBrace, tokens_iter);
 
-    FunctionDeclaration {
-        name: function_name,
-        statement: statement,
-    }
+    FunctionDeclaration { name, statement }
 }

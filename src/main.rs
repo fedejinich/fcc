@@ -1,7 +1,7 @@
 use token::Token;
 
-mod ast;
 mod file_reader;
+mod items;
 mod lexer;
 mod parser;
 mod token;

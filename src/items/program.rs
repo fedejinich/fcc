@@ -12,15 +12,16 @@ pub struct Program {
 impl Program {
     pub fn new(function_declaration: FunctionDeclaration) -> Program {
         Program {
-            function_declaration: function_declaration,
+            function_declaration,
         }
     }
 }
 
+// todo(fedejinich) lacks unit test
 pub fn parse_program(tokens_iter: Iter<Token>) -> Program {
-    let fun = parse_function_declaration(tokens_iter);
+    let function_declaration = parse_function_declaration(tokens_iter);
 
     Program {
-        function_declaration: fun,
+        function_declaration,
     }
 }

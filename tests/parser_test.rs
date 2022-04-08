@@ -1,7 +1,7 @@
 #[cfg(test)]
 mod test {
     use fcc::{
-        ast::{
+        items::{
             expression::Expression, function_declaration::FunctionDeclaration, program::Program,
             statement::Statement,
         },
@@ -10,7 +10,7 @@ mod test {
     };
 
     #[test]
-    fn parse() {
+    fn valid_return_2() {
         let program = parser::parse(vec![
             Token::IntKeyword,
             Token::Identifier(String::from("main")),
