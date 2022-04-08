@@ -1,7 +1,7 @@
-pub mod program;
-pub mod function_declaration;
-pub mod statement;
 pub mod expression;
+pub mod function_declaration;
+pub mod program;
+pub mod statement;
 
 // then this part will be extracte into files
 
