@@ -1,6 +1,6 @@
 use std::slice::Iter;
 
-use crate::token::Token;
+use crate::{parser::parse_next, token::Token};
 
 use super::statement::{parse_statement, Statement};
 
@@ -20,11 +20,7 @@ impl FunctionDeclaration {
 }
 
 pub fn parse_function_declaration(mut tokens_iter: Iter<Token>) -> FunctionDeclaration {
-    let token = tokens_iter.next().unwrap().clone();
-
-    if token != Token::IntKeyword {
-        panic!("expected 'int'");
-    }
+    let mut tokens_iter = parse_next(Token::IntKeyword, tokens_iter);
 
     let token = tokens_iter.next().unwrap().clone();
 
@@ -33,32 +29,15 @@ pub fn parse_function_declaration(mut tokens_iter: Iter<Token>) -> FunctionDecla
         _ => panic!("expected Token::Identifier"),
     };
 
-    let token = tokens_iter.next().unwrap().clone();
+    tokens_iter = parse_next(Token::OpenParenthesis, tokens_iter);
 
-    if token != Token::OpenParenthesis {
-        panic!("expected '('");
-    }
+    tokens_iter = parse_next(Token::CloseParenthesis, tokens_iter);
 
-    let token = tokens_iter.next().unwrap().clone();
+    tokens_iter = parse_next(Token::OpenBrace, tokens_iter);
 
-    if token != Token::CloseParenthesis {
-        panic!("expected ')'");
-    }
+    let (statement, tokens_iter) = parse_statement(tokens_iter);
 
-    let token = tokens_iter.next().unwrap().clone();
-
-    if token != Token::OpenBrace {
-        panic!("expected 'OpenBrace'"); // todo change 'OpenBrace' to '{'
-    }
-
-    let (statement, mut tokens_iter) = parse_statement(tokens_iter);
-
-    let token = tokens_iter.next().unwrap().clone();
-
-    if token != Token::CloseBrace {
-        println!("{:?}", token);
-        panic!("expected 'CloseBrace'"); // todo change 'CloseBrace' to '}'
-    }
+    parse_next(Token::CloseBrace, tokens_iter);
 
     FunctionDeclaration {
         name: function_name,

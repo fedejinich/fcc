@@ -1,6 +1,6 @@
 use std::slice::Iter;
 
-use crate::token::Token;
+use crate::{parser::parse_next, token::Token};
 
 use super::expression::{parse_expression, Expression};
 
@@ -19,20 +19,12 @@ impl Statement {
     }
 }
 
-pub fn parse_statement(mut tokens_iter: Iter<Token>) -> (Statement, Iter<Token>) {
-    let token = tokens_iter.next().unwrap().clone();
-
-    if token != Token::ReturnKeyword {
-        panic!("expected 'return'");
-    }
+pub fn parse_statement(tokens_iter: Iter<Token>) -> (Statement, Iter<Token>) {
+    let tokens_iter = parse_next(Token::ReturnKeyword, tokens_iter);
 
     let (expression, mut tokens_iter) = parse_expression(tokens_iter);
 
-    let token = tokens_iter.next().unwrap().clone();
-
-    if token != Token::Semicolon {
-        panic!("expected ';'");
-    }
+    tokens_iter = parse_next(Token::Semicolon, tokens_iter);
 
     (
         ReturnStatement {
