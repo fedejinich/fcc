@@ -1,6 +1,7 @@
 #[cfg(test)]
 mod test {
     use fcc::{file_reader, lexer::lex, token::Token};
+    use std::path::PathBuf;
 
     #[test]
     fn valid_return_2() {
@@ -232,7 +233,10 @@ mod test {
     }
 
     fn lex_by_file_path(file_path: &str) -> Vec<Token> {
-        let program = file_reader::read_file_to_string(file_path).unwrap();
+        let mut path_buff = PathBuf::new();
+        path_buff.push(file_path);
+
+        let program = file_reader::read_path_buff_to_string(&path_buff).unwrap();
         lex(program.as_slice(), Vec::new())
     }
 }

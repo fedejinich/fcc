@@ -45,7 +45,7 @@ pub fn parse_function_declaration(tokens_iter: Iter<Token>) -> FunctionDeclarati
 
     let name = match token {
         Token::Identifier(name) => name,
-        _ => panic!("expected Token::Identifier"),
+        _ => panic!("expected Token::Identifier"), // todo(fedejinich) error handling
     };
 
     tokens_iter = parse_next(Token::OpenParenthesis, tokens_iter);
@@ -78,6 +78,7 @@ pub fn parse_expression(mut tokens_iter: Iter<Token>) -> (Expression, Iter<Token
     let constant = match token {
         Token::IntegerLiteral(num) => num,
         _ => panic!(
+            // todo(fedejinich) error handling
             "expected token: 'IntegerLiteral', found: '{}'",
             token.to_string()
         ),
