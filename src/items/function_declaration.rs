@@ -22,4 +22,8 @@ impl ASTItem for FunctionDeclaration {
         )
         .to_string()
     }
+
+    fn pretty_print(&self) -> String {
+        format!("FUN {}:\n    {}", self.name, self.statement.pretty_print())
+    }
 }

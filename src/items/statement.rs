@@ -22,4 +22,8 @@ impl ASTItem for ReturnStatement {
         )
         .to_string()
     }
+
+    fn pretty_print(&self) -> String {
+        format!("RETURN {}", self.expression.pretty_print())
+    }
 }

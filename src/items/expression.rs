@@ -17,4 +17,8 @@ impl ASTItem for ConstantExpression {
     fn generate_assembly(&self) -> String {
         self.constant.to_string()
     }
+
+    fn pretty_print(&self) -> String {
+        format!("Int<{}>", self.constant)
+    }
 }
