@@ -1,7 +1,7 @@
 #[cfg(test)]
 mod test {
     use fcc::{
-        assembler,
+        code_generator,
         items::{
             expression::Expression, function_declaration::FunctionDeclaration, program::Program,
             statement::Statement,
@@ -18,7 +18,7 @@ mod test {
 
         assert_eq!(
             " .globl _main\n_main:\nmovl    $2, %eax\nret",
-            assembler::generate(program, String::from("return_2.s"))
+            code_generator::generate(program, String::from("return_2.s"))
         )
     }
 }

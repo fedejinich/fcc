@@ -1,8 +1,8 @@
 use clap::Parser; // why do i need to do this? shouldn't be imported from cli.rs?
 use fcc::cli::Cli;
 
-mod assembler;
 mod cli;
+mod code_generator;
 mod file_reader;
 mod items;
 mod lexer;
@@ -19,7 +19,7 @@ fn main() {
 
         let program = parser::parse(token_vec);
 
-        let _generated_assembly = assembler::generate(program, String::from("return_2.s"));
+        let _generated_assembly = code_generator::generate(program, String::from("return_2.s"));
     } else {
         panic!("could't read .c file {:?}", cli.source_path);
     }
