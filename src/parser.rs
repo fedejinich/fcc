@@ -1,7 +1,7 @@
 use std::slice::Iter;
 
 use crate::{
-    c_ast::{expression::*, function_declaration::*, program::*, statement::*},
+    ast::c_ast::{expression::*, function_declaration::*, program::*, statement::*},
     token::Token,
 };
 

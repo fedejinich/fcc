@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod test {
-    use fcc::c_ast::{
+    use fcc::ast::c_ast::{
         ast_item::ASTItem, expression::Expression, function_declaration::FunctionDeclaration,
         program::Program, statement::Statement,
     };

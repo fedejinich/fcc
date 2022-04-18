@@ -1,4 +1,4 @@
-pub mod c_ast;
+pub mod ast;
 pub mod cli;
 pub mod code_generator;
 pub mod file_reader;

@@ -2,7 +2,7 @@ use clap::Parser; // why do i need to do this? shouldn't be imported from cli.rs
 use fcc::cli::Cli;
 
 mod assembly_emitter;
-mod c_ast;
+mod ast;
 mod cli;
 mod code_generator;
 mod file_reader;
