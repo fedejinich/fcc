@@ -16,3 +16,7 @@ pub fn generate(program: Program, file_name: String) -> String {
         Err(_) => panic!("couldn't write"),
     }
 }
+
+pub fn _generate_2(program: Program) -> String {
+    program.generate_assembly()
+}
