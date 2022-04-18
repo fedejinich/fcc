@@ -1,7 +1,8 @@
 use std::fs::File;
 use std::io::Write;
 
-use crate::items::{ast_item::ASTItem, program::Program};
+use crate::c_ast::ast_item::ASTItem;
+use crate::c_ast::program::Program;
 
 pub fn generate(program: Program, file_name: String) -> String {
     let generated = program.generate_assembly();

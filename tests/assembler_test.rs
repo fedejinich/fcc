@@ -1,11 +1,11 @@
 #[cfg(test)]
 mod test {
     use fcc::{
-        code_generator,
-        items::{
+        c_ast::{
             expression::Expression, function_declaration::FunctionDeclaration, program::Program,
             statement::Statement,
         },
+        code_generator,
     };
 
     #[test]

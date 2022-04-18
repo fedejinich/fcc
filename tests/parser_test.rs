@@ -1,7 +1,7 @@
 #[cfg(test)]
 mod test {
     use fcc::{
-        items::{
+        c_ast::{
             expression::Expression, function_declaration::FunctionDeclaration, program::Program,
             statement::Statement,
         },
