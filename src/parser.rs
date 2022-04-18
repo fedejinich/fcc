@@ -58,7 +58,7 @@ pub fn parse_function_declaration(tokens_iter: Iter<Token>) -> FunctionDeclarati
 
     parse_next(Token::CloseBrace, tokens_iter);
 
-    FunctionDeclaration::new(name, statement)
+    FunctionDeclaration::new(name, vec![statement])
 }
 
 // todo(fedejinich) lacks unit test
