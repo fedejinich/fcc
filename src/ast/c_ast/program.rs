@@ -1,4 +1,5 @@
-use super::{ast_item::ASTItem, function_declaration::FunctionDeclaration};
+use super::function_declaration::FunctionDeclaration;
+use crate::ast::ast_item::ASTItem;
 
 #[derive(Debug, PartialEq)]
 pub struct Program {

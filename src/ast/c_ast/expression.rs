@@ -1,4 +1,4 @@
-use super::ast_item::ASTItem;
+use crate::ast::ast_item::ASTItem;
 
 pub type Expression = ConstantExpression;
 
