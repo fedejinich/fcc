@@ -22,4 +22,11 @@ impl ASTItem for Program {
     fn pretty_print(&self) -> String {
         format!("PROGRAM:\n  {}", self.function_declaration.pretty_print())
     }
+
+    fn pretty_print_2(&self) -> String {
+        format!(
+            "Program(\n  {}\n)",
+            self.function_declaration.pretty_print_2()
+        )
+    }
 }

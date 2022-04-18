@@ -19,5 +19,12 @@ mod test {
             "PROGRAM:\n  FUN main:\n    RETURN Int<2>",
             program.pretty_print()
         );
+
+        println!("{}", program.pretty_print_2());
+
+        assert_eq!(
+            "Program(\n  Function(\n    name=\"main\",\n    body=Return(\n      Const(2)\n    )\n)",
+            program.pretty_print_2()
+        )
     }
 }

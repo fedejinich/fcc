@@ -21,4 +21,8 @@ impl ASTItem for ConstantExpression {
     fn pretty_print(&self) -> String {
         format!("Int<{}>", self.constant)
     }
+
+    fn pretty_print_2(&self) -> String {
+        format!("Const({})", self.constant)
+    }
 }
