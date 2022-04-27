@@ -1,4 +1,4 @@
-use super::expression::Expression;
+use super::expression::{Expression, ExpressionNew};
 use crate::ast::ast_item::ASTItem;
 
 pub type Statement = ReturnStatement;
@@ -6,6 +6,11 @@ pub type Statement = ReturnStatement;
 #[derive(Debug, PartialEq)]
 pub struct ReturnStatement {
     expression: Expression,
+}
+
+#[derive(Debug, PartialEq)]
+pub enum StatementNew {
+    ReturnStatement { expression: ExpressionNew },
 }
 
 // todo(fedejinich) should be ReturnStatement

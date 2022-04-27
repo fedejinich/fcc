@@ -1,13 +1,15 @@
-use super::function_declaration::FunctionDeclaration;
+use super::function_definition::FunctionDefinition;
 use crate::ast::ast_item::ASTItem;
 
 #[derive(Debug, PartialEq)]
 pub struct Program {
-    function_declaration: FunctionDeclaration,
+    pub function_declaration: FunctionDefinition,
 }
 
+pub type CProgram = Program;
+
 impl Program {
-    pub fn new(function_declaration: FunctionDeclaration) -> Program {
+    pub fn new(function_declaration: FunctionDefinition) -> Program {
         Program {
             function_declaration,
         }

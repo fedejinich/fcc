@@ -7,6 +7,11 @@ pub struct ConstantExpression {
     constant: u32,
 }
 
+#[derive(Debug, PartialEq)]
+pub enum ExpressionNew {
+    Constant(u32),
+}
+
 impl ConstantExpression {
     pub fn new(constant: u32) -> ConstantExpression {
         ConstantExpression { constant }

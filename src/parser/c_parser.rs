@@ -1,7 +1,7 @@
 use std::slice::Iter;
 
 use crate::{
-    ast::c_ast::{expression::*, function_declaration::*, program::*, statement::*},
+    ast::c_ast::{expression::*, function_definition::*, program::*, statement::*},
     token::Token,
 };
 
@@ -38,7 +38,7 @@ pub fn parse_program(tokens_iter: Iter<Token>) -> Program {
 }
 
 // todo(fedejinich) lacks unit test
-pub fn parse_function_declaration(tokens_iter: Iter<Token>) -> FunctionDeclaration {
+pub fn parse_function_declaration(tokens_iter: Iter<Token>) -> FunctionDefinition {
     let mut tokens_iter = parse_next(Token::IntKeyword, tokens_iter);
 
     let token = tokens_iter.next().unwrap().clone();
@@ -58,7 +58,7 @@ pub fn parse_function_declaration(tokens_iter: Iter<Token>) -> FunctionDeclarati
 
     parse_next(Token::CloseBrace, tokens_iter);
 
-    FunctionDeclaration::new(name, vec![statement])
+    FunctionDefinition::new(name, vec![statement])
 }
 
 // todo(fedejinich) lacks unit test

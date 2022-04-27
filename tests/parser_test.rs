@@ -2,7 +2,7 @@
 mod test {
     use fcc::{
         ast::c_ast::{
-            expression::Expression, function_declaration::FunctionDeclaration, program::Program,
+            expression::Expression, function_definition::FunctionDefinition, program::Program,
             statement::Statement,
         },
         parser::{self},
@@ -25,7 +25,7 @@ mod test {
 
         let expression = Expression::new(2);
         let statement = Statement::new(expression);
-        let function_declaration = FunctionDeclaration::new(String::from("main"), vec![statement]);
+        let function_declaration = FunctionDefinition::new(String::from("main"), vec![statement]);
         let expected_program = Program::new(function_declaration);
 
         assert_eq!(expected_program, program)

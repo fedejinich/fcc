@@ -1,4 +1,4 @@
 pub enum Operand {
-    Imm { int: i32 },
-    Register,
+    Imm { int: u32 },
+    Register, // this will change into different registers
 }
