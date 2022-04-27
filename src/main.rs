@@ -18,7 +18,7 @@ fn main() {
         let code = code_opt.unwrap(); // todo(fedejinich) error handling
         let token_vec = lexer::lex(code.as_slice(), Vec::new());
 
-        let program = parser::parse(token_vec);
+        let program = parser::c_parser::parse(token_vec);
 
         // let generated_assembly = code_generator::_generate_2(program);
         let _generated_assembly = code_generator::generate(program, String::from("return_2.s"));

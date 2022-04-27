@@ -11,7 +11,7 @@ mod test {
 
     #[test]
     fn valid_parse() {
-        let program = parser::parse(vec![
+        let program = parser::c_parser::parse(vec![
             Token::IntKeyword,
             Token::Identifier(String::from("main")),
             Token::OpenParenthesis,
@@ -34,7 +34,7 @@ mod test {
     #[test]
     #[should_panic = "expected token: 'return', found: 'RETURN'"]
     fn invalid_wrong_case() {
-        parser::parse(vec![
+        parser::c_parser::parse(vec![
             Token::IntKeyword,
             Token::Identifier(String::from("main")),
             Token::OpenParenthesis,
@@ -50,7 +50,7 @@ mod test {
     #[test]
     #[should_panic = "expected token: 'return', found: 'returne'"]
     fn invalid_exceed_keyword() {
-        parser::parse(vec![
+        parser::c_parser::parse(vec![
             Token::IntKeyword,
             Token::Identifier(String::from("main")),
             Token::OpenParenthesis,
@@ -66,7 +66,7 @@ mod test {
     #[test]
     #[should_panic = "expected token: ')', found: '{'"]
     fn invalid_missing_paren() {
-        parser::parse(vec![
+        parser::c_parser::parse(vec![
             Token::IntKeyword,
             Token::Identifier(String::from("main")),
             Token::OpenParenthesis,
@@ -81,7 +81,7 @@ mod test {
     #[test]
     #[should_panic = "expected token: 'IntegerLiteral', found: ';'"]
     fn invalid_missing_retval() {
-        parser::parse(vec![
+        parser::c_parser::parse(vec![
             Token::IntKeyword,
             Token::Identifier(String::from("main")),
             Token::OpenParenthesis,
@@ -96,7 +96,7 @@ mod test {
     #[test]
     #[should_panic = "expected token: '}', found: 'END'"]
     fn invalid_no_brace() {
-        parser::parse(vec![
+        parser::c_parser::parse(vec![
             Token::IntKeyword,
             Token::Identifier(String::from("main")),
             Token::OpenParenthesis,
@@ -111,7 +111,7 @@ mod test {
     #[test]
     #[should_panic = "expected token: ';', found: '}'"]
     fn invalid_no_semicolon() {
-        parser::parse(vec![
+        parser::c_parser::parse(vec![
             Token::IntKeyword,
             Token::Identifier(String::from("main")),
             Token::OpenParenthesis,
@@ -126,7 +126,7 @@ mod test {
     #[test]
     #[should_panic = "expected token: 'return', found: 'return0'"]
     fn invalid_no_space() {
-        parser::parse(vec![
+        parser::c_parser::parse(vec![
             Token::IntKeyword,
             Token::Identifier(String::from("main")),
             Token::OpenParenthesis,
