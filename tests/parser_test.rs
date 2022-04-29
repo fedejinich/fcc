@@ -23,8 +23,8 @@ mod test {
             Token::CloseBrace,
         ]);
 
-        let expression = Expression::new(2);
-        let statement = Statement::new(expression);
+        let expression = Expression::Constant(2);
+        let statement = Statement::ReturnStatement { expression };
         let function_declaration = FunctionDefinition::new(String::from("main"), vec![statement]);
         let expected_program = Program::new(function_declaration);
 

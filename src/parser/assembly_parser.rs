@@ -1,11 +1,11 @@
 use crate::ast::{
     assembly_ast::{
-        function_definition::AssemblyFunctionDefinition, instruction::Instruction,
-        operand::Operand, program::AssemblyProgram,
+        function_definition::FunctionDefinition as AssemblyFunctionDefinition,
+        instruction::Instruction, operand::Operand, program::AssemblyProgram,
     },
     c_ast::{
-        expression::ExpressionNew, function_definition::CFunctionDefinition, program::CProgram,
-        statement::StatementNew,
+        expression::Expression, function_definition::FunctionDefinition as CFunctionDefinition,
+        program::Program as CProgram, statement::Statement,
     },
 };
 
@@ -21,7 +21,7 @@ fn parse_function_definition(
 ) -> AssemblyFunctionDefinition {
     let name: String = function_definition.name;
     let instructions: Vec<Instruction> = function_definition
-        .body_new
+        .body
         .iter()
         .map(|statement| parse_instructions(statement))
         .flatten()
@@ -30,15 +30,15 @@ fn parse_function_definition(
     AssemblyFunctionDefinition::new(name, instructions)
 }
 
-fn parse_instructions(statement: &StatementNew) -> Vec<Instruction> {
+fn parse_instructions(statement: &Statement) -> Vec<Instruction> {
     match statement {
-        StatementNew::ReturnStatement { expression } => parse_expression(expression),
+        Statement::ReturnStatement { expression } => parse_expression(expression),
     }
 }
 
-fn parse_expression(expression: &ExpressionNew) -> Vec<Instruction> {
+fn parse_expression(expression: &Expression) -> Vec<Instruction> {
     match expression {
-        ExpressionNew::Constant(num) => parse_expression_constant(num.to_owned()),
+        Expression::Constant(num) => parse_expression_constant(num.to_owned()),
     }
 }
 

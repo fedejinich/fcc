@@ -69,7 +69,7 @@ pub fn parse_statement(tokens_iter: Iter<Token>) -> (Statement, Iter<Token>) {
 
     tokens_iter = parse_next(Token::Semicolon, tokens_iter);
 
-    (ReturnStatement::new(expression), tokens_iter)
+    (Statement::ReturnStatement { expression }, tokens_iter)
 }
 
 // todo(fedejinich) lacks unit test
@@ -85,5 +85,5 @@ pub fn parse_expression(mut tokens_iter: Iter<Token>) -> (Expression, Iter<Token
     }
     .clone();
 
-    (ConstantExpression::new(constant), tokens_iter)
+    (Expression::Constant(constant), tokens_iter)
 }

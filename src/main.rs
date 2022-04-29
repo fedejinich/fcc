@@ -4,7 +4,6 @@ use fcc::cli::Cli;
 mod assembly_emitter;
 mod ast;
 mod cli;
-mod code_generator;
 mod file_reader;
 mod lexer;
 mod parser;
@@ -21,7 +20,7 @@ fn main() {
         let program = parser::c_parser::parse(token_vec);
 
         // let generated_assembly = code_generator::_generate_2(program);
-        let _generated_assembly = code_generator::generate(program, String::from("return_2.s"));
+        // let _generated_assembly = code_generator::generate(program, String::from("return_2.s"));
 
         // assembly_emitter::_emit(generated_assembly.as_str(), "return_2.s");
     } else {
