@@ -1,3 +1,5 @@
+use crate::ast::print::Printable;
+
 use super::function_definition::FunctionDefinition;
 
 #[derive(Debug, PartialEq)]
@@ -10,5 +12,11 @@ impl Program {
         Program {
             function_declaration,
         }
+    }
+}
+
+impl Printable for Program {
+    fn print(&self) -> String {
+        format!("Program(\n  {}\n)", self.function_declaration.print())
     }
 }
