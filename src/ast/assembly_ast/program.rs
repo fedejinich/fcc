@@ -1,3 +1,5 @@
+use crate::ast::print::Printable;
+
 use super::function_definition::FunctionDefinition;
 
 pub struct Program {
@@ -11,5 +13,11 @@ impl Program {
         Program {
             function_definition,
         }
+    }
+}
+
+impl Printable for Program {
+    fn print(&self) -> String {
+        todo!()
     }
 }

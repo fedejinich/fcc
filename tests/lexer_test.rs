@@ -236,7 +236,7 @@ mod test {
         let mut path_buff = PathBuf::new();
         path_buff.push(file_path);
 
-        let program = file_reader::read_path_buff_to_string(&path_buff).unwrap();
+        let program = file_reader::read_path_buff_to_string(&path_buff);
         lex(program.as_slice(), Vec::new())
     }
 }
