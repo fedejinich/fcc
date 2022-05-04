@@ -1,10 +1,14 @@
-use crate::ast::print::Printable;
+use crate::{
+    ast::print::Printable, cli::Cli, code_emitter::CodeEmitter,
+    file_reader::read_path_buff_to_string, parser::assembly_parser::parse_program,
+    parser::c_parser::parse,
+};
 use clap::Parser; // why do i need to do this? shouldn't be imported from cli.rs?
-use fcc::cli::Cli;
 
 mod assembly_emitter;
 mod ast;
 mod cli;
+mod code_emitter;
 mod file_reader;
 mod lexer;
 mod parser;
@@ -17,9 +21,11 @@ fn main() {
 
     let cli = Cli::parse();
 
-    println!("- reading source file {:?}", cli.source_path);
+    let path_buf = cli.source_path;
 
-    let code = file_reader::read_path_buff_to_string(&cli.source_path); // todo(fedejinich) error handling
+    println!("- reading source file {:?}", path_buf);
+
+    let code = read_path_buff_to_string(&path_buf); // todo(fedejinich) error handling
 
     println!("- lexing source code");
 
@@ -31,14 +37,23 @@ fn main() {
         return;
     }
 
-    let c_program = parser::c_parser::parse(token_vec);
+    let c_program = parse(token_vec); // todo(fedejinich) should be renamed to parse_c_program
 
     println!("- parsing");
 
-    let assembly_program = parser::assembly_parser::parse_program(c_program);
+    let assembly_program = parse_program(c_program); // todo(fedejinich) should be renamed to parse_assembly_program
 
     if cli.parse {
-        println!("\n{:?}", assembly_program.print());
+        // println!("\n{:?}", assembly_program.print());
+        println!("\n{:?}", assembly_program);
         return;
     }
+
+    println!("- emitting assembly code");
+
+    let file_name = path_buf.file_name().unwrap().to_str().unwrap();
+
+    println!("{}", file_name);
+
+    CodeEmitter::new().emit_assembly(&assembly_program, &file_name);
 }

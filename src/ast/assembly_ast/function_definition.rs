@@ -1,5 +1,6 @@
 use super::instruction::Instruction;
 
+#[derive(Debug, PartialEq)]
 pub struct FunctionDefinition {
     name: String,
     instructions: Vec<Instruction>,

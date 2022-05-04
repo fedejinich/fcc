@@ -1,7 +1,7 @@
 use crate::ast::{
     assembly_ast::{
         function_definition::FunctionDefinition as AssemblyFunctionDefinition,
-        instruction::Instruction, operand::Operand, program::AssemblyProgram,
+        instruction::Instruction, operand::Operand, program::Program as AssemblyProgram,
     },
     c_ast::{
         expression::Expression, function_definition::FunctionDefinition as CFunctionDefinition,

@@ -1,12 +1,11 @@
 use crate::ast::print::Printable;
 
-use super::function_definition::FunctionDefinition;
+use super::{assembly_ast::AssemblyAST, function_definition::FunctionDefinition};
 
+#[derive(Debug, PartialEq)]
 pub struct Program {
     function_definition: FunctionDefinition,
 }
-
-pub type AssemblyProgram = Program;
 
 impl Program {
     pub fn new(function_definition: FunctionDefinition) -> Program {
@@ -18,6 +17,12 @@ impl Program {
 
 impl Printable for Program {
     fn print(&self) -> String {
+        todo!()
+    }
+}
+
+impl AssemblyAST for Program {
+    fn assembly_str(&self) -> &str {
         todo!()
     }
 }
