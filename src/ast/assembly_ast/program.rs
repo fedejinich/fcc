@@ -23,6 +23,6 @@ impl Printable for Program {
 
 impl AssemblyAST for Program {
     fn assembly_str(&self) -> &str {
-        todo!()
+        self.function_definition.assembly_str()
     }
 }
