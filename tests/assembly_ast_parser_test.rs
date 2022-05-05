@@ -8,7 +8,7 @@ mod test {
         expression::Expression, function_definition::FunctionDefinition as CFunctionDefinition,
         program::Program as CProgram, statement::Statement,
     };
-    use fcc::parser::assembly_parser::parse_program;
+    use fcc::parser::assembly_parser::AssemblyParser;
 
     #[test]
     fn valid_parse() {
@@ -28,6 +28,9 @@ mod test {
             AssemblyFunctionDefinition::new(String::from("main"), instructions);
         let expected_assembly_program = AssemblyProgram::new(function_definition);
 
-        assert_eq!(expected_assembly_program, parse_program(c_program))
+        assert_eq!(
+            expected_assembly_program,
+            AssemblyParser::new().parse_program(c_program)
+        )
     }
 }

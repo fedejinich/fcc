@@ -1,6 +1,6 @@
 use crate::{
     ast::assembly_ast::assembly_ast::AssemblyAST, cli::Cli, file_util::FileUtil, lexer::Lexer,
-    parser::assembly_parser::parse_program, parser::c_parser::parse,
+    parser::assembly_parser::AssemblyParser, parser::c_parser::parse,
 };
 use clap::Parser; // why do i need to do this? shouldn't be imported from cli.rs?
 
@@ -41,7 +41,7 @@ fn main() {
 
     println!("- parsing");
 
-    let assembly_program = parse_program(c_program); // todo(fedejinich) should be renamed to parse_assembly_program
+    let assembly_program = AssemblyParser::new().parse_program(c_program); // todo(fedejinich) should be renamed to parse_assembly_program
 
     if cli.parse {
         println!("\n{:?}", assembly_program);
@@ -50,16 +50,16 @@ fn main() {
 
     println!("- emitting assembly code");
 
-    let file_name = path_buf
+    let assembly_file_name = path_buf
         .file_name()
         .unwrap()
         .to_str()
         .unwrap()
         .replace(".c", ".s");
 
-    println!("{}", file_name);
+    println!("{}", assembly_file_name);
 
-    match file_util.write_assembly_file(&assembly_program.assembly_str(), &file_name) {
+    match file_util.write_assembly_file(&assembly_program.assembly_str(), &assembly_file_name) {
         Ok(_) => (),
         Err(err) => panic!("coudln't emit assembly file {}", err), // todo(fedejinich) this might be converted to exit(1)
     }
