@@ -1,5 +1,5 @@
 use crate::{
-    cli::Cli, code_emitter::CodeEmitter, file_reader::read_path_buff_to_string,
+    cli::Cli, code_emitter::CodeEmitter, file_util::read_path_buff_to_string,
     parser::assembly_parser::parse_program, parser::c_parser::parse,
 };
 use clap::Parser; // why do i need to do this? shouldn't be imported from cli.rs?
@@ -8,7 +8,7 @@ mod assembly_emitter;
 mod ast;
 mod cli;
 mod code_emitter;
-mod file_reader;
+mod file_util;
 mod lexer;
 mod parser;
 mod token;
