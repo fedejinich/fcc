@@ -1,4 +1,4 @@
- .globl _main
-_main:
-movl    $2, %eax
+.globl main
+main:
+movl $2, %eax
 ret

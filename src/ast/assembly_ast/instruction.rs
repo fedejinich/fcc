@@ -7,12 +7,12 @@ pub enum Instruction {
 }
 
 impl AssemblyAST for Instruction {
-    fn assembly_str(&self) -> &str {
+    fn assembly_str(&self) -> String {
         match self {
             Instruction::Mov { src, dst } => {
-                format!("mov {} {}", src.assembly_str(), dst.assembly_str()).as_str()
+                format!("movl {}, {}", src.assembly_str(), dst.assembly_str())
             }
-            Ret => "ret",
+            Instruction::Ret => format!("ret"),
         }
     }
 }

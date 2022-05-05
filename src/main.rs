@@ -1,7 +1,6 @@
 use crate::{
-    ast::print::Printable, cli::Cli, code_emitter::CodeEmitter,
-    file_reader::read_path_buff_to_string, parser::assembly_parser::parse_program,
-    parser::c_parser::parse,
+    cli::Cli, code_emitter::CodeEmitter, file_reader::read_path_buff_to_string,
+    parser::assembly_parser::parse_program, parser::c_parser::parse,
 };
 use clap::Parser; // why do i need to do this? shouldn't be imported from cli.rs?
 
@@ -44,14 +43,18 @@ fn main() {
     let assembly_program = parse_program(c_program); // todo(fedejinich) should be renamed to parse_assembly_program
 
     if cli.parse {
-        // println!("\n{:?}", assembly_program.print());
         println!("\n{:?}", assembly_program);
         return;
     }
 
     println!("- emitting assembly code");
 
-    let file_name = path_buf.file_name().unwrap().to_str().unwrap();
+    let file_name = path_buf
+        .file_name()
+        .unwrap()
+        .to_str()
+        .unwrap()
+        .replace(".c", ".s");
 
     println!("{}", file_name);
 

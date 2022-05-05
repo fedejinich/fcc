@@ -11,6 +11,8 @@ impl CodeEmitter {
     pub fn emit_assembly(&self, assembly_ast: &impl AssemblyAST, file_name: &str) {
         let assembly_str = assembly_ast.assembly_str();
 
+        println!("{}", file_name);
+
         let mut file = match File::create(file_name) {
             Ok(it) => it,
             Err(_) => panic!("couldn't emit assembly file"),

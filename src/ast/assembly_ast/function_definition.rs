@@ -13,21 +13,20 @@ impl FunctionDefinition {
 }
 
 impl AssemblyAST for FunctionDefinition {
-    fn assembly_str(&self) -> &str {
+    fn assembly_str(&self) -> String {
         let instructions_assembly_str = |instructions: &Vec<Instruction>| {
             instructions
                 .iter()
                 .map(|instruction| instruction.assembly_str())
-                .reduce(|a, b| format!("{} {}", a, b).as_str())
+                .reduce(|a, b| format!("{}\n{}", a, b))
                 .unwrap()
         };
 
         format!(
-            "    .globl {}\n{}:\n    {}",
+            ".globl {}\n{}:\n{}",
             self.name,
             self.name,
             instructions_assembly_str(&self.instructions)
         )
-        .as_str()
     }
 }

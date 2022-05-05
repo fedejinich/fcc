@@ -1,7 +1,8 @@
 #[cfg(test)]
 mod test {
     use fcc::ast::assembly_ast::{
-        assembly_ast::AssemblyAST, function_definition::AssemblyFunctionDefinition,
+        assembly_ast::AssemblyAST,
+        function_definition::FunctionDefinition as AssemblyFunctionDefinition,
         instruction::Instruction, operand::Operand, program::Program as AssemblyProgram,
     };
 
@@ -19,7 +20,7 @@ mod test {
             AssemblyFunctionDefinition::new(String::from("main"), instructions);
         let assembly_program = AssemblyProgram::new(function_definition);
 
-        let expected_assembly_str = String::from("");
+        let expected_assembly_str = String::from(".globl main\nmain:\nmovl $2, %eax\nret");
 
         assert_eq!(expected_assembly_str, assembly_program.assembly_str())
     }

@@ -1,8 +1,8 @@
 #[cfg(test)]
 mod test {
     use fcc::ast::assembly_ast::{
-        function_definition::AssemblyFunctionDefinition, instruction::Instruction,
-        operand::Operand, program::Program as AssemblyProgram,
+        function_definition::FunctionDefinition as AssemblyFunctionDefinition,
+        instruction::Instruction, operand::Operand, program::Program as AssemblyProgram,
     };
     use fcc::ast::c_ast::{
         expression::Expression, function_definition::FunctionDefinition as CFunctionDefinition,

@@ -22,7 +22,7 @@ impl Printable for Program {
 }
 
 impl AssemblyAST for Program {
-    fn assembly_str(&self) -> &str {
+    fn assembly_str(&self) -> String {
         self.function_definition.assembly_str()
     }
 }

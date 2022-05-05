@@ -7,10 +7,10 @@ pub enum Operand {
 }
 
 impl AssemblyAST for Operand {
-    fn assembly_str(&self) -> &str {
+    fn assembly_str(&self) -> String {
         match self {
-            Operand::Imm { int } => format!("${}", int).as_str(),
-            Operand::Register => "%eax",
+            Operand::Imm { int } => format!("${}", int),
+            Operand::Register => format!("%eax"),
         }
     }
 }
