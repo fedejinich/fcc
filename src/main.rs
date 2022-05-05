@@ -1,5 +1,5 @@
 use crate::{
-    cli::Cli, code_emitter::CodeEmitter, file_util::FileUtil,
+    cli::Cli, code_emitter::CodeEmitter, file_util::FileUtil, lexer::Lexer,
     parser::assembly_parser::parse_program, parser::c_parser::parse,
 };
 use clap::Parser; // why do i need to do this? shouldn't be imported from cli.rs?
@@ -30,7 +30,7 @@ fn main() {
 
     println!("- lexing source code");
 
-    let token_vec = lexer::lex(code.as_slice(), Vec::new());
+    let token_vec = Lexer::new().lex(code.as_slice(), Vec::new());
 
     if cli.lex {
         println!("\n");

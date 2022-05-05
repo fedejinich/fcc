@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod test {
-    use fcc::{file_util::FileUtil, lexer::lex, token::Token};
+    use fcc::{file_util::FileUtil, lexer::Lexer, token::Token};
     use std::path::PathBuf;
 
     #[test]
@@ -237,6 +237,6 @@ mod test {
         path_buff.push(file_path);
 
         let program = FileUtil::new().read_path_buff_to_string(&path_buff);
-        lex(program.as_slice(), Vec::new())
+        Lexer::new().lex(program.as_slice(), Vec::new())
     }
 }
