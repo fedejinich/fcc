@@ -1,21 +1,40 @@
-use std::fs::File;
+use std::error::Error;
 use std::io::Read;
 use std::path::PathBuf;
+use std::{fs::File, io::Write};
 
-pub fn read_path_buff_to_string(path_buf: &PathBuf) -> Vec<char> {
-    let path = path_buf.to_str().unwrap();
+pub struct FileUtil;
 
-    let mut code = String::new();
-    let input = File::open(path); // todo(fedejinich) error handling
+impl FileUtil {
+    pub fn new() -> FileUtil {
+        FileUtil {}
+    }
 
-    let result: Option<Vec<char>> = if input.is_err() {
-        panic!("could't read .c file {:?}", path_buf);
-    } else {
-        // reads to 'code'
-        input.unwrap().read_to_string(&mut code).unwrap();
+    pub fn write_assembly_file(
+        &self,
+        assembly_str: &str,
+        file_name: &str,
+    ) -> Result<(), impl Error> {
+        let mut file = File::create(file_name)?;
 
-        Some(code.chars().collect::<Vec<char>>())
-    };
+        write!(file, "{}", assembly_str)
+    }
 
-    result.unwrap()
+    pub fn read_path_buff_to_string(&self, path_buf: &PathBuf) -> Vec<char> {
+        let path = path_buf.to_str().unwrap();
+
+        let mut code = String::new();
+        let input = File::open(path); // todo(fedejinich) error handling
+
+        let result: Option<Vec<char>> = if input.is_err() {
+            panic!("could't read .c file {:?}", path_buf);
+        } else {
+            // reads to 'code'
+            input.unwrap().read_to_string(&mut code).unwrap();
+
+            Some(code.chars().collect::<Vec<char>>())
+        };
+
+        result.unwrap()
+    }
 }

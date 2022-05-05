@@ -1,5 +1,5 @@
 use crate::{
-    cli::Cli, code_emitter::CodeEmitter, file_util::read_path_buff_to_string,
+    cli::Cli, code_emitter::CodeEmitter, file_util::FileUtil,
     parser::assembly_parser::parse_program, parser::c_parser::parse,
 };
 use clap::Parser; // why do i need to do this? shouldn't be imported from cli.rs?
@@ -24,7 +24,9 @@ fn main() {
 
     println!("- reading source file {:?}", path_buf);
 
-    let code = read_path_buff_to_string(&path_buf); // todo(fedejinich) error handling
+    let file_util = FileUtil::new();
+
+    let code = file_util.read_path_buff_to_string(&path_buf); // todo(fedejinich) error handling
 
     println!("- lexing source code");
 
