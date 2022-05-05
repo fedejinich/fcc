@@ -1,5 +1,5 @@
 use crate::{
-    cli::Cli, code_emitter::CodeEmitter, file_util::FileUtil, lexer::Lexer,
+    ast::assembly_ast::assembly_ast::AssemblyAST, cli::Cli, file_util::FileUtil, lexer::Lexer,
     parser::assembly_parser::parse_program, parser::c_parser::parse,
 };
 use clap::Parser; // why do i need to do this? shouldn't be imported from cli.rs?
@@ -7,7 +7,6 @@ use clap::Parser; // why do i need to do this? shouldn't be imported from cli.rs
 mod assembly_emitter;
 mod ast;
 mod cli;
-mod code_emitter;
 mod file_util;
 mod lexer;
 mod parser;
@@ -60,5 +59,8 @@ fn main() {
 
     println!("{}", file_name);
 
-    CodeEmitter::new().emit_assembly(&assembly_program, &file_name);
+    match file_util.write_assembly_file(&assembly_program.assembly_str(), &file_name) {
+        Ok(_) => (),
+        Err(err) => panic!("coudln't emit assembly file {}", err), // todo(fedejinich) this might be converted to exit(1)
+    }
 }
