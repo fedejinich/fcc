@@ -1,3 +1,5 @@
+use std::process::Command;
+
 use crate::{
     ast::assembly_ast::assembly_ast::AssemblyAST, cli::Cli, file_util::FileUtil, lexer::Lexer,
     parser::assembly_parser::AssemblyParser, parser::c_parser::parse,
@@ -29,6 +31,8 @@ fn main() {
 
     println!("- lexing source code");
 
+    // lex tokens from the source code
+
     let token_vec = Lexer::new().lex(code.as_slice(), Vec::new());
 
     if cli.lex {
@@ -37,9 +41,13 @@ fn main() {
         return;
     }
 
+    // parse to c program
+
     let c_program = parse(token_vec); // todo(fedejinich) should be renamed to parse_c_program
 
     println!("- parsing");
+
+    // parse to assembly program
 
     let assembly_program = AssemblyParser::new().parse_program(c_program); // todo(fedejinich) should be renamed to parse_assembly_program
 
@@ -63,4 +71,20 @@ fn main() {
         Ok(_) => (),
         Err(err) => panic!("coudln't emit assembly file {}", err), // todo(fedejinich) this might be converted to exit(1)
     }
+
+    let final_name = assembly_file_name.replace(".s", "");
+
+    // assemble and link
+
+    println!("- assembling '{}' & linking\n", assembly_file_name);
+
+    let mut command = Command::new("gcc");
+
+    command.arg(assembly_file_name).arg("-o").arg(final_name); // gcc ASSEMBLY_FILE -o OUTPUT_FILE
+
+    let exit_code = command.status().unwrap().code().unwrap();
+
+    println!("\nexit code: {}", exit_code.to_string());
+
+    std::process::exit(exit_code);
 }
