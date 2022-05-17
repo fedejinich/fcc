@@ -1,7 +1,6 @@
 #[cfg(test)]
 mod test {
     use fcc::{file_util::FileUtil, lexer::Lexer, token::Token};
-    use std::path::PathBuf;
 
     #[test]
     fn valid_return_2() {
@@ -17,7 +16,7 @@ mod test {
                 Token::Semicolon,
                 Token::CloseBrace
             ],
-            lex_by_file_path("tests/resources/stage_1/valid/return_2.c")
+            lex_by_file_path("tests/resources/write_a_c_compiler/stage_1/valid/return_2.c")
         );
     }
 
@@ -35,7 +34,7 @@ mod test {
                 Token::Semicolon,
                 Token::CloseBrace
             ],
-            lex_by_file_path("tests/resources/stage_1/valid/return_0.c")
+            lex_by_file_path("tests/resources/write_a_c_compiler/stage_1/valid/return_0.c")
         );
     }
 
@@ -53,7 +52,7 @@ mod test {
                 Token::Semicolon,
                 Token::CloseBrace
             ],
-            lex_by_file_path("tests/resources/stage_1/valid/newlines.c")
+            lex_by_file_path("tests/resources/write_a_c_compiler/stage_1/valid/newlines.c")
         );
     }
 
@@ -71,7 +70,7 @@ mod test {
                 Token::Semicolon,
                 Token::CloseBrace
             ],
-            lex_by_file_path("tests/resources/stage_1/valid/no_newlines.c")
+            lex_by_file_path("tests/resources/write_a_c_compiler/stage_1/valid/no_newlines.c")
         );
     }
 
@@ -89,7 +88,7 @@ mod test {
                 Token::Semicolon,
                 Token::CloseBrace
             ],
-            lex_by_file_path("tests/resources/stage_1/valid/spaces.c")
+            lex_by_file_path("tests/resources/write_a_c_compiler/stage_1/valid/spaces.c")
         );
     }
 
@@ -107,7 +106,7 @@ mod test {
                 Token::Semicolon,
                 Token::CloseBrace
             ],
-            lex_by_file_path("tests/resources/stage_1/valid/multi_digit.c")
+            lex_by_file_path("tests/resources/write_a_c_compiler/stage_1/valid/multi_digit.c")
         );
     }
 
@@ -125,7 +124,7 @@ mod test {
                 Token::Semicolon,
                 Token::CloseBrace
             ],
-            lex_by_file_path("tests/resources/stage_1/invalid/wrong_case.c")
+            lex_by_file_path("tests/resources/write_a_c_compiler/stage_1/invalid/wrong_case.c")
         );
     }
 
@@ -143,7 +142,7 @@ mod test {
                 Token::Semicolon,
                 Token::CloseBrace
             ],
-            lex_by_file_path("tests/resources/stage_1/invalid/exceed_keyword.c")
+            lex_by_file_path("tests/resources/stage_1/invalid/exceed_keyword.c") // this is not taken from the test suite
         );
     }
 
@@ -160,7 +159,7 @@ mod test {
                 Token::Semicolon,
                 Token::CloseBrace
             ],
-            lex_by_file_path("tests/resources/stage_1/invalid/missing_paren.c")
+            lex_by_file_path("tests/resources/write_a_c_compiler/stage_1/invalid/missing_paren.c")
         );
     }
 
@@ -177,7 +176,7 @@ mod test {
                 Token::Semicolon,
                 Token::CloseBrace
             ],
-            lex_by_file_path("tests/resources/stage_1/invalid/missing_retval.c")
+            lex_by_file_path("tests/resources/write_a_c_compiler/stage_1/invalid/missing_retval.c")
         );
     }
 
@@ -194,7 +193,7 @@ mod test {
                 Token::IntegerLiteral(0),
                 Token::Semicolon
             ],
-            lex_by_file_path("tests/resources/stage_1/invalid/no_brace.c")
+            lex_by_file_path("tests/resources/write_a_c_compiler/stage_1/invalid/no_brace.c")
         );
     }
 
@@ -211,7 +210,7 @@ mod test {
                 Token::IntegerLiteral(0),
                 Token::CloseBrace
             ],
-            lex_by_file_path("tests/resources/stage_1/invalid/no_semicolon.c")
+            lex_by_file_path("tests/resources/write_a_c_compiler/stage_1/invalid/no_semicolon.c")
         );
     }
 
@@ -228,7 +227,7 @@ mod test {
                 Token::Semicolon,
                 Token::CloseBrace
             ],
-            lex_by_file_path("tests/resources/stage_1/invalid/no_space.c")
+            lex_by_file_path("tests/resources/write_a_c_compiler/stage_1/invalid/no_space.c")
         );
     }
 
