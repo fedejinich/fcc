@@ -10,7 +10,7 @@ Requirements
 ## Clone
 
 ```bash
-git clone git@github.com:fedejinich/fcc.git --recurse-submodules
+git clone https://github.com/fedejinich/fcc.git --recurse-submodules
 ```
 
 ## Build
