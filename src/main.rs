@@ -1,4 +1,4 @@
-use std::process::Command;
+use std::{path::PathBuf, process::Command};
 
 use crate::{
     ast::assembly_ast::assembly_ast::AssemblyAST, cli::Cli, file_util::FileUtil, lexer::Lexer,
@@ -15,19 +15,19 @@ mod parser;
 mod token;
 
 fn main() {
+    let cli = Cli::parse();
+
     println!("fcc COMPILER");
 
     println!("--------------------------------");
 
-    let cli = Cli::parse();
+    let path = cli.source_path;
 
-    let path_buf = cli.source_path;
-
-    println!("- reading source file {:?}", path_buf);
+    println!("- reading source file {:?}", path);
 
     let file_util = FileUtil::new();
 
-    let code = file_util.read_path_buff_to_string(&path_buf); // todo(fedejinich) error handling
+    let code = file_util.read_path_buff_to_string(&path); // todo(fedejinich) error handling
 
     println!("- lexing source code");
 
@@ -35,7 +35,7 @@ fn main() {
 
     let token_vec = Lexer::new().lex(code.as_slice(), Vec::new());
 
-    if cli.lex {
+    if cli.lex.is_some() {
         println!("\n");
         token_vec.iter().for_each(|t| println!("{:?}", t));
         return;
@@ -51,14 +51,14 @@ fn main() {
 
     let assembly_program = AssemblyParser::new().parse_program(c_program); // todo(fedejinich) should be renamed to parse_assembly_program
 
-    if cli.parse {
+    if cli.parse.is_some() {
         println!("\n{:?}", assembly_program);
         return;
     }
 
     println!("- emitting assembly code");
 
-    let assembly_file_name = path_buf
+    let assembly_file_name = PathBuf::from(path)
         .file_name()
         .unwrap()
         .to_str()

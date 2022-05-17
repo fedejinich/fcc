@@ -233,10 +233,7 @@ mod test {
     }
 
     fn lex_by_file_path(file_path: &str) -> Vec<Token> {
-        let mut path_buff = PathBuf::new();
-        path_buff.push(file_path);
-
-        let program = FileUtil::new().read_path_buff_to_string(&path_buff);
+        let program = FileUtil::new().read_path_buff_to_string(&file_path);
         Lexer::new().lex(program.as_slice(), Vec::new())
     }
 }
