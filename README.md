@@ -76,8 +76,8 @@ Non relevant data, used while coding
 
 ```
 # On docker
-./test_compiler.sh /fcc/target/x86_64-unknown-linux-gnu/debug/fcc 1
+cd /fcc/tests/resources/write_a_c_compiler && ./test_compiler.sh /fcc/target/x86_64-unknown-linux-gnu/debug/fcc
 
 # On mac 
-./test_compiler.sh /Users/fedejinich/Projects/fcc/target/debug/fcc 1
+./test_compiler.sh /Users/fedejinich/Projects/fcc/target/debug/fcc
 ```
