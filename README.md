@@ -72,6 +72,8 @@ This will build the cargo project for `x86_64` linux, then copies the project in
 
 ### TEMP
 
+Non relevant data, used while coding
+
 ```
 # On docker
 ./test_compiler.sh /fcc/target/x86_64-unknown-linux-gnu/debug/fcc 1

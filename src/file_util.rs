@@ -14,8 +14,6 @@ impl FileUtil {
         assembly_str: &str,
         file_name: &str,
     ) -> Result<(), impl Error> {
-        println!("Writing assembly to this filepath {}", file_name);
-
         let mut file = File::create(file_name)?;
 
         write!(file, "{}", assembly_str)
