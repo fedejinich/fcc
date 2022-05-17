@@ -58,29 +58,40 @@ fn main() {
 
     println!("- emitting assembly code");
 
-    let assembly_file_name = PathBuf::from(path)
+    let assembly_file_name = PathBuf::from(path.clone())
         .file_name()
         .unwrap()
         .to_str()
         .unwrap()
         .replace(".c", ".s");
 
-    println!("{}", assembly_file_name);
+    // todo(fedejinich) this smells, i should find a proper way to retrieve file_path.s
+    let assembly_file_name_2 = PathBuf::from(path.clone())
+        .canonicalize()
+        .unwrap()
+        .as_os_str()
+        .to_str()
+        .unwrap()
+        .replace(".c", ".s");
 
-    match file_util.write_assembly_file(&assembly_program.assembly_str(), &assembly_file_name) {
+    // match file_util.write_assembly_file(&assembly_program.assembly_str(), &assembly_file_name) {
+    match file_util.write_assembly_file(&assembly_program.assembly_str(), &assembly_file_name_2) {
         Ok(_) => (),
         Err(err) => panic!("coudln't emit assembly file {}", err), // todo(fedejinich) this might be converted to exit(1)
     }
 
-    let final_name = assembly_file_name.replace(".s", "");
+    // let final_name = assembly_file_name.replace(".s", "");
+    let final_name = assembly_file_name_2.replace(".s", "");
 
     // assemble and link
 
-    println!("- assembling '{}' & linking\n", assembly_file_name);
+    // println!("- assembling '{}' & linking\n", assembly_file_name);
+    println!("- assembling '{}' & linking\n", assembly_file_name_2);
 
     let mut command = Command::new("gcc");
 
-    command.arg(assembly_file_name).arg("-o").arg(final_name); // gcc ASSEMBLY_FILE -o OUTPUT_FILE
+    // command.arg(assembly_file_name).arg("-o").arg(final_name); // gcc ASSEMBLY_FILE -o OUTPUT_FILE
+    command.arg(assembly_file_name_2).arg("-o").arg(final_name); // gcc ASSEMBLY_FILE -o OUTPUT_FILE
 
     let exit_code = command.status().unwrap().code().unwrap();
 

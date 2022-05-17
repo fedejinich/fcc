@@ -67,3 +67,15 @@ Then run the tests with this script
 ```
 
 This will build the cargo project for `x86_64` linux, then copies the project into the linux container, and finally runs the tests in that environment.
+
+
+
+### TEMP
+
+```
+# On docker
+./test_compiler.sh /fcc/target/x86_64-unknown-linux-gnu/debug/fcc 1
+
+# On mac 
+./test_compiler.sh /Users/fedejinich/Projects/fcc/target/debug/fcc 1
+```
