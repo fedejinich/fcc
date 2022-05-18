@@ -1,6 +1,6 @@
 # fcc (another C compiler)
 
-A compiler for a tiny subset of C, written in Rust. This is a personal "recreation" of the `gcc` compiler, inspired by [Nora Sandler's book](https://norasandler.com/2022/03/29/Write-a-C-Compiler-the-Book.html).
+A compiler for a tiny subset of C, written in Rust. Inspired by [Nora Sandler's book](https://norasandler.com/2022/03/29/Write-a-C-Compiler-the-Book.html).
 
 Requirements
 - ONLY targets `x86_64` architectures.
