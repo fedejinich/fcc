@@ -23,7 +23,8 @@ impl AssemblyAST for FunctionDefinition {
         };
 
         format!(
-            ".globl {}\n{}:\n{}",
+            // ".globl {}\n{}:\n{}",
+            ".globl _{}\n_{}:\n{}", // todo(fedejinich) add underscore only for Mac Os systems
             self.name,
             self.name,
             instructions_assembly_str(&self.instructions)

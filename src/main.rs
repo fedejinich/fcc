@@ -78,9 +78,14 @@ fn main() {
 
     println!("- assembling '{}' & linking\n", assembly_file_name);
 
-    let mut command = Command::new("gcc");
-
-    command.arg(assembly_file_name).arg("-o").arg(final_name); // gcc ASSEMBLY_FILE -o OUTPUT_FILE
+    // todo(fedejinich) should do arch switch only in M1 processors
+    let mut command = Command::new("arch"); // invoke for arch '-x86_64'
+    command
+        .arg("-x86_64")
+        .arg("gcc") // gcc ASSEMBLY_FILE -o OUTPUT_FILE
+        .arg(assembly_file_name)
+        .arg("-o")
+        .arg(final_name);
 
     let exit_code = command.status().unwrap().code().unwrap();
 
