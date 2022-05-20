@@ -32,38 +32,6 @@ mod test {
     }
 
     #[test]
-    #[should_panic = "expected token: 'return', found: 'RETURN'"]
-    fn invalid_wrong_case() {
-        parser::c_parser::parse(vec![
-            Token::IntKeyword,
-            Token::Identifier(String::from("main")),
-            Token::OpenParenthesis,
-            Token::CloseParenthesis,
-            Token::OpenBrace,
-            Token::Invalid(String::from("RETURN")),
-            Token::IntegerLiteral(0),
-            Token::Semicolon,
-            Token::CloseBrace,
-        ]);
-    }
-
-    #[test]
-    #[should_panic = "expected token: 'return', found: 'returne'"]
-    fn invalid_exceed_keyword() {
-        parser::c_parser::parse(vec![
-            Token::IntKeyword,
-            Token::Identifier(String::from("main")),
-            Token::OpenParenthesis,
-            Token::CloseParenthesis,
-            Token::OpenBrace,
-            Token::Invalid(String::from("returne")),
-            Token::IntegerLiteral(0),
-            Token::Semicolon,
-            Token::CloseBrace,
-        ]);
-    }
-
-    #[test]
     #[should_panic = "expected token: ')', found: '{'"]
     fn invalid_missing_paren() {
         parser::c_parser::parse(vec![
@@ -119,21 +87,6 @@ mod test {
             Token::OpenBrace,
             Token::ReturnKeyword,
             Token::IntegerLiteral(0),
-            Token::CloseBrace,
-        ]);
-    }
-
-    #[test]
-    #[should_panic = "expected token: 'return', found: 'return0'"]
-    fn invalid_no_space() {
-        parser::c_parser::parse(vec![
-            Token::IntKeyword,
-            Token::Identifier(String::from("main")),
-            Token::OpenParenthesis,
-            Token::CloseParenthesis,
-            Token::OpenBrace,
-            Token::Invalid(String::from("return0")),
-            Token::Semicolon,
             Token::CloseBrace,
         ]);
     }

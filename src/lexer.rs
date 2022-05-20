@@ -30,6 +30,7 @@ impl Lexer {
             [';', tail @ ..] => self
                 .add(Token::Semicolon, self.lex(tail, tokens))
                 .to_owned(),
+            ['~', tail @ ..] => self.add(Token::Tilde, self.lex(tail, tokens)).to_owned(),
             [' ', tail @ ..] | ['\n', tail @ ..] => self.lex(tail, tokens).to_owned(), // skips white spaces and end lines
             code => {
                 let (token, end_index) =
@@ -96,7 +97,6 @@ impl Lexer {
                 .any(|k| String::from(identified).to_lowercase().contains(k));
 
             if contains_keyword {
-                // return Token::Invalid(String::from(identified));
                 panic!("found invalid word: {}", String::from(identified));
             }
         }

@@ -5,11 +5,11 @@ pub enum Token {
     OpenParenthesis,
     CloseParenthesis,
     Semicolon,
+    Tilde,
     IntKeyword,
     ReturnKeyword,
     Identifier(String),
     IntegerLiteral(u32),
-    Invalid(String),
 }
 
 impl Token {
@@ -20,11 +20,11 @@ impl Token {
             Token::OpenParenthesis => "(".to_string(),
             Token::CloseParenthesis => ")".to_string(),
             Token::Semicolon => ";".to_string(),
+            Token::Tilde => "~".to_string(),
             Token::IntKeyword => "int".to_string(),
             Token::ReturnKeyword => "return".to_string(),
             Token::Identifier(id) => id.to_string(),
             Token::IntegerLiteral(num) => num.to_string(),
-            Token::Invalid(invalid) => invalid.to_string(),
         }
     }
 }

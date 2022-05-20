@@ -113,112 +113,25 @@ mod test {
     #[test]
     #[should_panic(expected = "found invalid word: RETURN")]
     fn invalid_wrong_case() {
-        assert_eq!(
-            vec![
-                Token::IntKeyword,
-                Token::Identifier(String::from("main")),
-                Token::OpenParenthesis,
-                Token::CloseParenthesis,
-                Token::OpenBrace,
-                Token::Invalid(String::from("RETURN")),
-                Token::IntegerLiteral(0),
-                Token::Semicolon,
-                Token::CloseBrace
-            ],
-            lex_by_file_path("tests/resources/write_a_c_compiler/stage_1/invalid/wrong_case.c")
-        );
+        lex_by_file_path("tests/resources/write_a_c_compiler/stage_1/invalid/wrong_case.c");
     }
 
     #[test]
     #[should_panic(expected = "found invalid word: returne")]
     fn invalid_exceed_keyword() {
-        assert_eq!(
-            vec![
-                Token::IntKeyword,
-                Token::Identifier(String::from("main")),
-                Token::OpenParenthesis,
-                Token::CloseParenthesis,
-                Token::OpenBrace,
-                Token::Invalid(String::from("returne")),
-                Token::IntegerLiteral(0),
-                Token::Semicolon,
-                Token::CloseBrace
-            ],
-            lex_by_file_path("tests/resources/stage_1/invalid/exceed_keyword.c") // this is not taken from the test suite
-        );
-    }
-
-    #[test]
-    fn invalid_missing_paren() {
-        assert_eq!(
-            vec![
-                Token::IntKeyword,
-                Token::Identifier(String::from("main")),
-                Token::OpenParenthesis,
-                Token::OpenBrace,
-                Token::ReturnKeyword,
-                Token::IntegerLiteral(0),
-                Token::Semicolon,
-                Token::CloseBrace
-            ],
-            lex_by_file_path("tests/resources/write_a_c_compiler/stage_1/invalid/missing_paren.c")
-        );
-    }
-
-    #[test]
-    fn invalid_missing_retval() {
-        assert_eq!(
-            vec![
-                Token::IntKeyword,
-                Token::Identifier(String::from("main")),
-                Token::OpenParenthesis,
-                Token::CloseParenthesis,
-                Token::OpenBrace,
-                Token::ReturnKeyword,
-                Token::Semicolon,
-                Token::CloseBrace
-            ],
-            lex_by_file_path("tests/resources/write_a_c_compiler/stage_1/invalid/missing_retval.c")
-        );
-    }
-
-    #[test]
-    fn invalid_no_brace() {
-        assert_eq!(
-            vec![
-                Token::IntKeyword,
-                Token::Identifier(String::from("main")),
-                Token::OpenParenthesis,
-                Token::CloseParenthesis,
-                Token::OpenBrace,
-                Token::ReturnKeyword,
-                Token::IntegerLiteral(0),
-                Token::Semicolon
-            ],
-            lex_by_file_path("tests/resources/write_a_c_compiler/stage_1/invalid/no_brace.c")
-        );
-    }
-
-    #[test]
-    fn invalid_no_semicolon() {
-        assert_eq!(
-            vec![
-                Token::IntKeyword,
-                Token::Identifier(String::from("main")),
-                Token::OpenParenthesis,
-                Token::CloseParenthesis,
-                Token::OpenBrace,
-                Token::ReturnKeyword,
-                Token::IntegerLiteral(0),
-                Token::CloseBrace
-            ],
-            lex_by_file_path("tests/resources/write_a_c_compiler/stage_1/invalid/no_semicolon.c")
-        );
+        lex_by_file_path("tests/resources/stage_1/invalid/exceed_keyword.c"); // this is not taken from the test suite
     }
 
     #[test]
     #[should_panic(expected = "found invalid word: return0")]
     fn invalid_no_space() {
+        lex_by_file_path("tests/resources/write_a_c_compiler/stage_1/invalid/no_space.c");
+    }
+
+    // unary operators
+
+    #[test]
+    fn valid_bitwise_zero() {
         assert_eq!(
             vec![
                 Token::IntKeyword,
@@ -226,11 +139,13 @@ mod test {
                 Token::OpenParenthesis,
                 Token::CloseParenthesis,
                 Token::OpenBrace,
-                Token::Invalid(String::from("return0")),
+                Token::ReturnKeyword,
+                Token::Tilde,
+                Token::IntegerLiteral(0),
                 Token::Semicolon,
                 Token::CloseBrace
             ],
-            lex_by_file_path("tests/resources/write_a_c_compiler/stage_1/invalid/no_space.c")
+            lex_by_file_path("tests/resources/write_a_c_compiler/stage_2/valid/bitwise_zero.c")
         );
     }
 
