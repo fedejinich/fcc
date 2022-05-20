@@ -111,6 +111,7 @@ mod test {
     }
 
     #[test]
+    #[should_panic(expected = "found invalid word: RETURN")]
     fn invalid_wrong_case() {
         assert_eq!(
             vec![
@@ -129,6 +130,7 @@ mod test {
     }
 
     #[test]
+    #[should_panic(expected = "found invalid word: returne")]
     fn invalid_exceed_keyword() {
         assert_eq!(
             vec![
@@ -215,6 +217,7 @@ mod test {
     }
 
     #[test]
+    #[should_panic(expected = "found invalid word: return0")]
     fn invalid_no_space() {
         assert_eq!(
             vec![

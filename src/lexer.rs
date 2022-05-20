@@ -96,8 +96,8 @@ impl Lexer {
                 .any(|k| String::from(identified).to_lowercase().contains(k));
 
             if contains_keyword {
-                return Token::Invalid(String::from(identified));
-                // panic!("found invalid keyword: {}", String::from(identified));
+                // return Token::Invalid(String::from(identified));
+                panic!("found invalid word: {}", String::from(identified));
             }
         }
 
