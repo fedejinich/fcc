@@ -1,20 +1,33 @@
 use clap::Parser;
 use log::debug;
 
-use crate::{driver::CompilerDriver, title::Title};
+use crate::driver::CompilerDriver;
 
 mod asm;
 mod driver;
 mod lexer;
 mod parser;
-mod title;
 mod util;
+
+pub fn title() -> String {
+    String::from(
+        "
+███████╗ ██████╗ ██████╗
+██╔════╝██╔════╝██╔════╝
+█████╗  ██║     ██║     
+██╔══╝  ██║     ██║     
+██║     ╚██████╗╚██████╗
+╚═╝      ╚═════╝ ╚═════╝
+                        
+",
+    )
+}
 
 fn main() {
     let driver = CompilerDriver::parse();
     driver.init_logging();
 
-    println!("{}\n", Title::title2());
+    println!("{}\n", title());
 
     debug!("{:?}", driver);
     driver
