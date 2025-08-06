@@ -3,7 +3,7 @@
 /.vscode
 *.s
 *.c
-book/
+resources/book/
 
 
 # Added by cargo
