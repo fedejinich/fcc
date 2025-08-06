@@ -11,11 +11,24 @@ mod util;
 
 fn main() {
     println!("{}\n", Title::title2());
-    let args = vec!["fcc", "--lex", "return_2.c"];
-    let driver = CompilerDriver::parse_from(args);
-    //let driver = CompilerDriver::parse();
+    let driver = CompilerDriver::parse();
     println!("{:?}", driver);
     driver
         .create_program()
         .expect("fcc failed to create program");
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    pub fn test_lex() {
+        let args = vec!["fcc", "--lex", "return_2.c"];
+        let driver = CompilerDriver::parse_from(args);
+        println!("{:?}", driver);
+        driver
+            .create_program()
+            .expect("fcc failed to create program");
+    }
 }
