@@ -18,6 +18,9 @@ struct CompilerDriver {
 
     #[arg(long)]
     code_gen: bool,
+
+    #[arg(short, value_name = "S")]
+    s: bool,
 }
 
 impl CompilerDriver {
