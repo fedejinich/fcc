@@ -1,19 +1,11 @@
 use regex::Regex;
-// “while input isn't empty:
-// if input starts with whitespace:
-//     trim whitespace from start of input
-// else:
-//     find longest match at start of input for any regex in Table 1-1
-//     if no match is found, raise an error
-//     convert matching substring into a token
-//     remove matching substring from start of input”
 
 enum TokenId {
+    Identifier,
+    Constant,
     Int,
     Void,
     Return,
-    Constant,
-    Identifier,
     OpenParen,
     CloseParen,
     OpenBrace,
@@ -22,11 +14,11 @@ enum TokenId {
 }
 
 const TOKEN_RULES: [(TokenId, &str); 10] = [
+    (TokenId::Identifier, r"^[a-zA-Z_]\w*\b"),
+    (TokenId::Constant, r"^[0-9]+\b"),
     (TokenId::Int, r"^int\b"),
     (TokenId::Void, r"^void\b"),
     (TokenId::Return, r"^return\b"),
-    (TokenId::Constant, r"^[0-9]+\b"),
-    (TokenId::Identifier, r"^[a-zA-Z_]\w*\b"),
     (TokenId::OpenParen, r"^\("),
     (TokenId::CloseParen, r"^\)"),
     (TokenId::OpenBrace, r"^\{"),
@@ -36,11 +28,11 @@ const TOKEN_RULES: [(TokenId, &str); 10] = [
 
 #[derive(Debug)]
 pub enum Token {
+    Identifier(String),
+    Constant(String),
     Int(String),
     Void,
     Return,
-    Constant(String),
-    Identifier(String),
     OpenParen,
     CloseParen,
     OpenBrace,
@@ -64,7 +56,7 @@ pub fn lex(code: &str) -> Result<Vec<Token>, String> {
         for (token_id, regex) in TOKEN_RULES.iter() {
             if let Some(new_match) = Regex::new(regex).unwrap().find(code) {
                 if let Some((_, longest_match_value)) = longest_match {
-                    if new_match.len() < longest_match_value.len() {
+                    if new_match.len() > longest_match_value.len() {
                         longest_match = Some((token_id, new_match.as_str()));
                     }
                 }
@@ -90,15 +82,15 @@ pub fn lex(code: &str) -> Result<Vec<Token>, String> {
 
 fn match_token(token_id: &TokenId, m: &str) -> Token {
     match *token_id {
+        TokenId::Identifier => Token::Identifier(m.to_string()),
+        TokenId::Constant => Token::Constant(m.to_string()),
         TokenId::Int => Token::Int(m.to_string()),
         TokenId::Void => Token::Void,
         TokenId::Return => Token::Return,
-        TokenId::Constant => Token::Constant(m.to_string()),
-        TokenId::Identifier => Token::Identifier(m.to_string()),
         TokenId::OpenParen => Token::OpenParen,
         TokenId::CloseParen => Token::CloseParen,
         TokenId::OpenBrace => Token::OpenBrace,
-        TokenId::CloseBrace => Token::CloseParen,
+        TokenId::CloseBrace => Token::CloseBrace,
         TokenId::Semicolon => Token::Semicolon,
     }
 }

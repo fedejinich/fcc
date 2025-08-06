@@ -86,6 +86,11 @@ impl CompilerDriver {
         // get tokens
         let tokens = lex(code.as_str())?;
 
+        // only lex
+        if self.lex {
+            std::process::exit(0);
+        }
+
         // tokens to ast
         let ast = parse_tokens(tokens);
 
