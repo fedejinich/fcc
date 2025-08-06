@@ -1,30 +1,19 @@
 use regex::Regex;
 
-enum TokenId {
-    Identifier,
-    Constant,
-    Int,
-    Void,
-    Return,
-    OpenParen,
-    CloseParen,
-    OpenBrace,
-    CloseBrace,
-    Semicolon,
+fn build_token_rules() -> Vec<(fn(String) -> Token, &'static str)> {
+    vec![
+        (|s| Token::Identifier(s), r"^[a-zA-Z_]\w*\b"),
+        (|s| Token::Constant(s), r"^[0-9]+\b"),
+        (|s| Token::Int(s), r"^int\b"),
+        (|_| Token::Void, r"^void\b"),
+        (|_| Token::Return, r"^return\b"),
+        (|_| Token::OpenParen, r"^\("),
+        (|_| Token::CloseParen, r"^\)"),
+        (|_| Token::OpenBrace, r"^\{"),
+        (|_| Token::CloseBrace, r"^\}"),
+        (|_| Token::Semicolon, r"^;"),
+    ]
 }
-
-const TOKEN_RULES: [(TokenId, &str); 10] = [
-    (TokenId::Identifier, r"^[a-zA-Z_]\w*\b"),
-    (TokenId::Constant, r"^[0-9]+\b"),
-    (TokenId::Int, r"^int\b"),
-    (TokenId::Void, r"^void\b"),
-    (TokenId::Return, r"^return\b"),
-    (TokenId::OpenParen, r"^\("),
-    (TokenId::CloseParen, r"^\)"),
-    (TokenId::OpenBrace, r"^\{"),
-    (TokenId::CloseBrace, r"^\}"),
-    (TokenId::Semicolon, r"^;"),
-];
 
 #[derive(Debug)]
 pub enum Token {
@@ -40,6 +29,8 @@ pub enum Token {
     Semicolon,
 }
 
+type TokenDef = (fn(String) -> Token, String);
+
 pub fn lex(mut code: &str) -> Result<Vec<Token>, String> {
     println!("lexing code");
 
@@ -47,19 +38,20 @@ pub fn lex(mut code: &str) -> Result<Vec<Token>, String> {
         return Ok(vec![]);
     }
 
+    code = code.trim_start();
+
     let mut tokens = vec![];
     while !code.is_empty() {
-        code = code.trim_start();
         // find longest match at start of input for any token rule
-        let mut longest_match: Option<(&TokenId, &str)> = None;
-        for (token_id, regex) in TOKEN_RULES.iter() {
+        let mut longest_match: Option<TokenDef> = None;
+        for (constructor, regex) in build_token_rules().iter() {
             if let Some(new_match) = Regex::new(regex).unwrap().find(code) {
-                if let Some((_, longest_match_value)) = longest_match {
+                if let Some((_, ref longest_match_value)) = longest_match {
                     if new_match.len() > longest_match_value.len() {
-                        longest_match = Some((token_id, new_match.as_str()));
+                        longest_match = Some((*constructor, String::from(new_match.as_str())));
                     }
                 } else if longest_match.is_none() {
-                    longest_match = Some((token_id, new_match.as_str()));
+                    longest_match = Some((*constructor, String::from(new_match.as_str())));
                 }
             }
         }
@@ -68,30 +60,15 @@ pub fn lex(mut code: &str) -> Result<Vec<Token>, String> {
             return Err(String::from("couldn't find longest match"));
         }
 
-        let (token_id, value) = longest_match.unwrap();
-        let new_token = match_token(token_id, value);
+        let (constructor, value) = longest_match.unwrap();
+        let new_token = constructor(value.clone());
 
         println!("token: {:?}", new_token);
 
         tokens.push(new_token);
 
-        code = code.strip_prefix(value).unwrap().trim_start();
+        code = code.strip_prefix(value.as_str()).unwrap().trim_start();
     }
 
     Ok(tokens)
-}
-
-fn match_token(token_id: &TokenId, m: &str) -> Token {
-    match *token_id {
-        TokenId::Identifier => Token::Identifier(m.to_string()),
-        TokenId::Constant => Token::Constant(m.to_string()),
-        TokenId::Int => Token::Int(m.to_string()),
-        TokenId::Void => Token::Void,
-        TokenId::Return => Token::Return,
-        TokenId::OpenParen => Token::OpenParen,
-        TokenId::CloseParen => Token::CloseParen,
-        TokenId::OpenBrace => Token::OpenBrace,
-        TokenId::CloseBrace => Token::CloseBrace,
-        TokenId::Semicolon => Token::Semicolon,
-    }
 }

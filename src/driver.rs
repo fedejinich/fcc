@@ -88,6 +88,7 @@ impl CompilerDriver {
 
         // only lex
         if self.lex {
+            // todo(fede) find a better way to this
             std::process::exit(0);
         }
 
