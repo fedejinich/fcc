@@ -1,4 +1,4 @@
-use std::{path::Path, process::Command};
+use std::{fs, path::Path, process::Command};
 
 use clap::Parser;
 
@@ -23,10 +23,13 @@ struct CompilerDriver {
 impl CompilerDriver {
     pub fn create_program(&self) -> Result<(), String> {
         println!("creating program");
+
         let preprocessed_file = self.preprocess(&self.program_path)?;
         let assembly_file = self.compile(preprocessed_file.as_str())?;
         let exit_code = self.assemble_and_link(assembly_file)?;
+
         println!("exit code: {exit_code}");
+
         std::process::exit(exit_code);
     }
 
@@ -64,9 +67,19 @@ impl CompilerDriver {
 
     fn compile(&self, preprocessed_file: &str) -> Result<String, String> {
         println!("compiling {preprocessed_file}");
+
         // complile
-        // delete preprocessed file
-        Ok(preprocessed_file.replace(".i", ".asm"))
+
+        if Path::new(preprocessed_file).exists() {
+            fs::remove_file(preprocessed_file).expect("couldn't remove preprocessed file");
+            println!("file removed");
+        } else {
+            return Err(String::from("couldn't compile, preprocessed file does not exist"));
+        }
+
+        let assembly_file = preprocessed_file.replace(".i", ".asm");
+
+        Ok(assembly_file)
     }
 
     fn assemble_and_link(&self, assembly_file: String) -> Result<i32, String> {
@@ -75,6 +88,7 @@ impl CompilerDriver {
         if !Path::new(&assembly_file).exists() {
             return Err(String::from("source file does not exist"));
         }
+
         let output_file = assembly_file.replace(".asm", "");
         let result = Command::new("gcc")
             .arg(assembly_file)
