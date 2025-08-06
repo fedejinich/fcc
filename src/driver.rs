@@ -110,7 +110,7 @@ impl CompilerDriver {
         // get tokens
         let tokens = lex(code.as_str())?;
 
-        // only lex
+        // lex only
         if self.lex {
             // todo(fede) find a better way to this
             std::process::exit(0);
@@ -118,6 +118,12 @@ impl CompilerDriver {
 
         // tokens to ast
         let ast = parse_tokens(tokens);
+
+        // parse only
+        if self.parse {
+            // todo(fede) find a better way to this
+            std::process::exit(0);
+        }
 
         // generate assembly
         let assembly_file_name = preprocessed_file.replace(".i", ".asm");
