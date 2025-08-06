@@ -2,6 +2,9 @@ use std::{fs, path::Path, process::Command};
 
 use clap::Parser;
 
+use crate::asm::generate_assembly;
+use crate::lexer::lex;
+use crate::parser::parse_tokens;
 use crate::util::replace_c_with_i;
 
 #[derive(Parser, Debug)]
@@ -70,18 +73,30 @@ impl CompilerDriver {
     fn compile(&self, preprocessed_file: &str) -> Result<String, String> {
         println!("compiling {preprocessed_file}");
 
-        // complile
-
-        if Path::new(preprocessed_file).exists() {
-            fs::remove_file(preprocessed_file).expect("couldn't remove preprocessed file");
-            println!("file removed");
-        } else {
-            return Err(String::from("couldn't compile, preprocessed file does not exist"));
+        let preprocessed_file_path = Path::new(preprocessed_file);
+        if !preprocessed_file_path.exists() {
+            return Err(String::from(
+                "couldn't compile, preprocessed file does not exist",
+            ));
         }
 
-        let assembly_file = preprocessed_file.replace(".i", ".asm");
+        let code =
+            fs::read_to_string(preprocessed_file_path).expect("couldn't read preprocessed file");
 
-        Ok(assembly_file)
+        // get tokens
+        let tokens = lex(code.as_str());
+
+        // tokens to ast
+        let ast = parse_tokens(tokens);
+
+        // generate assembly
+        let assembly_file_name = preprocessed_file.replace(".i", ".asm");
+        let assembly_file = generate_assembly(ast, assembly_file_name);
+
+        fs::remove_file(preprocessed_file).expect("couldn't remove preprocessed file");
+        println!("file removed");
+
+        Ok(assembly_file.name)
     }
 
     fn assemble_and_link(&self, assembly_file: String) -> Result<i32, String> {

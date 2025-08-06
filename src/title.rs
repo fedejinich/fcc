@@ -1,6 +1,6 @@
 pub struct Title;
 impl Title {
-    pub fn title() -> String {
+    pub fn _title() -> String {
         String::from(
             "
 ▐▘    
