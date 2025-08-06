@@ -1,4 +1,5 @@
 use regex::Regex;
+use log::{info, debug, trace};
 
 fn build_token_rules() -> Vec<(fn(String) -> Token, &'static str)> {
     vec![
@@ -32,7 +33,7 @@ pub enum Token {
 type TokenDef = (fn(String) -> Token, String);
 
 pub fn lex(mut code: &str) -> Result<Vec<Token>, String> {
-    println!("lexing code");
+    debug!("lexing code");
 
     if code.is_empty() {
         return Ok(vec![]);
@@ -63,7 +64,7 @@ pub fn lex(mut code: &str) -> Result<Vec<Token>, String> {
         let (constructor, value) = longest_match.unwrap();
         let new_token = constructor(value.clone());
 
-        println!("token: {:?}", new_token);
+        trace!("token: {:?}", new_token);
 
         tokens.push(new_token);
 

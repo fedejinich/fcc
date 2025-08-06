@@ -1,6 +1,7 @@
 use std::{fs, path::Path, process::Command};
 
 use clap::Parser;
+use log::{debug, info, trace};
 
 use crate::asm::generate_assembly;
 use crate::lexer::lex;
@@ -23,23 +24,46 @@ pub struct CompilerDriver {
 
     #[arg(short, value_name = "S")]
     s: bool,
+
+    #[arg(long, help = "Enable debug logging")]
+    debug: bool,
+
+    #[arg(long, help = "Enable trace logging (most verbose)")]
+    trace: bool,
 }
 
 impl CompilerDriver {
+    pub fn init_logging(&self) {
+        use std::env;
+
+        let log_level = if self.trace {
+            "trace"
+        } else if self.debug {
+            "debug"
+        } else {
+            "info"
+        };
+
+        unsafe {
+            env::set_var("RUST_LOG", log_level);
+        }
+        env_logger::init();
+    }
+
     pub fn create_program(&self) -> Result<(), String> {
-        println!("creating program");
+        info!("creating program");
 
         let preprocessed_file = self.preprocess(&self.program_path)?;
         let assembly_file = self.compile(preprocessed_file.as_str())?;
         let exit_code = self.assemble_and_link(assembly_file)?;
 
-        println!("exit code: {exit_code}");
+        info!("exit code: {exit_code}");
 
         std::process::exit(exit_code);
     }
 
     pub fn preprocess(&self, source_file: &str) -> Result<String, String> {
-        println!("preprocessing {source_file}");
+        info!("preprocessing {source_file}");
 
         // todo(fede) this should be validated in another place
         if !source_file.ends_with(".c") {
@@ -71,7 +95,7 @@ impl CompilerDriver {
     }
 
     fn compile(&self, preprocessed_file: &str) -> Result<String, String> {
-        println!("compiling {preprocessed_file}");
+        info!("compiling {preprocessed_file}");
 
         let preprocessed_file_path = Path::new(preprocessed_file);
         if !preprocessed_file_path.exists() {
@@ -100,13 +124,13 @@ impl CompilerDriver {
         let assembly_file = generate_assembly(ast, assembly_file_name);
 
         fs::remove_file(preprocessed_file).expect("couldn't remove preprocessed file");
-        println!("file removed");
+        debug!("file removed");
 
         Ok(assembly_file.name)
     }
 
     fn assemble_and_link(&self, assembly_file: String) -> Result<i32, String> {
-        println!("assemblying and linking {assembly_file}");
+        info!("assemblying and linking {assembly_file}");
 
         if !Path::new(&assembly_file).exists() {
             return Err(String::from("source file does not exist"));
