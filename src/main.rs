@@ -11,6 +11,7 @@ mod util;
 
 fn main() {
     println!("{}\n", Title::title2());
+
     CompilerDriver::parse()
         .create_program()
         .expect("fcc failed to create program");

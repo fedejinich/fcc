@@ -84,7 +84,7 @@ impl CompilerDriver {
             fs::read_to_string(preprocessed_file_path).expect("couldn't read preprocessed file");
 
         // get tokens
-        let tokens = lex(code.as_str());
+        let tokens = lex(code.as_str())?;
 
         // tokens to ast
         let ast = parse_tokens(tokens);
