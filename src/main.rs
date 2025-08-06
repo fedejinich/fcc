@@ -2,6 +2,9 @@ use std::{path::Path, process::Command};
 
 use clap::Parser;
 
+use crate::title::Title;
+mod title;
+
 #[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]
 struct CompilerDriver {
@@ -19,13 +22,17 @@ struct CompilerDriver {
 
 impl CompilerDriver {
     pub fn create_program(&self) -> Result<(), String> {
+        println!("creating program");
         let preprocessed_file = self.preprocess(&self.program_path)?;
         let assembly_file = self.compile(preprocessed_file.as_str())?;
         let exit_code = self.assemble_and_link(assembly_file)?;
+        println!("exit code: {exit_code}");
         std::process::exit(exit_code);
     }
 
     pub fn preprocess(&self, source_file: &str) -> Result<String, String> {
+        println!("preprocessing {source_file}");
+
         // todo(fede) this should be validated in another place
         if !source_file.ends_with(".c") {
             return Err(String::from("SOURCE_FILE should have a .c file extension"));
@@ -56,12 +63,15 @@ impl CompilerDriver {
     }
 
     fn compile(&self, preprocessed_file: &str) -> Result<String, String> {
+        println!("compiling {preprocessed_file}");
         // complile
         // delete preprocessed file
         Ok(preprocessed_file.replace(".i", ".asm"))
     }
 
     fn assemble_and_link(&self, assembly_file: String) -> Result<i32, String> {
+        println!("assemblying and linking {assembly_file}");
+
         if !Path::new(&assembly_file).exists() {
             return Err(String::from("source file does not exist"));
         }
@@ -89,7 +99,9 @@ fn replace_c_with_i(file: &str) -> String {
 }
 
 fn main() {
-    let driver = CompilerDriver::parse();
-    driver.create_program().expect("failed to create program");
-    println!("done");
+    println!("{}", Title::title2());
+    println!("-----------------------------------------------------");
+    CompilerDriver::parse()
+        .create_program()
+        .expect("fcc failed to create program");
 }
