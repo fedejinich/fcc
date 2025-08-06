@@ -1,7 +1,7 @@
 use std::{fs, path::Path, process::Command};
 
 use clap::Parser;
-use log::{debug, info, trace};
+use log::{debug, info};
 
 use crate::asm::generate_assembly;
 use crate::lexer::lex;

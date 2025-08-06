@@ -1,18 +1,34 @@
+use log::{debug, trace};
 use regex::Regex;
-use log::{info, debug, trace};
 
-fn build_token_rules() -> Vec<(fn(String) -> Token, &'static str)> {
+#[derive(Clone)]
+pub struct TokenRule {
+    pub constructor: fn(String) -> Token,
+    pub regex: &'static str,
+}
+
+impl TokenRule {
+    fn new(constructor: fn(String) -> Token, regex: &'static str) -> Self {
+        Self { constructor, regex }
+    }
+    
+    fn matches<'a>(&self, code: &'a str) -> Option<regex::Match<'a>> {
+        Regex::new(self.regex).unwrap().find(code)
+    }
+}
+
+fn build_token_rules() -> Vec<TokenRule> {
     vec![
-        (|s| Token::Identifier(s), r"^[a-zA-Z_]\w*\b"),
-        (|s| Token::Constant(s), r"^[0-9]+\b"),
-        (|s| Token::Int(s), r"^int\b"),
-        (|_| Token::Void, r"^void\b"),
-        (|_| Token::Return, r"^return\b"),
-        (|_| Token::OpenParen, r"^\("),
-        (|_| Token::CloseParen, r"^\)"),
-        (|_| Token::OpenBrace, r"^\{"),
-        (|_| Token::CloseBrace, r"^\}"),
-        (|_| Token::Semicolon, r"^;"),
+        TokenRule::new(|s| Token::Identifier(s), r"^[a-zA-Z_]\w*\b"),
+        TokenRule::new(|s| Token::Constant(s), r"^[0-9]+\b"),
+        TokenRule::new(|s| Token::Int(s), r"^int\b"),
+        TokenRule::new(|_| Token::Void, r"^void\b"),
+        TokenRule::new(|_| Token::Return, r"^return\b"),
+        TokenRule::new(|_| Token::OpenParen, r"^\("),
+        TokenRule::new(|_| Token::CloseParen, r"^\)"),
+        TokenRule::new(|_| Token::OpenBrace, r"^\{"),
+        TokenRule::new(|_| Token::CloseBrace, r"^\}"),
+        TokenRule::new(|_| Token::Semicolon, r"^;"),
     ]
 }
 
@@ -30,8 +46,6 @@ pub enum Token {
     Semicolon,
 }
 
-type TokenDef = (fn(String) -> Token, String);
-
 pub fn lex(mut code: &str) -> Result<Vec<Token>, String> {
     debug!("lexing code");
 
@@ -44,15 +58,15 @@ pub fn lex(mut code: &str) -> Result<Vec<Token>, String> {
     let mut tokens = vec![];
     while !code.is_empty() {
         // find longest match at start of input for any token rule
-        let mut longest_match: Option<TokenDef> = None;
-        for (constructor, regex) in build_token_rules().iter() {
-            if let Some(new_match) = Regex::new(regex).unwrap().find(code) {
+        let mut longest_match: Option<(fn(String) -> Token, String)> = None;
+        for rule in build_token_rules().iter() {
+            if let Some(new_match) = rule.matches(code) {
                 if let Some((_, ref longest_match_value)) = longest_match {
                     if new_match.len() > longest_match_value.len() {
-                        longest_match = Some((*constructor, String::from(new_match.as_str())));
+                        longest_match = Some((rule.constructor, String::from(new_match.as_str())));
                     }
                 } else if longest_match.is_none() {
-                    longest_match = Some((*constructor, String::from(new_match.as_str())));
+                    longest_match = Some((rule.constructor, String::from(new_match.as_str())));
                 }
             }
         }
