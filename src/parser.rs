@@ -69,7 +69,7 @@ impl Parseable<FunctionDefinition> for FunctionDefinition {
     fn parse(tokens: &mut Iter<Token>) -> Result<FunctionDefinition, String> {
         trace!("Parsing FunctionDefinition");
 
-        expect(Token::Identifier(format!("int")), tokens)?;
+        expect(Token::Int, tokens)?;
 
         debug!("Parsing function identifier");
         let identifier = Identifier::parse(tokens)?;
@@ -124,7 +124,7 @@ impl Parseable<Expression> for Expression {
     fn parse(tokens: &mut Iter<Token>) -> Result<Expression, String> {
         trace!("Parsing Expression");
 
-        if let Some(Token::Int(n)) = tokens.next() {
+        if let Some(Token::Constant(n)) = tokens.next() {
             trace!("Found integer constant: {}", n);
             Ok(Expression::Constant(ConstantType::Int(n.clone())))
         } else {

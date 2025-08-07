@@ -21,7 +21,7 @@ fn build_token_rules() -> Vec<TokenRule> {
     vec![
         TokenRule::new(|s| Token::Identifier(s), r"^[a-zA-Z_]\w*\b"),
         TokenRule::new(|s| Token::Constant(s), r"^[0-9]+\b"),
-        TokenRule::new(|s| Token::Int(s), r"^int\b"),
+        TokenRule::new(|_| Token::Int, r"^int\b"),
         TokenRule::new(|_| Token::Void, r"^void\b"),
         TokenRule::new(|_| Token::Return, r"^return\b"),
         TokenRule::new(|_| Token::OpenParen, r"^\("),
@@ -36,7 +36,7 @@ fn build_token_rules() -> Vec<TokenRule> {
 pub enum Token {
     Identifier(String),
     Constant(String),
-    Int(String), // todo(fede) this should be an i32
+    Int, // todo(fede) this should be an i32
     Void,
     Return,
     OpenParen,
@@ -76,7 +76,17 @@ pub fn lex(mut code: &str) -> Result<Vec<Token>, String> {
         }
 
         let (constructor, value) = longest_match.unwrap();
-        let new_token = constructor(value.clone());
+        let mut new_token = constructor(value.clone());
+
+        // lex keywords
+        if let Token::Identifier(name) = new_token {
+            new_token = match name.as_str() {
+                "int" => Token::Int,
+                "void" => Token::Void,
+                "return" => Token::Return,
+                _ => Token::Identifier(name),
+            }
+        }
 
         trace!("token: {:?}", new_token);
 
