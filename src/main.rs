@@ -48,4 +48,14 @@ mod tests {
             .create_program()
             .expect("fcc failed to create program");
     }
+
+    #[test]
+    pub fn test_parse() {
+        let args = vec!["fcc", "--parse", "return_2.c"];
+        let driver = CompilerDriver::parse_from(args);
+        debug!("{:?}", driver);
+        driver
+            .create_program()
+            .expect("fcc failed to create program");
+    }
 }

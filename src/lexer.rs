@@ -1,37 +1,6 @@
 use log::{debug, trace};
 use regex::Regex;
 
-#[derive(Clone)]
-pub struct TokenRule {
-    pub constructor: fn(String) -> Token,
-    pub regex: &'static str,
-}
-
-impl TokenRule {
-    fn new(constructor: fn(String) -> Token, regex: &'static str) -> Self {
-        Self { constructor, regex }
-    }
-
-    fn matches<'a>(&self, code: &'a str) -> Option<regex::Match<'a>> {
-        Regex::new(self.regex).unwrap().find(code)
-    }
-}
-
-fn build_token_rules() -> Vec<TokenRule> {
-    vec![
-        TokenRule::new(|s| Token::Identifier(s), r"^[a-zA-Z_]\w*\b"),
-        TokenRule::new(|s| Token::Constant(s), r"^[0-9]+\b"),
-        TokenRule::new(|_| Token::Int, r"^int\b"),
-        TokenRule::new(|_| Token::Void, r"^void\b"),
-        TokenRule::new(|_| Token::Return, r"^return\b"),
-        TokenRule::new(|_| Token::OpenParen, r"^\("),
-        TokenRule::new(|_| Token::CloseParen, r"^\)"),
-        TokenRule::new(|_| Token::OpenBrace, r"^\{"),
-        TokenRule::new(|_| Token::CloseBrace, r"^\}"),
-        TokenRule::new(|_| Token::Semicolon, r"^;"),
-    ]
-}
-
 #[derive(Debug, PartialEq)]
 pub enum Token {
     Identifier(String),
@@ -57,36 +26,19 @@ pub fn lex(mut code: &str) -> Result<Vec<Token>, String> {
 
     let mut tokens = vec![];
     while !code.is_empty() {
-        // find longest match at start of input for any token rule
-        let mut longest_match: Option<(fn(String) -> Token, String)> = None;
-        for rule in build_token_rules().iter() {
-            if let Some(new_match) = rule.matches(code) {
-                if let Some((_, ref longest_match_value)) = longest_match {
-                    if new_match.len() > longest_match_value.len() {
-                        longest_match = Some((rule.constructor, String::from(new_match.as_str())));
-                    }
-                } else if longest_match.is_none() {
-                    longest_match = Some((rule.constructor, String::from(new_match.as_str())));
-                }
+        let mut longest_match: TokenMatch = None;
+        for matcher in token_matchers().iter() {
+            if let Some(new_match) = matcher.match_longest(code, &longest_match) {
+                longest_match = Some((matcher.token_builder, String::from(new_match.as_str())));
             }
         }
 
         if longest_match.is_none() {
-            return Err(String::from("couldn't find longest match"));
+            return Err(String::from("couldn't find any match"));
         }
 
         let (constructor, value) = longest_match.unwrap();
-        let mut new_token = constructor(value.clone());
-
-        // lex keywords
-        if let Token::Identifier(name) = new_token {
-            new_token = match name.as_str() {
-                "int" => Token::Int,
-                "void" => Token::Void,
-                "return" => Token::Return,
-                _ => Token::Identifier(name),
-            }
-        }
+        let new_token = constructor(value.clone());
 
         trace!("token: {:?}", new_token);
 
@@ -96,4 +48,64 @@ pub fn lex(mut code: &str) -> Result<Vec<Token>, String> {
     }
 
     Ok(tokens)
+}
+
+type TokenBuilder = fn(String) -> Token;
+type TokenMatch = Option<(TokenBuilder, String)>;
+
+fn token_matchers() -> Vec<TokenMatcher> {
+    vec![
+        TokenMatcher::new(|s| build_identifier_or_keyword(s), r"^[a-zA-Z_]\w*\b"),
+        TokenMatcher::new(|s| Token::Constant(s), r"^[0-9]+\b"),
+        TokenMatcher::new(|_| Token::OpenParen, r"^\("),
+        TokenMatcher::new(|_| Token::CloseParen, r"^\)"),
+        TokenMatcher::new(|_| Token::OpenBrace, r"^\{"),
+        TokenMatcher::new(|_| Token::CloseBrace, r"^\}"),
+        TokenMatcher::new(|_| Token::Semicolon, r"^;"),
+    ]
+}
+
+fn build_identifier_or_keyword(s: String) -> Token {
+    match s.as_str() {
+        "int" => Token::Int,
+        "void" => Token::Void,
+        "return" => Token::Return,
+        _ => Token::Identifier(s),
+    }
+}
+
+#[derive(Clone)]
+pub struct TokenMatcher {
+    pub regex: &'static str,
+    pub token_builder: TokenBuilder,
+}
+
+impl TokenMatcher {
+    fn new(token_builder: fn(String) -> Token, regex: &'static str) -> Self {
+        Self {
+            regex,
+            token_builder,
+        }
+    }
+
+    fn match_longest<'a>(
+        &self,
+        code: &'a str,
+        longest_match: &TokenMatch,
+    ) -> Option<regex::Match<'a>> {
+        let m = Regex::new(self.regex).unwrap().find(code)?;
+
+        if longest_match.is_none() {
+            return Some(m);
+        }
+
+        let longest_match_value = longest_match.clone().unwrap().1;
+
+        // match if longer than longest match
+        if m.len() > longest_match_value.len() {
+            return Some(m);
+        }
+
+        None
+    }
 }
