@@ -36,7 +36,7 @@ fn build_token_rules() -> Vec<TokenRule> {
 pub enum Token {
     Identifier(String),
     Constant(String),
-    Int(String),
+    Int(String), // todo(fede) this should be an i32
     Void,
     Return,
     OpenParen,
