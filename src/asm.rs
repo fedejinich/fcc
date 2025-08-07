@@ -1,9 +1,9 @@
-use crate::parser::AST;
+use crate::parser::Program;
 
 pub struct ASM {
     pub name: String,
 }
 
-pub fn generate_assembly(ast: AST, file_name: String) -> ASM {
+pub fn generate_assembly(program: Program, asm_file_name: String) -> ASM {
     todo!()
 }

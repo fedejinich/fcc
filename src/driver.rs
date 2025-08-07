@@ -117,7 +117,7 @@ impl CompilerDriver {
         }
 
         // tokens to ast
-        let ast = parse_tokens(tokens);
+        let program = parse_tokens(tokens)?;
 
         // parse only
         if self.parse {
@@ -127,7 +127,7 @@ impl CompilerDriver {
 
         // generate assembly
         let assembly_file_name = preprocessed_file.replace(".i", ".asm");
-        let assembly_file = generate_assembly(ast, assembly_file_name);
+        let assembly_file = generate_assembly(program, assembly_file_name);
 
         fs::remove_file(preprocessed_file).expect("couldn't remove preprocessed file");
         debug!("file removed");

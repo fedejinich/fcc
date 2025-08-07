@@ -11,7 +11,7 @@ impl TokenRule {
     fn new(constructor: fn(String) -> Token, regex: &'static str) -> Self {
         Self { constructor, regex }
     }
-    
+
     fn matches<'a>(&self, code: &'a str) -> Option<regex::Match<'a>> {
         Regex::new(self.regex).unwrap().find(code)
     }
@@ -32,7 +32,7 @@ fn build_token_rules() -> Vec<TokenRule> {
     ]
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum Token {
     Identifier(String),
     Constant(String),
