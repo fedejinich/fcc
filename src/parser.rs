@@ -35,6 +35,13 @@ pub fn parse_tokens(tokens: Vec<Token>) -> Result<Program, String> {
     let tokens_iter = &mut tokens.iter();
     let result = Program::parse(tokens_iter);
 
+    if tokens_iter.len() > 0 {
+        return Err(format!(
+            "unexpected tokens remaining: {:?}",
+            tokens_iter.collect::<Vec<_>>()
+        ));
+    }
+
     match &result {
         Ok(_) => debug!("Parsing completed successfully"),
         Err(e) => debug!("Parsing failed with error: {}", e),
