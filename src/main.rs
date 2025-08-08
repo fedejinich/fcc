@@ -30,9 +30,7 @@ fn main() {
     println!("{}\n", title());
 
     debug!("{:?}", driver);
-    driver
-        .create_program()
-        .expect("fcc failed to create program");
+    driver.build_program().expect("fcc failed to build program");
 }
 
 #[cfg(test)]
@@ -45,7 +43,7 @@ mod tests {
         let driver = CompilerDriver::parse_from(args);
         debug!("{:?}", driver);
         driver
-            .create_program()
+            .build_program()
             .expect("fcc failed to create program");
     }
 
@@ -55,7 +53,17 @@ mod tests {
         let driver = CompilerDriver::parse_from(args);
         debug!("{:?}", driver);
         driver
-            .create_program()
+            .build_program()
+            .expect("fcc failed to create program");
+    }
+
+    #[test]
+    pub fn test_parse_invalid() {
+        let args = vec!["fcc", "--parse", "extra_junk.c"];
+        let driver = CompilerDriver::parse_from(args);
+        debug!("{:?}", driver);
+        driver
+            .build_program()
             .expect("fcc failed to create program");
     }
 }

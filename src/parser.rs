@@ -32,7 +32,8 @@ pub fn parse_tokens(tokens: Vec<Token>) -> Result<Program, String> {
     debug!("Starting parsing with {} tokens", tokens.len());
     trace!("Token stream: {:?}", tokens);
 
-    let result = Program::parse(&mut tokens.iter());
+    let tokens_iter = &mut tokens.iter();
+    let result = Program::parse(tokens_iter);
 
     match &result {
         Ok(_) => debug!("Parsing completed successfully"),
@@ -59,9 +60,15 @@ impl Parseable<Program> for Program {
         );
         trace!("Program parsing completed");
 
-        Ok(Program {
+        let program = Program {
             function_definition,
-        })
+        };
+
+        if tokens.next().is_some() {
+            return Err(String::from("unexpected tokens remaining"));
+        }
+
+        Ok(program)
     }
 }
 

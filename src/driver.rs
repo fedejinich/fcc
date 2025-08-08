@@ -50,8 +50,8 @@ impl CompilerDriver {
         env_logger::init();
     }
 
-    pub fn create_program(&self) -> Result<(), String> {
-        info!("creating program");
+    pub fn build_program(&self) -> Result<(), String> {
+        info!("building program");
 
         let preprocessed_file = self.preprocess(&self.program_path)?;
         let assembly_file = self.compile(preprocessed_file.as_str())?;
