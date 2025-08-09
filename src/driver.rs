@@ -30,6 +30,9 @@ pub struct CompilerDriver {
 
     #[arg(long, help = "Enable trace logging (most verbose)")]
     trace: bool,
+
+    #[arg(long, help = "Prints AST")]
+    ast: bool,
 }
 
 impl CompilerDriver {
@@ -120,7 +123,10 @@ impl CompilerDriver {
         let program_ast = generate_ast(tokens)?;
 
         // parse only
-        if self.parse {
+        if self.parse || self.ast {
+            if self.ast {
+                println!("{}", program_ast);
+            }
             // todo(fede) find a better way to this
             std::process::exit(0);
         }

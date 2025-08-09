@@ -1,5 +1,5 @@
 use log::{debug, trace};
-use std::slice::Iter;
+use std::{fmt, slice::Iter};
 
 use crate::lexer::Token;
 
@@ -169,4 +169,59 @@ fn expect(expected: Token, tokens: &mut Iter<Token>) -> Result<(), String> {
 
     debug!("No more tokens available when expecting: {:?}", expected);
     Err(String::from("empty tokens"))
+}
+
+fn indent(s: &str, spaces: usize) -> String {
+    let pad = " ".repeat(spaces);
+    s.lines()
+        .map(|line| format!("{}{}", pad, line))
+        .collect::<Vec<_>>()
+        .join("\n")
+}
+
+impl fmt::Display for Program {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        writeln!(f, "Program(")?;
+        write!(f, "{}\n)", indent(&self.function_definition.to_string(), 4))
+    }
+}
+
+impl fmt::Display for FunctionDefinition {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        writeln!(f, "Function(")?;
+        writeln!(
+            f,
+            "{}",
+            indent(&format!("name=\"{}\",", self.identifier.name), 4)
+        )?;
+        write!(f, "{}", indent(&format!("body={}", self.body), 4))?;
+        Ok(())
+    }
+}
+
+impl fmt::Display for Statement {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Statement::Return(expr) => {
+                writeln!(f, "Return(")?;
+                write!(f, "{}\n)", indent(&expr.to_string(), 4))
+            }
+        }
+    }
+}
+
+impl fmt::Display for Expression {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Expression::Constant(c) => write!(f, "{}", c),
+        }
+    }
+}
+
+impl fmt::Display for ConstantType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            ConstantType::Int(v) => write!(f, "Constant({})", v),
+        }
+    }
 }
