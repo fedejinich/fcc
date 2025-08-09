@@ -131,13 +131,11 @@ impl Parseable<Vec<CStatement>> for CStatement {
         trace!("Parsing Statement");
 
         let mut statements = Vec::new();
-        // todo(fede) aca pido por el siguiente token que eventualmente no es statement y lo
-        // consumo, eso me genera que se rompa todo, no debeira consumir si no es statement
-        // o deberia volver a ponerlo si no es statement
-        while let Some(t) = tokens.next() {
+        while let Some(t) = tokens.clone().next() {
             match t {
                 Token::Return => {
-                    // expect(Token::Return, tokens)?;
+                    expect(Token::Return, tokens)?;
+
                     debug!("Parsing return expression");
                     let expr = CExpression::parse(tokens)?;
 
