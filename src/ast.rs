@@ -14,8 +14,6 @@ pub struct CFunctionDefinition {
     pub body: CStatement,
 }
 
-// todo(fede) this might be an enum someday
-// todo(fede) do i really need this?
 pub struct CIdentifier {
     pub name: String,
 }
@@ -27,12 +25,7 @@ pub enum CStatement {
 
 #[allow(dead_code)]
 pub enum CExpression {
-    Constant(ConstantType), // todo(fede) a constant it's alwasy an int
-}
-
-#[allow(dead_code)]
-pub enum ConstantType {
-    Int(String), // todo(fede) this should be an i32
+    Constant(i32), // todo(fede) a constant it's alwasy an int
 }
 
 pub fn generate_ast(tokens: Vec<Token>) -> Result<CProgram, String> {
@@ -73,7 +66,6 @@ impl Parseable<CProgram> for CProgram {
             function_definition.name.name
         );
         trace!("Program parsing completed");
-
         let program = CProgram {
             function_definition,
         };
@@ -103,6 +95,7 @@ impl Parseable<CFunctionDefinition> for CFunctionDefinition {
 
         debug!("Parsing function body statement");
         let body = CStatement::parse(tokens)?;
+        // aca un while "mientras sea statement"
 
         expect(Token::CloseBrace, tokens)?;
 
@@ -150,7 +143,7 @@ impl Parseable<CExpression> for CExpression {
 
         if let Some(Token::Constant(n)) = tokens.next() {
             trace!("Found integer constant: {}", n);
-            Ok(CExpression::Constant(ConstantType::Int(n.clone())))
+            Ok(CExpression::Constant(n.parse::<i32>().unwrap()))
         } else {
             debug!("Expected integer constant but found none");
             Err(String::from("expected int"))
@@ -214,14 +207,6 @@ impl fmt::Display for CExpression {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             CExpression::Constant(c) => write!(f, "{}", c),
-        }
-    }
-}
-
-impl fmt::Display for ConstantType {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            ConstantType::Int(v) => write!(f, "Constant({})", v),
         }
     }
 }

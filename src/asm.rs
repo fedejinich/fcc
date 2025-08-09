@@ -32,7 +32,7 @@ impl From<CProgram> for AsmProgram {
 }
 
 impl From<CFunctionDefinition> for AsmFunctionDefinition {
-    fn from(c_function_definition: CFunctionDefinition) -> Self {
+    fn from(_c_function_definition: CFunctionDefinition) -> Self {
         todo!()
         // AsmFunctionDefinition {
         //     name: c_function_definition.name,

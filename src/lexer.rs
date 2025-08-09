@@ -5,9 +5,13 @@ use regex::Regex;
 pub enum Token {
     Identifier(String),
     Constant(String),
-    Int, // todo(fede) this should be an i32
+
+    // keywords
+    Int,
     Void,
     Return,
+
+    // symbols
     OpenParen,
     CloseParen,
     OpenBrace,
