@@ -1,39 +1,45 @@
-use log::{debug, info, trace};
+use log::{debug, trace};
 use std::slice::Iter;
 
 use crate::lexer::Token;
 
+#[allow(dead_code)]
 pub struct Program {
     function_definition: FunctionDefinition,
 }
 
+#[allow(dead_code)]
 pub struct FunctionDefinition {
     identifier: Identifier,
     body: Statement,
 }
 
+// todo(fede) this might be an enum someday
 pub struct Identifier {
     name: String,
 }
 
+#[allow(dead_code)]
 pub enum Statement {
     Return(Expression),
 }
 
+#[allow(dead_code)]
 pub enum Expression {
     Constant(ConstantType),
 }
 
+#[allow(dead_code)]
 pub enum ConstantType {
     Int(String), // todo(fede) this should be an i32
 }
 
-pub fn parse_tokens(tokens: Vec<Token>) -> Result<Program, String> {
+pub fn generate_ast(tokens: Vec<Token>) -> Result<Program, String> {
     debug!("Starting parsing with {} tokens", tokens.len());
     trace!("Token stream: {:?}", tokens);
 
     let tokens_iter = &mut tokens.iter();
-    let result = Program::parse(tokens_iter);
+    let program_ast = Program::parse(tokens_iter);
 
     if tokens_iter.len() > 0 {
         return Err(format!(
@@ -42,12 +48,12 @@ pub fn parse_tokens(tokens: Vec<Token>) -> Result<Program, String> {
         ));
     }
 
-    match &result {
+    match &program_ast {
         Ok(_) => debug!("Parsing completed successfully"),
         Err(e) => debug!("Parsing failed with error: {}", e),
     }
 
-    result
+    program_ast
 }
 
 trait Parseable<T> {

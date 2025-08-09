@@ -55,8 +55,8 @@ type TokenMatch = Option<(TokenBuilder, String)>;
 
 fn token_matchers() -> Vec<TokenMatcher> {
     vec![
-        TokenMatcher::new(|s| build_identifier_or_keyword(s), r"^[a-zA-Z_]\w*\b"),
-        TokenMatcher::new(|s| Token::Constant(s), r"^[0-9]+\b"),
+        TokenMatcher::new(build_identifier_or_keyword, r"^[a-zA-Z_]\w*\b"),
+        TokenMatcher::new(Token::Constant, r"^[0-9]+\b"),
         TokenMatcher::new(|_| Token::OpenParen, r"^\("),
         TokenMatcher::new(|_| Token::CloseParen, r"^\)"),
         TokenMatcher::new(|_| Token::OpenBrace, r"^\{"),

@@ -5,7 +5,7 @@ use log::{debug, info};
 
 use crate::asm::generate_assembly;
 use crate::lexer::lex;
-use crate::parser::parse_tokens;
+use crate::parser::generate_ast;
 use crate::util::replace_c_with_i;
 
 #[derive(Parser, Debug)]
@@ -117,7 +117,7 @@ impl CompilerDriver {
         }
 
         // tokens to ast
-        let program = parse_tokens(tokens)?;
+        let program_ast = generate_ast(tokens)?;
 
         // parse only
         if self.parse {
@@ -127,7 +127,7 @@ impl CompilerDriver {
 
         // generate assembly
         let assembly_file_name = preprocessed_file.replace(".i", ".asm");
-        let assembly_file = generate_assembly(program, assembly_file_name);
+        let assembly_file = generate_assembly(program_ast, assembly_file_name);
 
         fs::remove_file(preprocessed_file).expect("couldn't remove preprocessed file");
         debug!("file removed");

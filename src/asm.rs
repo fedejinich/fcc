@@ -1,9 +1,10 @@
 use crate::parser::Program;
 
-pub struct ASM {
+pub struct Asm {
     pub name: String,
 }
 
-pub fn generate_assembly(program: Program, asm_file_name: String) -> ASM {
+#[allow(unused_variables)]
+pub fn generate_assembly(program: Program, asm_file_name: String) -> Asm {
     todo!()
 }
