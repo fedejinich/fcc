@@ -4,9 +4,9 @@ use log::debug;
 use crate::driver::CompilerDriver;
 
 mod asm;
+mod ast;
 mod driver;
 mod lexer;
-mod parser;
 mod util;
 
 pub fn title() -> String {

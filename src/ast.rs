@@ -4,29 +4,30 @@ use std::{fmt, slice::Iter};
 use crate::lexer::Token;
 
 #[allow(dead_code)]
-pub struct Program {
-    function_definition: FunctionDefinition,
+pub struct CProgram {
+    pub function_definition: CFunctionDefinition,
 }
 
 #[allow(dead_code)]
-pub struct FunctionDefinition {
-    identifier: Identifier,
-    body: Statement,
+pub struct CFunctionDefinition {
+    pub name: CIdentifier,
+    pub body: CStatement,
 }
 
 // todo(fede) this might be an enum someday
-pub struct Identifier {
-    name: String,
+// todo(fede) do i really need this?
+pub struct CIdentifier {
+    pub name: String,
 }
 
 #[allow(dead_code)]
-pub enum Statement {
-    Return(Expression),
+pub enum CStatement {
+    Return(CExpression),
 }
 
 #[allow(dead_code)]
-pub enum Expression {
-    Constant(ConstantType),
+pub enum CExpression {
+    Constant(ConstantType), // todo(fede) a constant it's alwasy an int
 }
 
 #[allow(dead_code)]
@@ -34,12 +35,12 @@ pub enum ConstantType {
     Int(String), // todo(fede) this should be an i32
 }
 
-pub fn generate_ast(tokens: Vec<Token>) -> Result<Program, String> {
+pub fn generate_ast(tokens: Vec<Token>) -> Result<CProgram, String> {
     debug!("Starting parsing with {} tokens", tokens.len());
     trace!("Token stream: {:?}", tokens);
 
     let tokens_iter = &mut tokens.iter();
-    let program_ast = Program::parse(tokens_iter);
+    let program_ast = CProgram::parse(tokens_iter);
 
     if tokens_iter.len() > 0 {
         return Err(format!(
@@ -60,20 +61,20 @@ trait Parseable<T> {
     fn parse(tokens: &mut Iter<Token>) -> Result<T, String>;
 }
 
-impl Parseable<Program> for Program {
-    fn parse(tokens: &mut Iter<Token>) -> Result<Program, String> {
+impl Parseable<CProgram> for CProgram {
+    fn parse(tokens: &mut Iter<Token>) -> Result<CProgram, String> {
         trace!("Parsing Program");
         debug!("Attempting to parse function definition");
 
-        let function_definition = FunctionDefinition::parse(tokens)?;
+        let function_definition = CFunctionDefinition::parse(tokens)?;
 
         debug!(
             "Successfully parsed function definition: {}",
-            function_definition.identifier.name
+            function_definition.name.name
         );
         trace!("Program parsing completed");
 
-        let program = Program {
+        let program = CProgram {
             function_definition,
         };
 
@@ -85,14 +86,14 @@ impl Parseable<Program> for Program {
     }
 }
 
-impl Parseable<FunctionDefinition> for FunctionDefinition {
-    fn parse(tokens: &mut Iter<Token>) -> Result<FunctionDefinition, String> {
+impl Parseable<CFunctionDefinition> for CFunctionDefinition {
+    fn parse(tokens: &mut Iter<Token>) -> Result<CFunctionDefinition, String> {
         trace!("Parsing FunctionDefinition");
 
         expect(Token::Int, tokens)?;
 
         debug!("Parsing function identifier");
-        let identifier = Identifier::parse(tokens)?;
+        let identifier = CIdentifier::parse(tokens)?;
         debug!("Found function: {}", identifier.name);
 
         expect(Token::OpenParen, tokens)?;
@@ -101,22 +102,25 @@ impl Parseable<FunctionDefinition> for FunctionDefinition {
         expect(Token::OpenBrace, tokens)?;
 
         debug!("Parsing function body statement");
-        let body = Statement::parse(tokens)?;
+        let body = CStatement::parse(tokens)?;
 
         expect(Token::CloseBrace, tokens)?;
 
         trace!("FunctionDefinition parsing completed successfully");
-        Ok(FunctionDefinition { identifier, body })
+        Ok(CFunctionDefinition {
+            name: identifier,
+            body,
+        })
     }
 }
 
-impl Parseable<Identifier> for Identifier {
-    fn parse(tokens: &mut Iter<Token>) -> Result<Identifier, String> {
+impl Parseable<CIdentifier> for CIdentifier {
+    fn parse(tokens: &mut Iter<Token>) -> Result<CIdentifier, String> {
         trace!("Parsing Identifier");
 
         if let Some(Token::Identifier(n)) = tokens.next() {
             trace!("Found identifier: {}", n);
-            Ok(Identifier { name: n.clone() })
+            Ok(CIdentifier { name: n.clone() })
         } else {
             debug!("Expected identifier but found none");
             Err(String::from("expected identifier"))
@@ -124,29 +128,29 @@ impl Parseable<Identifier> for Identifier {
     }
 }
 
-impl Parseable<Statement> for Statement {
-    fn parse(tokens: &mut Iter<Token>) -> Result<Statement, String> {
+impl Parseable<CStatement> for CStatement {
+    fn parse(tokens: &mut Iter<Token>) -> Result<CStatement, String> {
         trace!("Parsing Statement");
 
         expect(Token::Return, tokens)?;
 
         debug!("Parsing return expression");
-        let expr = Expression::parse(tokens)?;
+        let expr = CExpression::parse(tokens)?;
 
         expect(Token::Semicolon, tokens)?;
 
         trace!("Statement parsing completed");
-        Ok(Statement::Return(expr))
+        Ok(CStatement::Return(expr))
     }
 }
 
-impl Parseable<Expression> for Expression {
-    fn parse(tokens: &mut Iter<Token>) -> Result<Expression, String> {
+impl Parseable<CExpression> for CExpression {
+    fn parse(tokens: &mut Iter<Token>) -> Result<CExpression, String> {
         trace!("Parsing Expression");
 
         if let Some(Token::Constant(n)) = tokens.next() {
             trace!("Found integer constant: {}", n);
-            Ok(Expression::Constant(ConstantType::Int(n.clone())))
+            Ok(CExpression::Constant(ConstantType::Int(n.clone())))
         } else {
             debug!("Expected integer constant but found none");
             Err(String::from("expected int"))
@@ -179,30 +183,26 @@ fn indent(s: &str, spaces: usize) -> String {
         .join("\n")
 }
 
-impl fmt::Display for Program {
+impl fmt::Display for CProgram {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         writeln!(f, "Program(")?;
         write!(f, "{}\n)", indent(&self.function_definition.to_string(), 4))
     }
 }
 
-impl fmt::Display for FunctionDefinition {
+impl fmt::Display for CFunctionDefinition {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         writeln!(f, "Function(")?;
-        writeln!(
-            f,
-            "{}",
-            indent(&format!("name=\"{}\",", self.identifier.name), 4)
-        )?;
+        writeln!(f, "{}", indent(&format!("name=\"{}\",", self.name.name), 4))?;
         write!(f, "{}", indent(&format!("body={}", self.body), 4))?;
         Ok(())
     }
 }
 
-impl fmt::Display for Statement {
+impl fmt::Display for CStatement {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Statement::Return(expr) => {
+            CStatement::Return(expr) => {
                 writeln!(f, "Return(")?;
                 write!(f, "{}\n)", indent(&expr.to_string(), 4))
             }
@@ -210,10 +210,10 @@ impl fmt::Display for Statement {
     }
 }
 
-impl fmt::Display for Expression {
+impl fmt::Display for CExpression {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Expression::Constant(c) => write!(f, "{}", c),
+            CExpression::Constant(c) => write!(f, "{}", c),
         }
     }
 }

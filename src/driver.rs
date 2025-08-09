@@ -3,9 +3,9 @@ use std::{fs, path::Path, process::Command};
 use clap::Parser;
 use log::{debug, info};
 
-use crate::asm::generate_assembly;
+use crate::asm::AsmProgram;
+use crate::ast::generate_ast;
 use crate::lexer::lex;
-use crate::parser::generate_ast;
 use crate::util::replace_c_with_i;
 
 #[derive(Parser, Debug)]
@@ -133,12 +133,14 @@ impl CompilerDriver {
 
         // generate assembly
         let assembly_file_name = preprocessed_file.replace(".i", ".asm");
-        let assembly_file = generate_assembly(program_ast, assembly_file_name);
+        let _assembly_program = AsmProgram::from(program_ast);
+
+        // assembly_program.generate_file();
 
         fs::remove_file(preprocessed_file).expect("couldn't remove preprocessed file");
         debug!("file removed");
 
-        Ok(assembly_file.name)
+        Ok(assembly_file_name)
     }
 
     fn assemble_and_link(&self, assembly_file: String) -> Result<i32, String> {
