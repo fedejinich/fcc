@@ -66,4 +66,14 @@ mod tests {
             .build_program()
             .expect("fcc failed to create program");
     }
+
+    #[test]
+    pub fn test_parse_tabs() {
+        let args = vec!["fcc", "--parse", "tabs.c"];
+        let driver = CompilerDriver::parse_from(args);
+        debug!("{:?}", driver);
+        driver
+            .build_program()
+            .expect("fcc failed to create program");
+    }
 }

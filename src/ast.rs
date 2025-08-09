@@ -11,21 +11,23 @@ pub struct CProgram {
 #[allow(dead_code)]
 pub struct CFunctionDefinition {
     pub name: CIdentifier,
-    pub body: CStatement,
+    pub body: Vec<CStatement>,
 }
 
 pub struct CIdentifier {
-    pub name: String,
+    pub id: String,
 }
 
 #[allow(dead_code)]
+#[derive(Clone)]
 pub enum CStatement {
     Return(CExpression),
 }
 
 #[allow(dead_code)]
+#[derive(Clone)]
 pub enum CExpression {
-    Constant(i32), // todo(fede) a constant it's alwasy an int
+    Constant(i32),
 }
 
 pub fn generate_ast(tokens: Vec<Token>) -> Result<CProgram, String> {
@@ -63,7 +65,7 @@ impl Parseable<CProgram> for CProgram {
 
         debug!(
             "Successfully parsed function definition: {}",
-            function_definition.name.name
+            function_definition.name.id
         );
         trace!("Program parsing completed");
         let program = CProgram {
@@ -86,16 +88,19 @@ impl Parseable<CFunctionDefinition> for CFunctionDefinition {
 
         debug!("Parsing function identifier");
         let identifier = CIdentifier::parse(tokens)?;
-        debug!("Found function: {}", identifier.name);
+        debug!("Found function: {}", identifier.id);
 
         expect(Token::OpenParen, tokens)?;
         expect(Token::Void, tokens)?;
         expect(Token::CloseParen, tokens)?;
         expect(Token::OpenBrace, tokens)?;
 
+        println!("{}", tokens.len());
+
         debug!("Parsing function body statement");
         let body = CStatement::parse(tokens)?;
-        // aca un while "mientras sea statement"
+
+        println!("{}", tokens.len());
 
         expect(Token::CloseBrace, tokens)?;
 
@@ -113,7 +118,7 @@ impl Parseable<CIdentifier> for CIdentifier {
 
         if let Some(Token::Identifier(n)) = tokens.next() {
             trace!("Found identifier: {}", n);
-            Ok(CIdentifier { name: n.clone() })
+            Ok(CIdentifier { id: n.clone() })
         } else {
             debug!("Expected identifier but found none");
             Err(String::from("expected identifier"))
@@ -121,19 +126,37 @@ impl Parseable<CIdentifier> for CIdentifier {
     }
 }
 
-impl Parseable<CStatement> for CStatement {
-    fn parse(tokens: &mut Iter<Token>) -> Result<CStatement, String> {
+impl Parseable<Vec<CStatement>> for CStatement {
+    fn parse(tokens: &mut Iter<Token>) -> Result<Vec<CStatement>, String> {
         trace!("Parsing Statement");
 
-        expect(Token::Return, tokens)?;
+        let mut statements = Vec::new();
+        // todo(fede) aca pido por el siguiente token que eventualmente no es statement y lo
+        // consumo, eso me genera que se rompa todo, no debeira consumir si no es statement
+        // o deberia volver a ponerlo si no es statement
+        while let Some(t) = tokens.next() {
+            match t {
+                Token::Return => {
+                    // expect(Token::Return, tokens)?;
+                    debug!("Parsing return expression");
+                    let expr = CExpression::parse(tokens)?;
 
-        debug!("Parsing return expression");
-        let expr = CExpression::parse(tokens)?;
+                    expect(Token::Semicolon, tokens)?;
 
-        expect(Token::Semicolon, tokens)?;
+                    statements.push(CStatement::Return(expr));
+                }
+                // try to match any other token statement
+                _ => break,
+            };
+        }
+
+        if statements.is_empty() {
+            return Err(String::from("could not parse any statement"));
+        }
 
         trace!("Statement parsing completed");
-        Ok(CStatement::Return(expr))
+
+        Ok(statements)
     }
 }
 
@@ -186,8 +209,23 @@ impl fmt::Display for CProgram {
 impl fmt::Display for CFunctionDefinition {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         writeln!(f, "Function(")?;
-        writeln!(f, "{}", indent(&format!("name=\"{}\",", self.name.name), 4))?;
-        write!(f, "{}", indent(&format!("body={}", self.body), 4))?;
+        writeln!(f, "{}", indent(&format!("name=\"{}\",", self.name.id), 4))?;
+        write!(
+            f,
+            "{}",
+            indent(
+                &format!(
+                    "body={}",
+                    self.body
+                        .clone()
+                        .into_iter()
+                        .map(|s| s.to_string())
+                        .collect::<Vec<_>>()
+                        .join("\n")
+                ),
+                4
+            )
+        )?;
         Ok(())
     }
 }

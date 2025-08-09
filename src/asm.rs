@@ -8,7 +8,7 @@ pub struct AsmProgram {
 #[allow(dead_code)]
 pub struct AsmFunctionDefinition {
     name: String,
-    instructions: AsmInstruction,
+    instructions: Vec<AsmInstruction>,
 }
 
 #[allow(dead_code)]
@@ -35,7 +35,7 @@ impl From<CFunctionDefinition> for AsmFunctionDefinition {
     fn from(_c_function_definition: CFunctionDefinition) -> Self {
         todo!()
         // AsmFunctionDefinition {
-        //     name: c_function_definition.name,
+        //     name: c_function_definition.name.id,
         //     instructions: c_function_definition.body.map(AsmInstruction::from),
         // }
     }
