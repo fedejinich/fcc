@@ -20,7 +20,7 @@ pub struct CompilerDriver {
     parse: bool,
 
     #[arg(long)]
-    code_gen: bool,
+    codegen: bool,
 
     #[arg(short, value_name = "S")]
     s: bool,
@@ -135,6 +135,10 @@ impl CompilerDriver {
         let assembly_file_name = preprocessed_file.replace(".i", ".asm");
         let _assembly_program = AsmProgram::from(program_ast);
 
+        if self.codegen {
+            std::process::exit(0);
+        }
+
         // assembly_program.generate_file();
 
         fs::remove_file(preprocessed_file).expect("couldn't remove preprocessed file");
@@ -147,7 +151,7 @@ impl CompilerDriver {
         info!("assemblying and linking {assembly_file}");
 
         if !Path::new(&assembly_file).exists() {
-            return Err(String::from("source file does not exist"));
+            return Err(String::from("asm file does not exist"));
         }
 
         let output_file = assembly_file.replace(".asm", "");

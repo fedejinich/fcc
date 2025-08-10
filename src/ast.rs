@@ -15,7 +15,7 @@ pub struct CFunctionDefinition {
 }
 
 pub struct CIdentifier {
-    pub id: String,
+    pub value: String, //  todo(fede) this is still weird as fuck
 }
 
 #[allow(dead_code)]
@@ -65,7 +65,7 @@ impl Parseable<CProgram> for CProgram {
 
         debug!(
             "Successfully parsed function definition: {}",
-            function_definition.name.id
+            function_definition.name.value
         );
         trace!("Program parsing completed");
         let program = CProgram {
@@ -88,7 +88,7 @@ impl Parseable<CFunctionDefinition> for CFunctionDefinition {
 
         debug!("Parsing function identifier");
         let identifier = CIdentifier::parse(tokens)?;
-        debug!("Found function: {}", identifier.id);
+        debug!("Found function: {}", identifier.value);
 
         expect(Token::OpenParen, tokens)?;
         expect(Token::Void, tokens)?;
@@ -118,7 +118,7 @@ impl Parseable<CIdentifier> for CIdentifier {
 
         if let Some(Token::Identifier(n)) = tokens.next() {
             trace!("Found identifier: {}", n);
-            Ok(CIdentifier { id: n.clone() })
+            Ok(CIdentifier { value: n.clone() })
         } else {
             debug!("Expected identifier but found none");
             Err(String::from("expected identifier"))
@@ -207,7 +207,11 @@ impl fmt::Display for CProgram {
 impl fmt::Display for CFunctionDefinition {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         writeln!(f, "Function(")?;
-        writeln!(f, "{}", indent(&format!("name=\"{}\",", self.name.id), 4))?;
+        writeln!(
+            f,
+            "{}",
+            indent(&format!("name=\"{}\",", self.name.value), 4)
+        )?;
         write!(
             f,
             "{}",

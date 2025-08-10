@@ -21,3 +21,6 @@ echo "Testing lexer"
 echo "Testing parser"
 ./test_compiler $FCC_PATH --chapter 1 --stage parse
 
+echo "Testing codegen"
+./test_compiler $FCC_PATH --chapter 1 --stage codegen
+
