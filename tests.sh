@@ -1,7 +1,6 @@
 #!/bin/bash
 
-USER="void" # todo(fede) this is ugly
-FCC_PATH="/Users/$USER/Projects/fcc/target/debug/fcc"
+FCC_PATH="$HOME/Projects/fcc/target/debug/fcc"
 
 set -e
 
