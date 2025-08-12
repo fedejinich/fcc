@@ -1,4 +1,5 @@
 use crate::ast::{CExpression, CFunctionDefinition, CProgram, CStatement};
+use crate::util::indent;
 
 #[allow(dead_code)]
 pub struct AsmProgram {
@@ -37,7 +38,12 @@ impl AsmFunctionDefinition {
             .map(|i| i.code_emit())
             .collect::<String>();
 
-        format!(".globl _{}\n_{}:\n{}", self.name, self.name, instructions)
+        format!(
+            ".globl _{}\n{}\n{}",
+            self.name,
+            format!("\n_{}:", self.name).as_str(),
+            indent(instructions.as_str(), 4)
+        )
     }
 }
 

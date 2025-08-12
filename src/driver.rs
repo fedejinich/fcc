@@ -142,7 +142,7 @@ impl CompilerDriver {
         let code = assembly_program.code_emit();
         fs::write(&assembly_file_name, &code).expect("couldn't write assembly file");
 
-        debug!("{code}");
+        debug!("\n{code}");
 
         fs::remove_file(preprocessed_file).expect("couldn't remove preprocessed file");
         debug!("file removed");
