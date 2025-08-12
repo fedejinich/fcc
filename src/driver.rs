@@ -4,7 +4,7 @@ use clap::Parser;
 use log::{debug, info};
 
 use crate::asm::AsmProgram;
-use crate::ast::create_ast;
+use crate::ast::{CProgram, Parseable};
 use crate::lexer::lex;
 use crate::util::replace_c_with_i;
 
@@ -119,13 +119,13 @@ impl CompilerDriver {
             std::process::exit(0);
         }
 
-        // tokens to ast
-        let program_ast = create_ast(tokens)?;
+        // parse tokens into ast
+        let c_program = CProgram::parse(&mut tokens.iter())?;
 
         // parse only
         if self.parse || self.ast {
             if self.ast {
-                println!("{program_ast}");
+                println!("{c_program}");
             }
             // todo(fede) find a better way to this
             std::process::exit(0);
@@ -133,7 +133,7 @@ impl CompilerDriver {
 
         // generate assembly
         let assembly_file_name = preprocessed_file.replace(".i", ".asm");
-        let assembly_program = AsmProgram::from(program_ast);
+        let assembly_program = AsmProgram::from(c_program);
 
         if self.codegen {
             std::process::exit(0);

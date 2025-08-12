@@ -1,7 +1,7 @@
 use log::{debug, trace};
 use std::{fmt, slice::Iter};
 
-use crate::lexer::Token;
+use crate::{lexer::Token, util::indent};
 
 #[allow(dead_code)]
 pub struct CProgram {
@@ -30,34 +30,15 @@ pub enum CExpression {
     Constant(i32),
 }
 
-pub fn create_ast(tokens: Vec<Token>) -> Result<CProgram, String> {
-    debug!("Starting parsing with {} tokens", tokens.len());
-    trace!("Token stream: {:?}", tokens);
-
-    let tokens_iter = &mut tokens.iter();
-    let program_ast = CProgram::parse(tokens_iter);
-
-    if tokens_iter.len() > 0 {
-        return Err(format!(
-            "unexpected tokens remaining: {:?}",
-            tokens_iter.collect::<Vec<_>>()
-        ));
-    }
-
-    match &program_ast {
-        Ok(_) => debug!("Parsing completed successfully"),
-        Err(e) => debug!("Parsing failed with error: {}", e),
-    }
-
-    program_ast
-}
-
-trait Parseable<T> {
+// todo(fede) this should be 'from' trait
+pub trait Parseable<T> {
     fn parse(tokens: &mut Iter<Token>) -> Result<T, String>;
 }
 
 impl Parseable<CProgram> for CProgram {
     fn parse(tokens: &mut Iter<Token>) -> Result<CProgram, String> {
+        debug!("Starting parsing with {} tokens", tokens.len());
+        trace!("Token stream: {:?}", tokens);
         trace!("Parsing Program");
         debug!("Attempting to parse function definition");
 
@@ -68,7 +49,8 @@ impl Parseable<CProgram> for CProgram {
             function_definition.name.value
         );
         trace!("Program parsing completed");
-        let program = CProgram {
+
+        let program_ast = CProgram {
             function_definition,
         };
 
@@ -76,7 +58,16 @@ impl Parseable<CProgram> for CProgram {
             return Err(String::from("unexpected tokens remaining"));
         }
 
-        Ok(program)
+        if tokens.len() > 0 {
+            return Err(format!(
+                "unexpected tokens remaining: {:?}",
+                tokens.collect::<Vec<_>>()
+            ));
+        }
+
+        debug!("Parsing completed successfully");
+
+        Ok(program_ast)
     }
 }
 
@@ -84,25 +75,21 @@ impl Parseable<CFunctionDefinition> for CFunctionDefinition {
     fn parse(tokens: &mut Iter<Token>) -> Result<CFunctionDefinition, String> {
         trace!("Parsing FunctionDefinition");
 
-        expect(Token::Int, tokens)?;
+        token_eq(Token::Int, tokens)?;
 
         debug!("Parsing function identifier");
         let identifier = CIdentifier::parse(tokens)?;
         debug!("Found function: {}", identifier.value);
 
-        expect(Token::OpenParen, tokens)?;
-        expect(Token::Void, tokens)?;
-        expect(Token::CloseParen, tokens)?;
-        expect(Token::OpenBrace, tokens)?;
-
-        println!("{}", tokens.len());
+        token_eq(Token::OpenParen, tokens)?;
+        token_eq(Token::Void, tokens)?;
+        token_eq(Token::CloseParen, tokens)?;
+        token_eq(Token::OpenBrace, tokens)?;
 
         debug!("Parsing function body statement");
         let body = CStatement::parse(tokens)?;
 
-        println!("{}", tokens.len());
-
-        expect(Token::CloseBrace, tokens)?;
+        token_eq(Token::CloseBrace, tokens)?;
 
         trace!("FunctionDefinition parsing completed successfully");
         Ok(CFunctionDefinition {
@@ -134,12 +121,12 @@ impl Parseable<Vec<CStatement>> for CStatement {
         while let Some(t) = tokens.clone().next() {
             match t {
                 Token::Return => {
-                    expect(Token::Return, tokens)?;
+                    token_eq(Token::Return, tokens)?;
 
                     debug!("Parsing return expression");
                     let expr = CExpression::parse(tokens)?;
 
-                    expect(Token::Semicolon, tokens)?;
+                    token_eq(Token::Semicolon, tokens)?;
 
                     statements.push(CStatement::Return(expr));
                 }
@@ -172,7 +159,7 @@ impl Parseable<CExpression> for CExpression {
     }
 }
 
-fn expect(expected: Token, tokens: &mut Iter<Token>) -> Result<(), String> {
+fn token_eq(expected: Token, tokens: &mut Iter<Token>) -> Result<(), String> {
     debug!("Expecting token: {:?}", expected);
 
     if let Some(t) = tokens.next() {
@@ -187,14 +174,6 @@ fn expect(expected: Token, tokens: &mut Iter<Token>) -> Result<(), String> {
 
     debug!("No more tokens available when expecting: {:?}", expected);
     Err(String::from("empty tokens"))
-}
-
-fn indent(s: &str, spaces: usize) -> String {
-    let pad = " ".repeat(spaces);
-    s.lines()
-        .map(|line| format!("{}{}", pad, line))
-        .collect::<Vec<_>>()
-        .join("\n")
 }
 
 impl fmt::Display for CProgram {
