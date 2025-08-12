@@ -14,6 +14,7 @@ pub struct AsmFunctionDefinition {
 
 #[allow(dead_code)]
 pub enum AsmInstruction {
+    Comment(String),
     Mov(AsmOperand, AsmOperand),
     Ret,
 }
@@ -50,6 +51,7 @@ impl AsmFunctionDefinition {
 impl AsmInstruction {
     pub fn code_emit(&self) -> String {
         match self {
+            AsmInstruction::Comment(s) => format!("# {s}\n"),
             AsmInstruction::Mov(src, dst) => {
                 format!("mov {}, {}\n", src.code_emit(), dst.code_emit())
             }
@@ -73,6 +75,7 @@ impl AsmInstruction {
     fn from(c_statement: CStatement) -> Vec<AsmInstruction> {
         match c_statement {
             CStatement::Return(exp) => vec![
+                AsmInstruction::Comment("return statement".to_string()),
                 AsmInstruction::Mov(AsmOperand::from(exp), AsmOperand::Register),
                 AsmInstruction::Ret,
             ],
