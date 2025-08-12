@@ -15,11 +15,13 @@ echo "Building fcc"
 cargo build
 
 echo "Testing lexer"
-./test_compiler $FCC_PATH --chapter 1 --stage lex
+./test_compiler "$FCC_PATH" --chapter 1 --stage lex
 
 echo "Testing parser"
-./test_compiler $FCC_PATH --chapter 1 --stage parse
+./test_compiler "$FCC_PATH" --chapter 1 --stage parse
 
 echo "Testing codegen"
-./test_compiler $FCC_PATH --chapter 1 --stage codegen
+./test_compiler "$FCC_PATH" --chapter 1 --stage codegen
 
+echo "Testing chapter 1"
+./test_compiler "$FCC_PATH" --chapter 1

@@ -30,7 +30,7 @@ pub enum CExpression {
     Constant(i32),
 }
 
-pub fn generate_ast(tokens: Vec<Token>) -> Result<CProgram, String> {
+pub fn create_ast(tokens: Vec<Token>) -> Result<CProgram, String> {
     debug!("Starting parsing with {} tokens", tokens.len());
     trace!("Token stream: {:?}", tokens);
 
