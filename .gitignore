@@ -1,8 +1,6 @@
 /target
-.idea
-/.vscode
 *.s
 *.c
 *.i
+*.asm
 resources/book/
-return_*
