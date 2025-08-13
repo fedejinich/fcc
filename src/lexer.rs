@@ -17,6 +17,13 @@ pub enum Token {
     OpenBrace,
     CloseBrace,
     Semicolon,
+
+    // unary operators
+    Bitwise,
+    Negation,
+
+    // ops
+    Decrement,
 }
 
 pub fn lex(mut code: &str) -> Result<Vec<Token>, String> {
@@ -66,6 +73,9 @@ fn token_matchers() -> Vec<TokenMatcher> {
         TokenMatcher::new(|_| Token::OpenBrace, r"^\{"),
         TokenMatcher::new(|_| Token::CloseBrace, r"^\}"),
         TokenMatcher::new(|_| Token::Semicolon, r"^;"),
+        TokenMatcher::new(|_| Token::Bitwise, r"^\~"),
+        TokenMatcher::new(|_| Token::Negation, r"^\-"),
+        TokenMatcher::new(|_| Token::Decrement, r"^\--"),
     ]
 }
 
