@@ -3,8 +3,8 @@ use std::{fs, path::Path, process::Command};
 use clap::Parser;
 use log::{debug, info};
 
-use crate::asm::AsmProgram;
-use crate::ast::{CProgram, Parseable};
+use crate::ast::asm::AsmProgram;
+use crate::ast::program::{CProgram, Parseable};
 use crate::lexer::lex;
 use crate::util::replace_c_with_i;
 

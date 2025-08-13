@@ -5,12 +5,10 @@ use crate::{lexer::Token, util::indent};
 
 // todo(fede) disable warnings for 'variables can be used directly in the `format!` string'
 
-#[allow(dead_code)]
 pub struct CProgram {
     pub function_definition: CFunctionDefinition,
 }
 
-#[allow(dead_code)]
 pub struct CFunctionDefinition {
     pub name: CIdentifier,
     pub body: Vec<CStatement>,
@@ -20,20 +18,17 @@ pub struct CIdentifier {
     pub value: String, //  todo(fede) this is still weird as fuck
 }
 
-#[allow(dead_code)]
 #[derive(Clone)]
 pub enum CStatement {
     Return(CExpression),
 }
 
-#[allow(dead_code)]
 #[derive(Clone)]
 pub enum CExpression {
     Constant(i32),
     Unary(CUnaryOperator, Box<CExpression>),
 }
 
-#[allow(dead_code)]
 #[derive(Clone)]
 pub enum CUnaryOperator {
     Complement,

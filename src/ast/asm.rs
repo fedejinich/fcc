@@ -1,4 +1,4 @@
-use crate::ast::{CExpression, CFunctionDefinition, CProgram, CStatement};
+use crate::ast::program::{CExpression, CFunctionDefinition, CProgram, CStatement};
 use crate::util::indent;
 
 #[allow(dead_code)]
