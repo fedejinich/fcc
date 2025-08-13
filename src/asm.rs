@@ -109,6 +109,7 @@ impl From<CExpression> for AsmOperand {
     fn from(c_expression: CExpression) -> Self {
         match c_expression {
             CExpression::Constant(c) => AsmOperand::Imm(c),
+            CExpression::Unary(u, e) => todo!(),
         }
     }
 }

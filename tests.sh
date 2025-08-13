@@ -32,3 +32,6 @@ echo "Testing chapter 2"
 
 echo "Testing lexer"
 ./test_compiler "$FCC_PATH" --chapter 2 --stage lex
+
+echo "Testing parser"
+./test_compiler "$FCC_PATH" --chapter 2 --stage parse

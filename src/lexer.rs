@@ -19,8 +19,8 @@ pub enum Token {
     Semicolon,
 
     // unary operators
-    Bitwise,
-    Negation,
+    Complement,
+    Negate,
 
     // ops
     Decrement,
@@ -73,8 +73,8 @@ fn token_matchers() -> Vec<TokenMatcher> {
         TokenMatcher::new(|_| Token::OpenBrace, r"^\{"),
         TokenMatcher::new(|_| Token::CloseBrace, r"^\}"),
         TokenMatcher::new(|_| Token::Semicolon, r"^;"),
-        TokenMatcher::new(|_| Token::Bitwise, r"^\~"),
-        TokenMatcher::new(|_| Token::Negation, r"^\-"),
+        TokenMatcher::new(|_| Token::Complement, r"^\~"),
+        TokenMatcher::new(|_| Token::Negate, r"^\-"),
         TokenMatcher::new(|_| Token::Decrement, r"^\--"),
     ]
 }

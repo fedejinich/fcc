@@ -3,6 +3,8 @@ use std::{fmt, slice::Iter};
 
 use crate::{lexer::Token, util::indent};
 
+// todo(fede) disable warnings for 'variables can be used directly in the `format!` string'
+
 #[allow(dead_code)]
 pub struct CProgram {
     pub function_definition: CFunctionDefinition,
@@ -28,6 +30,14 @@ pub enum CStatement {
 #[derive(Clone)]
 pub enum CExpression {
     Constant(i32),
+    Unary(CUnaryOperator, Box<CExpression>),
+}
+
+#[allow(dead_code)]
+#[derive(Clone)]
+pub enum CUnaryOperator {
+    Complement,
+    Negate,
 }
 
 // todo(fede) this should be 'from' trait
@@ -149,12 +159,44 @@ impl Parseable<CExpression> for CExpression {
     fn parse(tokens: &mut Iter<Token>) -> Result<CExpression, String> {
         trace!("Parsing Expression");
 
-        if let Some(Token::Constant(n)) = tokens.next() {
-            trace!("Found integer constant: {}", n);
-            Ok(CExpression::Constant(n.parse::<i32>().unwrap()))
-        } else {
-            debug!("Expected integer constant but found none");
-            Err(String::from("expected int"))
+        // todo(fede) i'm supposing that there's always a next token
+        // analyze this and leave a comment
+        let next_token = tokens.clone().next().unwrap();
+        match next_token {
+            Token::Constant(n) => {
+                trace!("Found integer constant: {}", n);
+                let _ = tokens.next();
+
+                Ok(CExpression::Constant(n.parse::<i32>().unwrap()))
+            }
+            Token::Complement | Token::Negate => {
+                trace!("Found unary operator: {:?}", next_token);
+                let unary = CUnaryOperator::parse(tokens)?;
+                let exp = CExpression::parse(tokens)?;
+
+                Ok(CExpression::Unary(unary, Box::new(exp)))
+            }
+            Token::OpenParen => {
+                trace!("Found open parenthesis");
+                let _ = tokens.next();
+                let exp = CExpression::parse(tokens)?;
+                token_eq(Token::CloseParen, tokens)?;
+
+                Ok(exp)
+            }
+            _ => Err("could not parse expression".to_string()),
+        }
+    }
+}
+
+impl Parseable<CUnaryOperator> for CUnaryOperator {
+    fn parse(tokens: &mut Iter<Token>) -> Result<CUnaryOperator, String> {
+        trace!("Parsing UnaryOperator");
+
+        match tokens.next().unwrap() {
+            Token::Complement => Ok(CUnaryOperator::Complement),
+            Token::Negate => Ok(CUnaryOperator::Negate),
+            _ => Err("could not parse unary operator".to_string()),
         }
     }
 }
@@ -226,6 +268,7 @@ impl fmt::Display for CExpression {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             CExpression::Constant(c) => write!(f, "{}", c),
+            CExpression::Unary(u, e) => todo!(),
         }
     }
 }

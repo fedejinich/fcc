@@ -86,4 +86,14 @@ mod tests {
             .build_program()
             .expect("fcc failed to create program");
     }
+
+    #[test]
+    pub fn test_parse_unary() {
+        let args = vec!["fcc", "redundant_parens.c", "--debug", "--parse"];
+        let driver = CompilerDriver::parse_from(args);
+        debug!("{:?}", driver);
+        driver
+            .build_program()
+            .expect("fcc failed to create program");
+    }
 }
