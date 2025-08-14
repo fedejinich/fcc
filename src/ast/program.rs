@@ -263,7 +263,7 @@ impl fmt::Display for CExpression {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             CExpression::Constant(c) => write!(f, "{}", c),
-            CExpression::Unary(u, e) => todo!(),
+            CExpression::Unary(_u, _e) => todo!(),
         }
     }
 }
