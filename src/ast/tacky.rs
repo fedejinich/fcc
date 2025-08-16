@@ -1,6 +1,9 @@
 #![allow(warnings)]
 
-use std::fmt;
+use std::{
+    fmt,
+    sync::atomic::{AtomicUsize, Ordering},
+};
 
 use crate::{
     ast::program::{CFunctionDefinition, CIdentifier, CProgram, CStatement},
@@ -31,13 +34,19 @@ pub struct TackyIdentifier {
 }
 
 impl TackyIdentifier {
-    fn tmp_name() -> TackyIdentifier {
+    fn new(desc: &str) -> TackyIdentifier {
         let num = 0;
         // todo(fede) this should be generated using an identity
         TackyIdentifier {
-            value: format!("tmp.{}", num),
+            value: format!("{}.{}", desc, num),
         }
     }
+}
+
+static COUNTER: AtomicUsize = AtomicUsize::new(0);
+
+fn next_id() -> usize {
+    COUNTER.fetch_add(1, Ordering::Relaxed)
 }
 
 #[derive(Clone)]
@@ -97,8 +106,11 @@ impl TackyInstruction {
             CExpression::Constant(c) => TackyValue::Constant(c),
             CExpression::Unary(op, inner_exp) => {
                 let src = TackyInstruction::from_expr(*inner_exp, instructions);
-                let dst_name = TackyIdentifier::tmp_name();
-                let dst = TackyValue::Var(dst_name);
+                let name = match src {
+                    TackyValue::Constant(_) => "constant",
+                    TackyValue::Var(_) => "var",
+                };
+                let dst = TackyValue::Var(TackyIdentifier::new(name));
                 let unary_op = TackyUnaryOperator::from(op);
                 // todo(fede) this is a clone(hack?)
                 instructions.push(TackyInstruction::Unary(unary_op, src, dst.clone()));
