@@ -5,6 +5,7 @@ use log::{debug, info};
 
 use crate::ast::asm::AsmProgram;
 use crate::ast::program::{CProgram, Parseable};
+use crate::ast::tacky::TackyProgram;
 use crate::lexer::lex;
 use crate::util::replace_c_with_i;
 
@@ -18,6 +19,9 @@ pub struct CompilerDriver {
 
     #[arg(long)]
     parse: bool,
+
+    #[arg(long)]
+    tacky: bool,
 
     #[arg(long)]
     codegen: bool,
@@ -131,23 +135,32 @@ impl CompilerDriver {
             std::process::exit(0);
         }
 
-        // generate assembly
-        let assembly_file_name = preprocessed_file.replace(".i", ".asm");
-        let assembly_program = AsmProgram::from(c_program);
-
-        if self.codegen {
+        let _ = TackyProgram::from(c_program);
+        // todo(fede) this should be unified with .parse
+        if self.tacky {
             std::process::exit(0);
         }
 
-        let code = assembly_program.code_emit();
-        fs::write(&assembly_file_name, &code).expect("couldn't write assembly file");
+        Ok("ok".to_string())
 
-        debug!("\n{code}");
-
-        fs::remove_file(preprocessed_file).expect("couldn't remove preprocessed file");
-        debug!("file removed");
-
-        Ok(assembly_file_name)
+        // // generate assembly
+        // let assembly_file_name = preprocessed_file.replace(".i", ".asm");
+        // // todo(fede) this will be changed to parse Asm program from Tacky program
+        // let assembly_program = AsmProgram::from(c_program);
+        //
+        // if self.codegen {
+        //     std::process::exit(0);
+        // }
+        //
+        // let code = assembly_program.code_emit();
+        // fs::write(&assembly_file_name, &code).expect("couldn't write assembly file");
+        //
+        // debug!("\n{code}");
+        //
+        // fs::remove_file(preprocessed_file).expect("couldn't remove preprocessed file");
+        // debug!("file removed");
+        //
+        // Ok(assembly_file_name)
     }
 
     fn assemble_and_link(&self, assembly_file: String) -> Result<i32, String> {
