@@ -36,7 +36,10 @@ pub struct CompilerDriver {
     trace: bool,
 
     #[arg(long, help = "Prints AST")]
-    ast: bool,
+    print_ast: bool,
+
+    #[arg(long, help = "Prints TACKY AST")]
+    print_tacky: bool,
 }
 
 impl CompilerDriver {
@@ -125,17 +128,20 @@ impl CompilerDriver {
 
         // parse tokens into ast
         let c_program = CProgram::parse(&mut tokens.iter())?;
+        if self.print_ast {
+            println!("{c_program}");
+        }
 
         // parse only
-        if self.parse || self.ast {
-            if self.ast {
-                println!("{c_program}");
-            }
+        if self.parse {
             // todo(fede) find a better way to this
             std::process::exit(0);
         }
 
-        let _ = TackyProgram::from(c_program);
+        let tacky_program = TackyProgram::from(c_program);
+        if self.print_tacky {
+            println!("{tacky_program}");
+        }
         // todo(fede) this should be unified with .parse
         if self.tacky {
             std::process::exit(0);

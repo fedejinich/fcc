@@ -1,6 +1,11 @@
 #![allow(warnings)]
 
-use crate::ast::program::{CFunctionDefinition, CIdentifier, CProgram, CStatement};
+use std::fmt;
+
+use crate::{
+    ast::program::{CFunctionDefinition, CIdentifier, CProgram, CStatement},
+    util::indent,
+};
 
 use super::program::{CExpression, CUnaryOperator};
 
@@ -8,11 +13,13 @@ pub struct TackyProgram {
     function_definition: TackyFunctionDefinition,
 }
 
+#[derive(Clone)]
 pub struct TackyFunctionDefinition {
-    name: TackyIdentifier,
-    instructions: Vec<TackyInstruction>,
+    pub name: TackyIdentifier,
+    pub instructions: Vec<TackyInstruction>,
 }
 
+#[derive(Clone)]
 pub enum TackyInstruction {
     Return(TackyValue),
     Unary(TackyUnaryOperator, TackyValue, TackyValue),
@@ -27,7 +34,9 @@ impl TackyIdentifier {
     fn tmp_name() -> TackyIdentifier {
         let num = 0;
         // todo(fede) this should be generated using an identity
-        TackyIdentifier { value: format!("tmp.{}", num) }
+        TackyIdentifier {
+            value: format!("tmp.{}", num),
+        }
     }
 }
 
@@ -37,6 +46,7 @@ pub enum TackyValue {
     Var(TackyIdentifier),
 }
 
+#[derive(Clone)]
 pub enum TackyUnaryOperator {
     Complement,
     Negate,
@@ -85,7 +95,7 @@ impl TackyInstruction {
     fn from_expr(expr: CExpression, instructions: &mut Vec<TackyInstruction>) -> TackyValue {
         match expr {
             CExpression::Constant(c) => TackyValue::Constant(c),
-            CExpression::Unary(op, inner_exp, ) => {
+            CExpression::Unary(op, inner_exp) => {
                 let src = TackyInstruction::from_expr(*inner_exp, instructions);
                 let dst_name = TackyIdentifier::tmp_name();
                 let dst = TackyValue::Var(dst_name);
@@ -108,3 +118,77 @@ impl From<CUnaryOperator> for TackyUnaryOperator {
     }
 }
 
+impl fmt::Display for TackyProgram {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        writeln!(f, "TackyProgram(")?;
+        writeln!(f, "{})", indent(&self.function_definition.to_string(), 4));
+        writeln!(f, ")")
+    }
+}
+
+impl fmt::Display for TackyFunctionDefinition {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        writeln!(f, "TackyFunction(")?;
+        writeln!(
+            f,
+            "{}",
+            indent(&format!("name=\"{}\",", self.name.value), 4)
+        )?;
+        writeln!(
+            f,
+            "{}",
+            indent(
+                &format!(
+                    "instructions=[\n{}\n]",
+                    self.instructions
+                        .clone()
+                        .into_iter()
+                        .map(|s| indent(&s.to_string(), 4))
+                        .collect::<Vec<_>>()
+                        .join("\n")
+                ),
+                4
+            )
+        )?;
+        writeln!(f, "")
+    }
+}
+
+impl fmt::Display for TackyInstruction {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            TackyInstruction::Return(value) => {
+                writeln!(f, "Return(")?;
+                writeln!(f, "{}", indent(&value.to_string(), 4));
+                writeln!(f, ")")
+            }
+            TackyInstruction::Unary(op, src, dst) => {
+                writeln!(f, "Unary({}, {}, {})", op, src, dst)
+                // writeln!(f, "Unary(")?;
+                // writeln!(f, "{},", indent(&op.to_string(), 4))?;
+                // writeln!(f, "{},", indent(&src.to_string(), 4))?;
+                // writeln!(f, "{}", indent(&dst.to_string(), 4))?;
+                // writeln!(f, ")")
+            }
+        }
+    }
+}
+
+impl fmt::Display for TackyValue {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            TackyValue::Constant(c) => write!(f, "Constant({})", c),
+            TackyValue::Var(id) => write!(f, "Var({})", id.value),
+        }
+    }
+}
+
+impl fmt::Display for TackyUnaryOperator {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            // todo(fede) this might be replaced with derive debug
+            TackyUnaryOperator::Complement => write!(f, "Complement"),
+            TackyUnaryOperator::Negate => write!(f, "Negate"),
+        }
+    }
+}

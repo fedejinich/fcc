@@ -262,8 +262,17 @@ impl fmt::Display for CStatement {
 impl fmt::Display for CExpression {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            CExpression::Constant(c) => write!(f, "{}", c),
-            CExpression::Unary(_u, _e) => todo!(),
+            CExpression::Constant(c) => write!(f, "Constant({})", c),
+            CExpression::Unary(u, e) => write!(f, "Unary({}, {})", u, e),
+        }
+    }
+}
+
+impl fmt::Display for CUnaryOperator {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            CUnaryOperator::Complement => write!(f, "Complement"),
+            CUnaryOperator::Negate => write!(f, "Negate"),
         }
     }
 }
