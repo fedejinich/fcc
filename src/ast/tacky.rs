@@ -12,6 +12,12 @@ use crate::{
 
 use super::program::{CExpression, CUnaryOperator};
 
+static COUNTER: AtomicUsize = AtomicUsize::new(0);
+
+fn next_id() -> usize {
+    COUNTER.fetch_add(1, Ordering::Relaxed)
+}
+
 pub struct TackyProgram {
     function_definition: TackyFunctionDefinition,
 }
@@ -35,18 +41,10 @@ pub struct TackyIdentifier {
 
 impl TackyIdentifier {
     fn new(desc: &str) -> TackyIdentifier {
-        let num = 0;
-        // todo(fede) this should be generated using an identity
         TackyIdentifier {
-            value: format!("{}.{}", desc, num),
+            value: format!("{}.{}", desc, next_id()),
         }
     }
-}
-
-static COUNTER: AtomicUsize = AtomicUsize::new(0);
-
-fn next_id() -> usize {
-    COUNTER.fetch_add(1, Ordering::Relaxed)
 }
 
 #[derive(Clone)]
@@ -92,7 +90,7 @@ impl From<CIdentifier> for TackyIdentifier {
 
 impl TackyInstruction {
     fn from(statement: CStatement) -> Vec<TackyInstruction> {
-        let mut instructions: Vec<TackyInstruction> = vec![];
+        let mut instructions = vec![];
         match statement {
             CStatement::Return(expr) => {
                 let _ = TackyInstruction::from_expr(expr, &mut instructions);
@@ -106,12 +104,10 @@ impl TackyInstruction {
             CExpression::Constant(c) => TackyValue::Constant(c),
             CExpression::Unary(op, inner_exp) => {
                 let src = TackyInstruction::from_expr(*inner_exp, instructions);
-                let name = match src {
-                    TackyValue::Constant(_) => "constant",
-                    TackyValue::Var(_) => "var",
-                };
-                let dst = TackyValue::Var(TackyIdentifier::new(name));
+                // todo(fede) provide a more descriptive name
+                let dst = TackyValue::Var(TackyIdentifier::new("tmp"));
                 let unary_op = TackyUnaryOperator::from(op);
+
                 // todo(fede) this is a clone(hack?)
                 instructions.push(TackyInstruction::Unary(unary_op, src, dst.clone()));
 
