@@ -19,7 +19,7 @@ fn next_id() -> usize {
 }
 
 pub struct TackyProgram {
-    function_definition: TackyFunctionDefinition,
+    pub function_definition: TackyFunctionDefinition,
 }
 
 #[derive(Clone)]
@@ -36,7 +36,7 @@ pub enum TackyInstruction {
 
 #[derive(Clone)]
 pub struct TackyIdentifier {
-    value: String,
+    pub value: String,
 }
 
 impl TackyIdentifier {
