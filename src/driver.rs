@@ -149,8 +149,9 @@ impl CompilerDriver {
 
         // generate assembly
         let assembly_file_name = preprocessed_file.replace(".i", ".asm");
-        let assembly_program = AsmProgram::from(tacky_program).with_regs();
-        let _ = assembly_program.fix_instructions();
+        let (assembly_program, last_offset) =
+            AsmProgram::from(tacky_program).replace_pseudoregisters();
+        let _ = assembly_program.fix_instructions(last_offset);
 
         if self.codegen {
             std::process::exit(0);

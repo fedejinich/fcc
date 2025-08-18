@@ -38,3 +38,6 @@ echo "Testing parser"
 
 echo "Testing tacky"
 ./test_compiler "$FCC_PATH" --chapter 2 --stage tacky
+
+echo "Testing codegen"
+./test_compiler "$FCC_PATH" --chapter 2 --stage codegen 

@@ -1,5 +1,7 @@
 use std::collections::HashMap;
 
+use log::trace;
+
 use crate::ast::c::{CExpression, CFunctionDefinition, CProgram, CStatement};
 use crate::util::indent;
 
@@ -61,13 +63,15 @@ impl AsmProgram {
         }
     }
 
-    pub fn with_regs(&self) -> (Self, i32) {
+    /// replaces pseudoregisters with stack slots and returns the last stack memory address
+    pub fn replace_pseudoregisters(&self) -> (Self, i32) {
         let (fd, offset) = self.function_definition.with_regs();
         (AsmProgram::new(fd), offset)
     }
 
-    pub fn fix_instructions(&self) -> Self {
-        todo!()
+    /// allocates stack and fixes Mov instructions
+    pub fn fix_instructions(&self, last_offset: i32) -> Self {
+        AsmProgram::new(self.function_definition.fix_instructions(last_offset))
     }
 }
 
@@ -108,6 +112,33 @@ impl AsmFunctionDefinition {
             });
 
         (map, last_offset)
+    }
+
+    fn fix_instructions(&self, last_offset: i32) -> AsmFunctionDefinition {
+        let mut instructions = vec![AsmInstruction::AllocateStack(last_offset)];
+        let mut fixed_instructions = self.instructions
+            .iter()
+            .flat_map(|i| {
+                // splits mov instructions that move stack slots to registers
+                // into two mov instructions
+                trace!("spliting mov instructions");
+                match i {
+                    AsmInstruction::Mov(AsmOperand::Stack(src), AsmOperand::Stack(dst)) => {
+                        vec![
+                            AsmInstruction::Mov(AsmOperand::Stack(*src), AsmOperand::Register(Reg::R10)),
+                            AsmInstruction::Mov(AsmOperand::Register(Reg::R10), AsmOperand::Stack(*dst))
+                        ]
+                    },
+                    _ => vec![i.clone()]
+                }
+            })
+            .collect();
+        instructions.append(&mut fixed_instructions);
+
+        AsmFunctionDefinition::new(
+            self.name.clone(),
+            instructions
+        )
     }
 }
 
