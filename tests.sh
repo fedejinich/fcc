@@ -14,14 +14,33 @@ cargo clean
 echo "Building fcc"
 cargo build
 
+# echo "Testing chapter 1"
+#
+# echo "Testing lexer"
+# ./test_compiler "$FCC_PATH" --chapter 1 --stage lex
+#
+# echo "Testing parser"
+# ./test_compiler "$FCC_PATH" --chapter 1 --stage parse
+#
+# echo "Testing codegen"
+# ./test_compiler "$FCC_PATH" --chapter 1 --stage codegen
+#
+# echo "Integration tests"
+# ./test_compiler "$FCC_PATH" --chapter 1
+
+echo "Testing chapter 2"
+
 echo "Testing lexer"
-./test_compiler "$FCC_PATH" --chapter 1 --stage lex
+./test_compiler "$FCC_PATH" --chapter 2 --stage lex
 
 echo "Testing parser"
-./test_compiler "$FCC_PATH" --chapter 1 --stage parse
+./test_compiler "$FCC_PATH" --chapter 2 --stage parse
+
+echo "Testing tacky"
+./test_compiler "$FCC_PATH" --chapter 2 --stage tacky
 
 echo "Testing codegen"
-./test_compiler "$FCC_PATH" --chapter 1 --stage codegen
+./test_compiler "$FCC_PATH" --chapter 2 --stage codegen
 
-echo "Testing chapter 1"
-./test_compiler "$FCC_PATH" --chapter 1
+echo "Integration tests"
+./test_compiler "$FCC_PATH" --chapter 2

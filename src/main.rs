@@ -1,9 +1,10 @@
+#![allow(clippy::uninlined_format_args)]
+
 use clap::Parser;
 use log::debug;
 
 use crate::driver::CompilerDriver;
 
-mod asm;
 mod ast;
 mod driver;
 mod lexer;
@@ -80,6 +81,16 @@ mod tests {
     #[test]
     pub fn test_parse_comments() {
         let args = vec!["fcc", "tabs.c", "--debug"];
+        let driver = CompilerDriver::parse_from(args);
+        debug!("{:?}", driver);
+        driver
+            .build_program()
+            .expect("fcc failed to create program");
+    }
+
+    #[test]
+    pub fn test_parse_unary() {
+        let args = vec!["fcc", "redundant_parens.c", "--debug", "--parse"];
         let driver = CompilerDriver::parse_from(args);
         debug!("{:?}", driver);
         driver

@@ -3,12 +3,12 @@ use std::{fmt, slice::Iter};
 
 use crate::{lexer::Token, util::indent};
 
-#[allow(dead_code)]
+// todo(fede) disable warnings for 'variables can be used directly in the `format!` string'
+
 pub struct CProgram {
     pub function_definition: CFunctionDefinition,
 }
 
-#[allow(dead_code)]
 pub struct CFunctionDefinition {
     pub name: CIdentifier,
     pub body: Vec<CStatement>,
@@ -18,31 +18,36 @@ pub struct CIdentifier {
     pub value: String, //  todo(fede) this is still weird as fuck
 }
 
-#[allow(dead_code)]
 #[derive(Clone)]
 pub enum CStatement {
     Return(CExpression),
 }
 
-#[allow(dead_code)]
 #[derive(Clone)]
 pub enum CExpression {
     Constant(i32),
+    Unary(CUnaryOperator, Box<CExpression>),
 }
 
-// todo(fede) this should be 'from' trait
-pub trait Parseable<T> {
-    fn parse(tokens: &mut Iter<Token>) -> Result<T, String>;
+#[derive(Clone)]
+pub enum CUnaryOperator {
+    Complement,
+    Negate,
 }
 
-impl Parseable<CProgram> for CProgram {
-    fn parse(tokens: &mut Iter<Token>) -> Result<CProgram, String> {
+type ParseResult<T> = Result<T, String>;
+
+impl TryFrom<Vec<Token>> for CProgram {
+    type Error = String;
+
+    fn try_from(tokens: Vec<Token>) -> Result<Self, Self::Error> {
         debug!("Starting parsing with {} tokens", tokens.len());
         trace!("Token stream: {:?}", tokens);
         trace!("Parsing Program");
         debug!("Attempting to parse function definition");
 
-        let function_definition = CFunctionDefinition::parse(tokens)?;
+        let mut iter = tokens.iter();
+        let function_definition = CFunctionDefinition::from(&mut iter)?;
 
         debug!(
             "Successfully parsed function definition: {}",
@@ -54,14 +59,10 @@ impl Parseable<CProgram> for CProgram {
             function_definition,
         };
 
-        if tokens.next().is_some() {
-            return Err(String::from("unexpected tokens remaining"));
-        }
-
-        if tokens.len() > 0 {
+        if iter.next().is_some() {
             return Err(format!(
                 "unexpected tokens remaining: {:?}",
-                tokens.collect::<Vec<_>>()
+                iter.collect::<Vec<_>>()
             ));
         }
 
@@ -71,14 +72,14 @@ impl Parseable<CProgram> for CProgram {
     }
 }
 
-impl Parseable<CFunctionDefinition> for CFunctionDefinition {
-    fn parse(tokens: &mut Iter<Token>) -> Result<CFunctionDefinition, String> {
+impl CFunctionDefinition {
+    fn from(tokens: &mut Iter<Token>) -> ParseResult<Self> {
         trace!("Parsing FunctionDefinition");
 
         token_eq(Token::Int, tokens)?;
 
         debug!("Parsing function identifier");
-        let identifier = CIdentifier::parse(tokens)?;
+        let identifier = CIdentifier::from(tokens)?;
         debug!("Found function: {}", identifier.value);
 
         token_eq(Token::OpenParen, tokens)?;
@@ -87,7 +88,7 @@ impl Parseable<CFunctionDefinition> for CFunctionDefinition {
         token_eq(Token::OpenBrace, tokens)?;
 
         debug!("Parsing function body statement");
-        let body = CStatement::parse(tokens)?;
+        let body = CStatement::from(tokens)?;
 
         token_eq(Token::CloseBrace, tokens)?;
 
@@ -99,8 +100,8 @@ impl Parseable<CFunctionDefinition> for CFunctionDefinition {
     }
 }
 
-impl Parseable<CIdentifier> for CIdentifier {
-    fn parse(tokens: &mut Iter<Token>) -> Result<CIdentifier, String> {
+impl CIdentifier {
+    fn from(tokens: &mut Iter<Token>) -> ParseResult<Self> {
         trace!("Parsing Identifier");
 
         if let Some(Token::Identifier(n)) = tokens.next() {
@@ -113,8 +114,8 @@ impl Parseable<CIdentifier> for CIdentifier {
     }
 }
 
-impl Parseable<Vec<CStatement>> for CStatement {
-    fn parse(tokens: &mut Iter<Token>) -> Result<Vec<CStatement>, String> {
+impl CStatement {
+    fn from(tokens: &mut Iter<Token>) -> ParseResult<Vec<Self>> {
         trace!("Parsing Statement");
 
         let mut statements = Vec::new();
@@ -124,13 +125,12 @@ impl Parseable<Vec<CStatement>> for CStatement {
                     token_eq(Token::Return, tokens)?;
 
                     debug!("Parsing return expression");
-                    let expr = CExpression::parse(tokens)?;
+                    let expr = CExpression::from(tokens)?;
 
                     token_eq(Token::Semicolon, tokens)?;
 
                     statements.push(CStatement::Return(expr));
                 }
-                // try to match any other token statement
                 _ => break,
             };
         }
@@ -145,16 +145,46 @@ impl Parseable<Vec<CStatement>> for CStatement {
     }
 }
 
-impl Parseable<CExpression> for CExpression {
-    fn parse(tokens: &mut Iter<Token>) -> Result<CExpression, String> {
+impl CExpression {
+    fn from(tokens: &mut Iter<Token>) -> ParseResult<Self> {
         trace!("Parsing Expression");
 
-        if let Some(Token::Constant(n)) = tokens.next() {
-            trace!("Found integer constant: {}", n);
-            Ok(CExpression::Constant(n.parse::<i32>().unwrap()))
-        } else {
-            debug!("Expected integer constant but found none");
-            Err(String::from("expected int"))
+        let next_token = tokens.clone().next().unwrap();
+        match next_token {
+            Token::Constant(n) => {
+                trace!("Found integer constant: {}", n);
+                let _ = tokens.next();
+
+                Ok(CExpression::Constant(n.parse::<i32>().unwrap()))
+            }
+            Token::Complement | Token::Negate => {
+                trace!("Found unary operator: {:?}", next_token);
+                let unary = CUnaryOperator::from(tokens)?;
+                let exp = CExpression::from(tokens)?;
+
+                Ok(CExpression::Unary(unary, Box::new(exp)))
+            }
+            Token::OpenParen => {
+                trace!("Found open parenthesis");
+                let _ = tokens.next();
+                let exp = CExpression::from(tokens)?;
+                token_eq(Token::CloseParen, tokens)?;
+
+                Ok(exp)
+            }
+            _ => Err("could not parse expression".to_string()),
+        }
+    }
+}
+
+impl CUnaryOperator {
+    fn from(tokens: &mut Iter<Token>) -> Result<CUnaryOperator, String> {
+        trace!("Parsing UnaryOperator");
+
+        match tokens.next().unwrap() {
+            Token::Complement => Ok(CUnaryOperator::Complement),
+            Token::Negate => Ok(CUnaryOperator::Negate),
+            _ => Err("could not parse unary operator".to_string()),
         }
     }
 }
@@ -225,7 +255,17 @@ impl fmt::Display for CStatement {
 impl fmt::Display for CExpression {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            CExpression::Constant(c) => write!(f, "{}", c),
+            CExpression::Constant(c) => write!(f, "Constant({})", c),
+            CExpression::Unary(u, e) => write!(f, "Unary({}, {})", u, e),
+        }
+    }
+}
+
+impl fmt::Display for CUnaryOperator {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            CUnaryOperator::Complement => write!(f, "Complement"),
+            CUnaryOperator::Negate => write!(f, "Negate"),
         }
     }
 }

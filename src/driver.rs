@@ -3,8 +3,9 @@ use std::{fs, path::Path, process::Command};
 use clap::Parser;
 use log::{debug, info};
 
-use crate::asm::AsmProgram;
-use crate::ast::{CProgram, Parseable};
+use crate::ast::asm::AsmProgram;
+use crate::ast::c::CProgram;
+use crate::ast::tacky::TackyProgram;
 use crate::lexer::lex;
 use crate::util::replace_c_with_i;
 
@@ -20,6 +21,9 @@ pub struct CompilerDriver {
     parse: bool,
 
     #[arg(long)]
+    tacky: bool,
+
+    #[arg(long)]
     codegen: bool,
 
     #[arg(short, value_name = "S")]
@@ -32,7 +36,10 @@ pub struct CompilerDriver {
     trace: bool,
 
     #[arg(long, help = "Prints AST")]
-    ast: bool,
+    print_ast: bool,
+
+    #[arg(long, help = "Prints TACKY AST")]
+    print_tacky: bool,
 }
 
 impl CompilerDriver {
@@ -120,20 +127,33 @@ impl CompilerDriver {
         }
 
         // parse tokens into ast
-        let c_program = CProgram::parse(&mut tokens.iter())?;
+        let c_program = CProgram::try_from(tokens)?;
+        if self.print_ast {
+            println!("{c_program}");
+        }
 
         // parse only
-        if self.parse || self.ast {
-            if self.ast {
-                println!("{c_program}");
-            }
+        if self.parse {
             // todo(fede) find a better way to this
+            std::process::exit(0);
+        }
+
+        let tacky_program = TackyProgram::from(c_program);
+        if self.print_tacky {
+            println!("{tacky_program}");
+        }
+        // todo(fede) this should be unified with .parse
+        if self.tacky {
             std::process::exit(0);
         }
 
         // generate assembly
         let assembly_file_name = preprocessed_file.replace(".i", ".asm");
-        let assembly_program = AsmProgram::from(c_program);
+
+        // todo(fede) this should be a monad
+        let (assembly_program, last_offset) =
+            AsmProgram::from(tacky_program).replace_pseudoregisters();
+        let assembly_program = assembly_program.fix_instructions(last_offset);
 
         if self.codegen {
             std::process::exit(0);

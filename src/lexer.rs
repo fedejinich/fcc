@@ -1,7 +1,7 @@
 use log::{debug, trace};
 use regex::Regex;
 
-#[derive(Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum Token {
     Identifier(String),
     Constant(String),
@@ -17,6 +17,13 @@ pub enum Token {
     OpenBrace,
     CloseBrace,
     Semicolon,
+
+    // unary operators
+    Complement,
+    Negate,
+
+    // ops
+    Decrement,
 }
 
 pub fn lex(mut code: &str) -> Result<Vec<Token>, String> {
@@ -66,6 +73,9 @@ fn token_matchers() -> Vec<TokenMatcher> {
         TokenMatcher::new(|_| Token::OpenBrace, r"^\{"),
         TokenMatcher::new(|_| Token::CloseBrace, r"^\}"),
         TokenMatcher::new(|_| Token::Semicolon, r"^;"),
+        TokenMatcher::new(|_| Token::Complement, r"^\~"),
+        TokenMatcher::new(|_| Token::Negate, r"^\-"),
+        TokenMatcher::new(|_| Token::Decrement, r"^\--"),
     ]
 }
 
