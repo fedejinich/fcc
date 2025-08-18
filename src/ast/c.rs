@@ -35,6 +35,8 @@ pub enum CUnaryOperator {
     Negate,
 }
 
+type ParseResult<T> = Result<T, String>;
+
 impl TryFrom<Vec<Token>> for CProgram {
     type Error = String;
 
@@ -71,7 +73,7 @@ impl TryFrom<Vec<Token>> for CProgram {
 }
 
 impl CFunctionDefinition {
-    fn from(tokens: &mut Iter<Token>) -> Result<CFunctionDefinition, String> {
+    fn from(tokens: &mut Iter<Token>) -> ParseResult<Self> {
         trace!("Parsing FunctionDefinition");
 
         token_eq(Token::Int, tokens)?;
@@ -99,7 +101,7 @@ impl CFunctionDefinition {
 }
 
 impl CIdentifier {
-    fn from(tokens: &mut Iter<Token>) -> Result<CIdentifier, String> {
+    fn from(tokens: &mut Iter<Token>) -> ParseResult<Self> {
         trace!("Parsing Identifier");
 
         if let Some(Token::Identifier(n)) = tokens.next() {
@@ -113,7 +115,7 @@ impl CIdentifier {
 }
 
 impl CStatement {
-    fn from(tokens: &mut Iter<Token>) -> Result<Vec<CStatement>, String> {
+    fn from(tokens: &mut Iter<Token>) -> ParseResult<Vec<Self>> {
         trace!("Parsing Statement");
 
         let mut statements = Vec::new();
@@ -144,7 +146,7 @@ impl CStatement {
 }
 
 impl CExpression {
-    fn from(tokens: &mut Iter<Token>) -> Result<CExpression, String> {
+    fn from(tokens: &mut Iter<Token>) -> ParseResult<Self> {
         trace!("Parsing Expression");
 
         let next_token = tokens.clone().next().unwrap();
