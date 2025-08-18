@@ -2,11 +2,11 @@ use std::collections::HashMap;
 
 use log::{debug, trace};
 
-use crate::ast::c::{CExpression, CFunctionDefinition, CProgram, CStatement};
+use crate::ast::{CExpression, CFunctionDefinition, CProgram, CStatement};
 use crate::util::indent;
 
-use super::c::CIdentifier;
-use super::tacky::{
+use crate::ast::CIdentifier;
+use crate::tacky::{
     TackyFunctionDefinition, TackyIdentifier, TackyInstruction, TackyProgram, TackyUnaryOperator,
     TackyValue,
 };
@@ -146,12 +146,11 @@ impl AsmFunctionDefinition {
             .instructions
             .iter()
             .flat_map(|i| {
-                // splits mov instructions that move stack slots to registers
-                // into two mov instructions
                 trace!("spliting mov instructions");
                 match i {
                     AsmInstruction::Mov(AsmOperand::Stack(src), AsmOperand::Stack(dst)) => {
                         vec![
+                            AsmInstruction::Comment("splited mov into two mov instructions".to_string()),
                             AsmInstruction::Mov(
                                 AsmOperand::Stack(*src),
                                 AsmOperand::Register(Reg::R10),

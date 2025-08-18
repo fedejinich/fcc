@@ -3,9 +3,9 @@ use std::{fs, path::Path, process::Command};
 use clap::Parser;
 use log::{debug, info};
 
-use crate::ast::asm::AsmProgram;
-use crate::ast::c::CProgram;
-use crate::ast::tacky::TackyProgram;
+use crate::codegen::x64::asm::AsmProgram;
+use crate::ast::CProgram;
+use crate::tacky::TackyProgram;
 use crate::lexer::lex;
 use crate::util::replace_c_with_i;
 
