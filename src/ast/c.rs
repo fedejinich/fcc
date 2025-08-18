@@ -35,19 +35,17 @@ pub enum CUnaryOperator {
     Negate,
 }
 
-// todo(fede) this should be 'from' trait
-pub trait Parseable<T> {
-    fn parse(tokens: &mut Iter<Token>) -> Result<T, String>;
-}
+impl TryFrom<Vec<Token>> for CProgram {
+    type Error = String;
 
-impl Parseable<CProgram> for CProgram {
-    fn parse(tokens: &mut Iter<Token>) -> Result<CProgram, String> {
+    fn try_from(tokens: Vec<Token>) -> Result<Self, Self::Error> {
         debug!("Starting parsing with {} tokens", tokens.len());
         trace!("Token stream: {:?}", tokens);
         trace!("Parsing Program");
         debug!("Attempting to parse function definition");
 
-        let function_definition = CFunctionDefinition::parse(tokens)?;
+        let mut iter = tokens.iter();
+        let function_definition = CFunctionDefinition::from(&mut iter)?;
 
         debug!(
             "Successfully parsed function definition: {}",
@@ -59,14 +57,10 @@ impl Parseable<CProgram> for CProgram {
             function_definition,
         };
 
-        if tokens.next().is_some() {
-            return Err(String::from("unexpected tokens remaining"));
-        }
-
-        if tokens.len() > 0 {
+        if iter.next().is_some() {
             return Err(format!(
                 "unexpected tokens remaining: {:?}",
-                tokens.collect::<Vec<_>>()
+                iter.collect::<Vec<_>>()
             ));
         }
 
@@ -76,14 +70,14 @@ impl Parseable<CProgram> for CProgram {
     }
 }
 
-impl Parseable<CFunctionDefinition> for CFunctionDefinition {
-    fn parse(tokens: &mut Iter<Token>) -> Result<CFunctionDefinition, String> {
+impl CFunctionDefinition {
+    fn from(tokens: &mut Iter<Token>) -> Result<CFunctionDefinition, String> {
         trace!("Parsing FunctionDefinition");
 
         token_eq(Token::Int, tokens)?;
 
         debug!("Parsing function identifier");
-        let identifier = CIdentifier::parse(tokens)?;
+        let identifier = CIdentifier::from(tokens)?;
         debug!("Found function: {}", identifier.value);
 
         token_eq(Token::OpenParen, tokens)?;
@@ -92,7 +86,7 @@ impl Parseable<CFunctionDefinition> for CFunctionDefinition {
         token_eq(Token::OpenBrace, tokens)?;
 
         debug!("Parsing function body statement");
-        let body = CStatement::parse(tokens)?;
+        let body = CStatement::from(tokens)?;
 
         token_eq(Token::CloseBrace, tokens)?;
 
@@ -104,8 +98,8 @@ impl Parseable<CFunctionDefinition> for CFunctionDefinition {
     }
 }
 
-impl Parseable<CIdentifier> for CIdentifier {
-    fn parse(tokens: &mut Iter<Token>) -> Result<CIdentifier, String> {
+impl CIdentifier {
+    fn from(tokens: &mut Iter<Token>) -> Result<CIdentifier, String> {
         trace!("Parsing Identifier");
 
         if let Some(Token::Identifier(n)) = tokens.next() {
@@ -118,8 +112,8 @@ impl Parseable<CIdentifier> for CIdentifier {
     }
 }
 
-impl Parseable<Vec<CStatement>> for CStatement {
-    fn parse(tokens: &mut Iter<Token>) -> Result<Vec<CStatement>, String> {
+impl CStatement {
+    fn from(tokens: &mut Iter<Token>) -> Result<Vec<CStatement>, String> {
         trace!("Parsing Statement");
 
         let mut statements = Vec::new();
@@ -129,13 +123,12 @@ impl Parseable<Vec<CStatement>> for CStatement {
                     token_eq(Token::Return, tokens)?;
 
                     debug!("Parsing return expression");
-                    let expr = CExpression::parse(tokens)?;
+                    let expr = CExpression::from(tokens)?;
 
                     token_eq(Token::Semicolon, tokens)?;
 
                     statements.push(CStatement::Return(expr));
                 }
-                // try to match any other token statement
                 _ => break,
             };
         }
@@ -150,12 +143,10 @@ impl Parseable<Vec<CStatement>> for CStatement {
     }
 }
 
-impl Parseable<CExpression> for CExpression {
-    fn parse(tokens: &mut Iter<Token>) -> Result<CExpression, String> {
+impl CExpression {
+    fn from(tokens: &mut Iter<Token>) -> Result<CExpression, String> {
         trace!("Parsing Expression");
 
-        // todo(fede) i'm supposing that there's always a next token
-        // analyze this and leave a comment
         let next_token = tokens.clone().next().unwrap();
         match next_token {
             Token::Constant(n) => {
@@ -166,15 +157,15 @@ impl Parseable<CExpression> for CExpression {
             }
             Token::Complement | Token::Negate => {
                 trace!("Found unary operator: {:?}", next_token);
-                let unary = CUnaryOperator::parse(tokens)?;
-                let exp = CExpression::parse(tokens)?;
+                let unary = CUnaryOperator::from(tokens)?;
+                let exp = CExpression::from(tokens)?;
 
                 Ok(CExpression::Unary(unary, Box::new(exp)))
             }
             Token::OpenParen => {
                 trace!("Found open parenthesis");
                 let _ = tokens.next();
-                let exp = CExpression::parse(tokens)?;
+                let exp = CExpression::from(tokens)?;
                 token_eq(Token::CloseParen, tokens)?;
 
                 Ok(exp)
@@ -184,8 +175,8 @@ impl Parseable<CExpression> for CExpression {
     }
 }
 
-impl Parseable<CUnaryOperator> for CUnaryOperator {
-    fn parse(tokens: &mut Iter<Token>) -> Result<CUnaryOperator, String> {
+impl CUnaryOperator {
+    fn from(tokens: &mut Iter<Token>) -> Result<CUnaryOperator, String> {
         trace!("Parsing UnaryOperator");
 
         match tokens.next().unwrap() {

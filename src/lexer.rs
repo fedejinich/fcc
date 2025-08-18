@@ -1,7 +1,7 @@
 use log::{debug, trace};
 use regex::Regex;
 
-#[derive(Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum Token {
     Identifier(String),
     Constant(String),

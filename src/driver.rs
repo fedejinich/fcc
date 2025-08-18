@@ -4,7 +4,7 @@ use clap::Parser;
 use log::{debug, info};
 
 use crate::ast::asm::AsmProgram;
-use crate::ast::c::{CProgram, Parseable};
+use crate::ast::c::CProgram;
 use crate::ast::tacky::TackyProgram;
 use crate::lexer::lex;
 use crate::util::replace_c_with_i;
@@ -127,7 +127,7 @@ impl CompilerDriver {
         }
 
         // parse tokens into ast
-        let c_program = CProgram::parse(&mut tokens.iter())?;
+        let c_program = CProgram::try_from(tokens)?;
         if self.print_ast {
             println!("{c_program}");
         }
