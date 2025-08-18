@@ -5,6 +5,8 @@ use std::{
     sync::atomic::{AtomicUsize, Ordering},
 };
 
+use log::debug;
+
 use crate::{
     ast::c::{CFunctionDefinition, CIdentifier, CProgram, CStatement},
     util::indent,
@@ -18,23 +20,24 @@ fn next_id() -> usize {
     COUNTER.fetch_add(1, Ordering::Relaxed)
 }
 
+#[derive(Clone, Debug)]
 pub struct TackyProgram {
     pub function_definition: TackyFunctionDefinition,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct TackyFunctionDefinition {
     pub name: TackyIdentifier,
     pub instructions: Vec<TackyInstruction>,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub enum TackyInstruction {
     Return(TackyValue),
     Unary(TackyUnaryOperator, TackyValue, TackyValue),
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct TackyIdentifier {
     pub value: String,
 }
@@ -47,13 +50,13 @@ impl TackyIdentifier {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub enum TackyValue {
     Constant(i32),
     Var(TackyIdentifier),
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub enum TackyUnaryOperator {
     Complement,
     Negate,
@@ -91,12 +94,18 @@ impl From<CIdentifier> for TackyIdentifier {
 impl TackyInstruction {
     fn from(statement: CStatement) -> Vec<TackyInstruction> {
         let mut instructions = vec![];
-        match statement {
+        let i = match statement {
             CStatement::Return(expr) => {
-                let _ = TackyInstruction::from_expr(expr, &mut instructions);
+                let v = TackyInstruction::from_expr(expr, &mut instructions);
+                instructions.push(TackyInstruction::Return(v));
+
                 instructions
             }
-        }
+        };
+
+        debug!("Instructions: {i:?}");
+
+        i
     }
 
     fn from_expr(expr: CExpression, instructions: &mut Vec<TackyInstruction>) -> TackyValue {
@@ -109,6 +118,7 @@ impl TackyInstruction {
                 let unary_op = TackyUnaryOperator::from(op);
 
                 // todo(fede) this is a clone(hack?)
+                debug!("Moving {src:?} to {dst:?}");
                 instructions.push(TackyInstruction::Unary(unary_op, src, dst.clone()));
 
                 dst

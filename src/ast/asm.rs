@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use log::trace;
+use log::{debug, trace};
 
 use crate::ast::c::{CExpression, CFunctionDefinition, CProgram, CStatement};
 use crate::util::indent;
@@ -22,7 +22,7 @@ pub struct AsmFunctionDefinition {
     instructions: Vec<AsmInstruction>,
 }
 
-#[derive(Clone, Hash, Eq, PartialEq)]
+#[derive(Clone, Hash, Eq, PartialEq, Debug)]
 pub struct AsmIdetifier {
     value: String,
 }
@@ -36,13 +36,13 @@ pub enum AsmInstruction {
     Ret,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub enum AsmUnaryOperator {
     Neg,
     Not,
 }
 
-#[derive(Clone, Eq, PartialEq, Hash)]
+#[derive(Clone, Eq, PartialEq, Hash, Debug)]
 pub enum AsmOperand {
     Imm(i32),
     Register(Reg),
@@ -50,7 +50,7 @@ pub enum AsmOperand {
     Stack(i32),
 }
 
-#[derive(Clone, Eq, PartialEq, Hash)]
+#[derive(Clone, Eq, PartialEq, Hash, Debug)]
 pub enum Reg {
     AX,
     R10,
@@ -63,10 +63,15 @@ impl AsmProgram {
         }
     }
 
+    pub fn code_emit(&self) -> String {
+        self.function_definition.code_emit()
+    }
+
     /// replaces pseudoregisters with stack slots and returns the last stack memory address
     pub fn replace_pseudoregisters(&self) -> (Self, i32) {
-        let (fd, offset) = self.function_definition.with_regs();
-        (AsmProgram::new(fd), offset)
+        let (new_fd, last_offset) = self.function_definition.with_regs();
+
+        (AsmProgram::new(new_fd), last_offset)
     }
 
     /// allocates stack and fixes Mov instructions
@@ -80,8 +85,29 @@ impl AsmFunctionDefinition {
         AsmFunctionDefinition { name, instructions }
     }
 
+    pub fn code_emit(&self) -> String {
+        let instructions = self
+            .instructions
+            .iter()
+            .map(|i| i.code_emit())
+            .collect::<Vec<String>>()
+            .join("\n");
+
+        [
+            indent(format!(".globl _{}", self.name.value).as_str(), 4),
+            format!("\n_{}:", self.name.value),
+            indent("pushq %rbp", 4),
+            indent("movq %rsp, %rbp", 4),
+            indent(instructions.as_str(), 4),
+        ]
+        .join("\n")
+    }
+
+    /// replace each pseudoregister with the same address on the stack every time it appears”
     pub fn with_regs(&self) -> (Self, i32) {
         let (pseudo_reg_map, last_offset) = self.ids_offset_map();
+
+        debug!("Pseudo registers map: {pseudo_reg_map:?}");
 
         (
             AsmFunctionDefinition::new(
@@ -116,7 +142,8 @@ impl AsmFunctionDefinition {
 
     fn fix_instructions(&self, last_offset: i32) -> AsmFunctionDefinition {
         let mut instructions = vec![AsmInstruction::AllocateStack(last_offset)];
-        let mut fixed_instructions = self.instructions
+        let mut fixed_instructions = self
+            .instructions
             .iter()
             .flat_map(|i| {
                 // splits mov instructions that move stack slots to registers
@@ -125,33 +152,55 @@ impl AsmFunctionDefinition {
                 match i {
                     AsmInstruction::Mov(AsmOperand::Stack(src), AsmOperand::Stack(dst)) => {
                         vec![
-                            AsmInstruction::Mov(AsmOperand::Stack(*src), AsmOperand::Register(Reg::R10)),
-                            AsmInstruction::Mov(AsmOperand::Register(Reg::R10), AsmOperand::Stack(*dst))
+                            AsmInstruction::Mov(
+                                AsmOperand::Stack(*src),
+                                AsmOperand::Register(Reg::R10),
+                            ),
+                            AsmInstruction::Mov(
+                                AsmOperand::Register(Reg::R10),
+                                AsmOperand::Stack(*dst),
+                            ),
                         ]
-                    },
-                    _ => vec![i.clone()]
+                    }
+                    _ => vec![i.clone()],
                 }
             })
             .collect();
         instructions.append(&mut fixed_instructions);
 
-        AsmFunctionDefinition::new(
-            self.name.clone(),
-            instructions
-        )
+        AsmFunctionDefinition::new(self.name.clone(), instructions)
     }
 }
 
 impl AsmInstruction {
+    pub fn code_emit(&self) -> String {
+        match self {
+            AsmInstruction::Comment(s) => format!("# {s}\n"),
+            AsmInstruction::Mov(src, dst) => {
+                format!("movl {}, {}\n", src.code_emit(), dst.code_emit())
+            }
+            AsmInstruction::Ret => ["movq %rbp, %rsp", "popq %rbp", "ret"].join("\n"),
+            AsmInstruction::Unary(unary_op, op) => {
+                format!("{} {}", unary_op.code_emit(), op.code_emit())
+            }
+            AsmInstruction::AllocateStack(val) => format!("subq ${val}, %rsp"),
+        }
+    }
+
     pub fn with_reg(&self, offset_map: &HashMap<AsmOperand, i32>) -> Self {
         match self {
             AsmInstruction::Mov(src, dst) => {
+                debug!("Moving {src:?} to {dst:?}");
                 AsmInstruction::Mov(src.with_reg(offset_map), dst.with_reg(offset_map))
             }
             AsmInstruction::Unary(unary_op, op) => {
+                debug!("Unary {unary_op:?} on {op:?}");
                 AsmInstruction::Unary(unary_op.clone(), op.with_reg(offset_map))
             }
-            _ => self.clone(),
+            _ => {
+                debug!("Not replacing registers");
+                self.clone()
+            }
         }
     }
 
@@ -164,7 +213,26 @@ impl AsmInstruction {
     }
 }
 
+impl AsmUnaryOperator {
+    fn code_emit(&self) -> String {
+        match self {
+            AsmUnaryOperator::Neg => "negl".to_string(),
+            AsmUnaryOperator::Not => "notl".to_string(),
+        }
+    }
+}
+
 impl AsmOperand {
+    fn code_emit(&self) -> String {
+        match self {
+            AsmOperand::Register(Reg::AX) => "%eax".to_string(),
+            AsmOperand::Register(Reg::R10) => "%r10d".to_string(),
+            AsmOperand::Stack(val) => format!("{val}(%rbp)"),
+            AsmOperand::Imm(num) => format!("${num}"),
+            _ => panic!("invalid operand"),
+        }
+    }
+
     fn with_reg(&self, regs_map: &HashMap<AsmOperand, i32>) -> Self {
         regs_map
             .get(self)
@@ -235,77 +303,6 @@ impl From<TackyUnaryOperator> for AsmUnaryOperator {
     }
 }
 
-// impl From<TackyInstruction> for AsmInstruction {
-//     fn from(tacky_instruction: TackyInstruction) -> Self {
-//         match tacky_instruction {
-//             TackyInstruction::Unary(op, src, dst) => {
-//                 AsmInstruction::Unary(AsmUnaryOperator::from(op), AsmOperand::from(src), AsmOperand::from(dst))
-//             }
-//         }
-//     }
-// }
-//
-// impl From<TackyUnaryOperator> for AsmUnaryOperator {
-//     fn from(tacky_unary_operator: TackyUnaryOperator) -> Self {
-//         match tacky_unary_operator {
-//             TackyUnaryOperator::Negate => AsmUnaryOperator::Neg,
-//             TackyUnaryOperator::Complement => AsmUnaryOperator::Not,
-//         }
-//     }
-// }
-//
-// impl From<TackyValue> for AsmOperand {
-//     fn from(tacky_value: TackyValue) -> Self {
-//         match tacky_value {
-//             TackyValue::Constant(c) => AsmOperand::Imm(c),
-//             TackyValue::Var
-
-// impl AsmProgram {
-//     pub fn code_emit(&self) -> String {
-//         self.function_definition.code_emit()
-//     }
-// }
-//
-// impl AsmFunctionDefinition {
-//     pub fn code_emit(&self) -> String {
-//         let instructions = self
-//             .instructions
-//             .iter()
-//             .map(|i| i.code_emit())
-//             .collect::<String>();
-//
-//         format!(
-//             ".globl _{}\n{}\n{}",
-//             self.name.value,
-//             format!("\n_{}:", self.name.value).as_str(),
-//             indent(instructions.as_str(), 4)
-//         )
-//     }
-// }
-//
-// impl AsmInstruction {
-//     pub fn code_emit(&self) -> String {
-//         match self {
-//             AsmInstruction::Comment(s) => format!("# {s}\n"),
-//             AsmInstruction::Mov(src, dst) => {
-//                 format!("mov {}, {}\n", src.code_emit(), dst.code_emit())
-//             }
-//             AsmInstruction::Ret => "ret\n".to_string(),
-//         }
-//     }
-// }
-//
-// impl AsmOperand {
-//     fn code_emit(&self) -> String {
-//         match self {
-//             AsmOperand::Register => "%eax".to_string(),
-//             AsmOperand::Imm(num) => {
-//                 format!("${num}")
-//             }
-//         }
-//     }
-// }
-//
 // impl AsmInstruction {
 //     fn from(c_statement: CStatement) -> Vec<AsmInstruction> {
 //         match c_statement {

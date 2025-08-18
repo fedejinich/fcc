@@ -40,4 +40,7 @@ echo "Testing tacky"
 ./test_compiler "$FCC_PATH" --chapter 2 --stage tacky
 
 echo "Testing codegen"
-./test_compiler "$FCC_PATH" --chapter 2 --stage codegen 
+./test_compiler "$FCC_PATH" --chapter 2 --stage codegen
+
+echo "Integration tests"
+./test_compiler "$FCC_PATH" --chapter 2

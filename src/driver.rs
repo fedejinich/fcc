@@ -149,22 +149,24 @@ impl CompilerDriver {
 
         // generate assembly
         let assembly_file_name = preprocessed_file.replace(".i", ".asm");
+
+        // todo(fede) this should be a monad
         let (assembly_program, last_offset) =
             AsmProgram::from(tacky_program).replace_pseudoregisters();
-        let _ = assembly_program.fix_instructions(last_offset);
+        let assembly_program = assembly_program.fix_instructions(last_offset);
 
         if self.codegen {
             std::process::exit(0);
         }
-        //
-        // let code = assembly_program.code_emit();
-        // fs::write(&assembly_file_name, &code).expect("couldn't write assembly file");
-        //
-        // debug!("\n{code}");
-        //
-        // fs::remove_file(preprocessed_file).expect("couldn't remove preprocessed file");
-        // debug!("file removed");
-        //
+
+        let code = assembly_program.code_emit();
+        fs::write(&assembly_file_name, &code).expect("couldn't write assembly file");
+
+        debug!("\n{code}");
+
+        fs::remove_file(preprocessed_file).expect("couldn't remove preprocessed file");
+        debug!("file removed");
+
         Ok(assembly_file_name)
     }
 
