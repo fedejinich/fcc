@@ -61,8 +61,9 @@ impl AsmProgram {
         }
     }
 
-    pub fn with_regs(&self) -> Self {
-        AsmProgram::new(self.function_definition.with_regs())
+    pub fn with_regs(&self) -> (Self, i32) {
+        let (fd, offset) = self.function_definition.with_regs();
+        (AsmProgram::new(fd), offset)
     }
 
     pub fn fix_instructions(&self) -> Self {
@@ -75,30 +76,38 @@ impl AsmFunctionDefinition {
         AsmFunctionDefinition { name, instructions }
     }
 
-    pub fn with_regs(&self) -> Self {
-        let offset_map = self.ids_offset_map();
+    pub fn with_regs(&self) -> (Self, i32) {
+        let (pseudo_reg_map, last_offset) = self.ids_offset_map();
 
-        AsmFunctionDefinition::new(
-            self.name.clone(),
-            self.instructions
-                .iter()
-                .map(|i| i.with_reg(&offset_map))
-                .collect(),
+        (
+            AsmFunctionDefinition::new(
+                self.name.clone(),
+                self.instructions
+                    .iter()
+                    .map(|i| i.with_reg(&pseudo_reg_map))
+                    .collect(),
+            ),
+            last_offset,
         )
     }
 
-    fn ids_offset_map(&self) -> HashMap<AsmOperand, i32> {
-        self.instructions
+    fn ids_offset_map(&self) -> (HashMap<AsmOperand, i32>, i32) {
+        let (map, last_offset) = self
+            .instructions
             .iter()
             .flat_map(|i| i.operands())
             .flatten()
-            .fold(HashMap::new(), |mut acc, i| {
-                if !acc.contains_key(&i) {
-                    let offset = (acc.len() as i32) * -4;
-                    acc.insert(i, offset);
+            .fold((HashMap::new(), -4i32), |(mut acc, mut next), op| {
+                if let AsmOperand::Pseudo(_) = op {
+                    if !acc.contains_key(&op) {
+                        acc.insert(op.clone(), next);
+                        next -= 4; // siguiente slot hacia abajo
+                    }
                 }
-                acc
-            })
+                (acc, next)
+            });
+
+        (map, last_offset)
     }
 }
 
