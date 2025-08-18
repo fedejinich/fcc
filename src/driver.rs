@@ -147,16 +147,15 @@ impl CompilerDriver {
             std::process::exit(0);
         }
 
-        Ok("ok".to_string())
+        // generate assembly
+        let assembly_file_name = preprocessed_file.replace(".i", ".asm");
+        let assembly_program = AsmProgram::from(tacky_program);
+        let assembly_program = assembly_program.with_reg();
+        let _ = assembly_program.fix_instructions();
 
-        // // generate assembly
-        // let assembly_file_name = preprocessed_file.replace(".i", ".asm");
-        // // todo(fede) this will be changed to parse Asm program from Tacky program
-        // let assembly_program = AsmProgram::from(c_program);
-        //
-        // if self.codegen {
-        //     std::process::exit(0);
-        // }
+        if self.codegen {
+            std::process::exit(0);
+        }
         //
         // let code = assembly_program.code_emit();
         // fs::write(&assembly_file_name, &code).expect("couldn't write assembly file");
@@ -166,7 +165,7 @@ impl CompilerDriver {
         // fs::remove_file(preprocessed_file).expect("couldn't remove preprocessed file");
         // debug!("file removed");
         //
-        // Ok(assembly_file_name)
+        Ok(assembly_file_name)
     }
 
     fn assemble_and_link(&self, assembly_file: String) -> Result<i32, String> {

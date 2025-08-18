@@ -7,19 +7,23 @@ use super::tacky::{
     TackyValue,
 };
 
+#[derive(Clone)]
 pub struct AsmProgram {
     function_definition: AsmFunctionDefinition,
 }
 
+#[derive(Clone)]
 pub struct AsmFunctionDefinition {
     name: AsmIdetifier,
     instructions: Vec<AsmInstruction>,
 }
 
+#[derive(Clone)]
 pub struct AsmIdetifier {
     value: String,
 }
 
+#[derive(Clone)]
 pub enum AsmInstruction {
     Comment(String),
     Mov(AsmOperand, AsmOperand),
@@ -28,11 +32,13 @@ pub enum AsmInstruction {
     Ret,
 }
 
+#[derive(Clone)]
 pub enum AsmUnaryOperator {
     Neg,
     Not,
 }
 
+#[derive(Clone)]
 pub enum AsmOperand {
     Imm(i32),
     Register(Reg),
@@ -40,9 +46,20 @@ pub enum AsmOperand {
     Stack(i32),
 }
 
+#[derive(Clone)]
 pub enum Reg {
     AX,
     R10,
+}
+
+impl AsmProgram {
+    pub fn with_reg(&self) -> Self {
+        todo!()
+    }
+
+    pub fn fix_instructions(&self) -> Self {
+        todo!()
+    }
 }
 
 impl From<TackyProgram> for AsmProgram {

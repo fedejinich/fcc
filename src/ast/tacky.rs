@@ -172,11 +172,6 @@ impl fmt::Display for TackyInstruction {
             }
             TackyInstruction::Unary(op, src, dst) => {
                 writeln!(f, "Unary({}, {}, {})", op, src, dst)
-                // writeln!(f, "Unary(")?;
-                // writeln!(f, "{},", indent(&op.to_string(), 4))?;
-                // writeln!(f, "{},", indent(&src.to_string(), 4))?;
-                // writeln!(f, "{}", indent(&dst.to_string(), 4))?;
-                // writeln!(f, ")")
             }
         }
     }
