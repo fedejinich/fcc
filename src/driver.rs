@@ -4,7 +4,7 @@ use clap::Parser;
 use log::{debug, info};
 
 use crate::ast::asm::AsmProgram;
-use crate::ast::program::{CProgram, Parseable};
+use crate::ast::c::{CProgram, Parseable};
 use crate::ast::tacky::TackyProgram;
 use crate::lexer::lex;
 use crate::util::replace_c_with_i;

@@ -1,3 +1,3 @@
 pub mod asm;
-pub mod program;
+pub mod c;
 pub mod tacky;

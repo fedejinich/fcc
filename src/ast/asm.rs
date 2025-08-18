@@ -1,7 +1,7 @@
-use crate::ast::program::{CExpression, CFunctionDefinition, CProgram, CStatement};
+use crate::ast::c::{CExpression, CFunctionDefinition, CProgram, CStatement};
 use crate::util::indent;
 
-use super::program::CIdentifier;
+use super::c::CIdentifier;
 use super::tacky::{
     TackyFunctionDefinition, TackyIdentifier, TackyInstruction, TackyProgram, TackyUnaryOperator,
     TackyValue,

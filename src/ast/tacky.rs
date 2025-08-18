@@ -6,11 +6,11 @@ use std::{
 };
 
 use crate::{
-    ast::program::{CFunctionDefinition, CIdentifier, CProgram, CStatement},
+    ast::c::{CFunctionDefinition, CIdentifier, CProgram, CStatement},
     util::indent,
 };
 
-use super::program::{CExpression, CUnaryOperator};
+use super::c::{CExpression, CUnaryOperator};
 
 static COUNTER: AtomicUsize = AtomicUsize::new(0);
 
