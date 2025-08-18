@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use crate::ast::c::{CExpression, CFunctionDefinition, CProgram, CStatement};
 use crate::util::indent;
 
@@ -18,7 +20,7 @@ pub struct AsmFunctionDefinition {
     instructions: Vec<AsmInstruction>,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Hash, Eq, PartialEq)]
 pub struct AsmIdetifier {
     value: String,
 }
@@ -38,7 +40,7 @@ pub enum AsmUnaryOperator {
     Not,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Eq, PartialEq, Hash)]
 pub enum AsmOperand {
     Imm(i32),
     Register(Reg),
@@ -46,19 +48,87 @@ pub enum AsmOperand {
     Stack(i32),
 }
 
-#[derive(Clone)]
+#[derive(Clone, Eq, PartialEq, Hash)]
 pub enum Reg {
     AX,
     R10,
 }
 
 impl AsmProgram {
-    pub fn with_reg(&self) -> Self {
-        todo!()
+    pub fn new(function_definition: AsmFunctionDefinition) -> Self {
+        AsmProgram {
+            function_definition,
+        }
+    }
+
+    pub fn with_regs(&self) -> Self {
+        AsmProgram::new(self.function_definition.with_regs())
     }
 
     pub fn fix_instructions(&self) -> Self {
         todo!()
+    }
+}
+
+impl AsmFunctionDefinition {
+    pub fn new(name: AsmIdetifier, instructions: Vec<AsmInstruction>) -> Self {
+        AsmFunctionDefinition { name, instructions }
+    }
+
+    pub fn with_regs(&self) -> Self {
+        let offset_map = self.ids_offset_map();
+
+        AsmFunctionDefinition::new(
+            self.name.clone(),
+            self.instructions
+                .iter()
+                .map(|i| i.with_reg(&offset_map))
+                .collect(),
+        )
+    }
+
+    fn ids_offset_map(&self) -> HashMap<AsmOperand, i32> {
+        self.instructions
+            .iter()
+            .flat_map(|i| i.operands())
+            .flatten()
+            .fold(HashMap::new(), |mut acc, i| {
+                if !acc.contains_key(&i) {
+                    let offset = (acc.len() as i32) * -4;
+                    acc.insert(i, offset);
+                }
+                acc
+            })
+    }
+}
+
+impl AsmInstruction {
+    pub fn with_reg(&self, offset_map: &HashMap<AsmOperand, i32>) -> Self {
+        match self {
+            AsmInstruction::Mov(src, dst) => {
+                AsmInstruction::Mov(src.with_reg(offset_map), dst.with_reg(offset_map))
+            }
+            AsmInstruction::Unary(unary_op, op) => {
+                AsmInstruction::Unary(unary_op.clone(), op.with_reg(offset_map))
+            }
+            _ => self.clone(),
+        }
+    }
+
+    fn operands(&self) -> Option<Vec<AsmOperand>> {
+        match self {
+            AsmInstruction::Mov(src, dst) => Some(vec![src.clone(), dst.clone()]),
+            AsmInstruction::Unary(_, op) => Some(vec![op.clone()]),
+            _ => None,
+        }
+    }
+}
+
+impl AsmOperand {
+    fn with_reg(&self, regs_map: &HashMap<AsmOperand, i32>) -> Self {
+        regs_map
+            .get(self)
+            .map_or(self.clone(), |i| AsmOperand::Stack(*i))
     }
 }
 

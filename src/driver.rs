@@ -149,8 +149,7 @@ impl CompilerDriver {
 
         // generate assembly
         let assembly_file_name = preprocessed_file.replace(".i", ".asm");
-        let assembly_program = AsmProgram::from(tacky_program);
-        let assembly_program = assembly_program.with_reg();
+        let assembly_program = AsmProgram::from(tacky_program).with_regs();
         let _ = assembly_program.fix_instructions();
 
         if self.codegen {
