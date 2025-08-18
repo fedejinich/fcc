@@ -190,11 +190,11 @@ impl AsmInstruction {
     pub fn with_reg(&self, offset_map: &HashMap<AsmOperand, i32>) -> Self {
         match self {
             AsmInstruction::Mov(src, dst) => {
-                debug!("Moving {src:?} to {dst:?}");
+                debug!("Replace pseudoregisters for Mov({src:?}, {dst:?})");
                 AsmInstruction::Mov(src.with_reg(offset_map), dst.with_reg(offset_map))
             }
             AsmInstruction::Unary(unary_op, op) => {
-                debug!("Unary {unary_op:?} on {op:?}");
+                debug!("Replace pseudoregisters for Unary({unary_op:?}, {op:?})");
                 AsmInstruction::Unary(unary_op.clone(), op.with_reg(offset_map))
             }
             _ => {
