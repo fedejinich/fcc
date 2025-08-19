@@ -3,10 +3,11 @@ use std::{fs, path::Path, process::Command};
 use clap::Parser;
 use log::{debug, info};
 
-use crate::codegen::x64::asm::AsmProgram;
 use crate::ast::CProgram;
-use crate::tacky::TackyProgram;
+use crate::codegen::x64::asm::AsmProgram;
+use crate::codegen::x64::fixup::AsmPipe;
 use crate::lexer::lex;
+use crate::tacky::TackyProgram;
 use crate::util::replace_c_with_i;
 
 #[derive(Parser, Debug)]
@@ -150,10 +151,10 @@ impl CompilerDriver {
         // generate assembly
         let assembly_file_name = preprocessed_file.replace(".i", ".asm");
 
-        // todo(fede) this should be a monad
-        let (assembly_program, last_offset) =
-            AsmProgram::from(tacky_program).replace_pseudoregisters();
-        let assembly_program = assembly_program.fix_instructions(last_offset);
+        let assembly_program = AsmPipe::from(tacky_program)
+            .replace_pseudoregisters()
+            .fix_instructions()
+            .out();
 
         if self.codegen {
             std::process::exit(0);

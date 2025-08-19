@@ -13,18 +13,18 @@ use crate::tacky::{
 
 #[derive(Clone)]
 pub struct AsmProgram {
-    function_definition: AsmFunctionDefinition,
+    pub function_definition: AsmFunctionDefinition,
 }
 
 #[derive(Clone)]
 pub struct AsmFunctionDefinition {
-    name: AsmIdetifier,
-    instructions: Vec<AsmInstruction>,
+    pub name: AsmIdetifier,
+    pub instructions: Vec<AsmInstruction>,
 }
 
 #[derive(Clone, Hash, Eq, PartialEq, Debug)]
 pub struct AsmIdetifier {
-    value: String,
+    pub value: String,
 }
 
 #[derive(Clone)]
@@ -66,18 +66,6 @@ impl AsmProgram {
     pub fn code_emit(&self) -> String {
         self.function_definition.code_emit()
     }
-
-    /// replaces pseudoregisters with stack slots and returns the last stack memory address
-    pub fn replace_pseudoregisters(&self) -> (Self, i32) {
-        let (new_fd, last_offset) = self.function_definition.with_regs();
-
-        (AsmProgram::new(new_fd), last_offset)
-    }
-
-    /// allocates stack and fixes Mov instructions
-    pub fn fix_instructions(&self, last_offset: i32) -> Self {
-        AsmProgram::new(self.function_definition.fix_instructions(last_offset))
-    }
 }
 
 impl AsmFunctionDefinition {
@@ -102,73 +90,6 @@ impl AsmFunctionDefinition {
         ]
         .join("\n")
     }
-
-    /// replace each pseudoregister with the same address on the stack every time it appears”
-    pub fn with_regs(&self) -> (Self, i32) {
-        let (pseudo_reg_map, last_offset) = self.ids_offset_map();
-
-        debug!("Pseudo registers map: {pseudo_reg_map:?}");
-
-        (
-            AsmFunctionDefinition::new(
-                self.name.clone(),
-                self.instructions
-                    .iter()
-                    .map(|i| i.with_reg(&pseudo_reg_map))
-                    .collect(),
-            ),
-            last_offset,
-        )
-    }
-
-    fn ids_offset_map(&self) -> (HashMap<AsmOperand, i32>, i32) {
-        let (map, last_offset) = self
-            .instructions
-            .iter()
-            .flat_map(|i| i.operands())
-            .flatten()
-            .fold((HashMap::new(), -4i32), |(mut acc, mut next), op| {
-                if let AsmOperand::Pseudo(_) = op {
-                    if !acc.contains_key(&op) {
-                        acc.insert(op.clone(), next);
-                        next -= 4; // siguiente slot hacia abajo
-                    }
-                }
-                (acc, next)
-            });
-
-        (map, last_offset)
-    }
-
-    fn fix_instructions(&self, last_offset: i32) -> AsmFunctionDefinition {
-        let mut instructions = vec![AsmInstruction::AllocateStack(last_offset)];
-        let mut fixed_instructions = self
-            .instructions
-            .iter()
-            .flat_map(|i| {
-                trace!("spliting mov instructions");
-                match i {
-                    AsmInstruction::Mov(AsmOperand::Stack(src), AsmOperand::Stack(dst)) => {
-                        vec![
-                            AsmInstruction::Comment("splited mov into two mov instructions".to_string()),
-                            AsmInstruction::Mov(
-                                AsmOperand::Stack(*src),
-                                AsmOperand::Register(Reg::R10),
-                            ),
-                            AsmInstruction::Mov(
-                                AsmOperand::Register(Reg::R10),
-                                AsmOperand::Stack(*dst),
-                            ),
-                        ]
-                    }
-                    _ => vec![i.clone()],
-                }
-            })
-            .collect();
-        instructions.append(&mut fixed_instructions);
-
-        AsmFunctionDefinition::new(self.name.clone(), instructions)
-    }
 }
 
 impl AsmInstruction {
@@ -183,31 +104,6 @@ impl AsmInstruction {
                 format!("{} {}", unary_op.code_emit(), op.code_emit())
             }
             AsmInstruction::AllocateStack(val) => format!("subq ${val}, %rsp"),
-        }
-    }
-
-    pub fn with_reg(&self, offset_map: &HashMap<AsmOperand, i32>) -> Self {
-        match self {
-            AsmInstruction::Mov(src, dst) => {
-                debug!("Replace pseudoregisters for Mov({src:?}, {dst:?})");
-                AsmInstruction::Mov(src.with_reg(offset_map), dst.with_reg(offset_map))
-            }
-            AsmInstruction::Unary(unary_op, op) => {
-                debug!("Replace pseudoregisters for Unary({unary_op:?}, {op:?})");
-                AsmInstruction::Unary(unary_op.clone(), op.with_reg(offset_map))
-            }
-            _ => {
-                debug!("Not replacing registers");
-                self.clone()
-            }
-        }
-    }
-
-    fn operands(&self) -> Option<Vec<AsmOperand>> {
-        match self {
-            AsmInstruction::Mov(src, dst) => Some(vec![src.clone(), dst.clone()]),
-            AsmInstruction::Unary(_, op) => Some(vec![op.clone()]),
-            _ => None,
         }
     }
 }
@@ -230,12 +126,6 @@ impl AsmOperand {
             AsmOperand::Imm(num) => format!("${num}"),
             _ => panic!("invalid operand"),
         }
-    }
-
-    fn with_reg(&self, regs_map: &HashMap<AsmOperand, i32>) -> Self {
-        regs_map
-            .get(self)
-            .map_or(self.clone(), |i| AsmOperand::Stack(*i))
     }
 }
 
