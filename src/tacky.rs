@@ -14,12 +14,6 @@ use crate::{
 
 use super::ast::{CExpression, CUnaryOperator};
 
-static COUNTER: AtomicUsize = AtomicUsize::new(0);
-
-fn next_id() -> usize {
-    COUNTER.fetch_add(1, Ordering::Relaxed)
-}
-
 #[derive(Clone, Debug)]
 pub struct TackyProgram {
     pub function_definition: TackyFunctionDefinition,
@@ -40,6 +34,12 @@ pub enum TackyInstruction {
 #[derive(Clone, Debug)]
 pub struct TackyIdentifier {
     pub value: String,
+}
+
+static COUNTER: AtomicUsize = AtomicUsize::new(0);
+
+fn next_id() -> usize {
+    COUNTER.fetch_add(1, Ordering::Relaxed)
 }
 
 impl TackyIdentifier {

@@ -1,11 +1,5 @@
-use std::collections::HashMap;
-
-use log::{debug, trace};
-
-use crate::ast::{CExpression, CFunctionDefinition, CProgram, CStatement};
 use crate::util::indent;
 
-use crate::ast::CIdentifier;
 use crate::tacky::{
     TackyFunctionDefinition, TackyIdentifier, TackyInstruction, TackyProgram, TackyUnaryOperator,
     TackyValue,
@@ -191,54 +185,3 @@ impl From<TackyUnaryOperator> for AsmUnaryOperator {
         }
     }
 }
-
-// impl AsmInstruction {
-//     fn from(c_statement: CStatement) -> Vec<AsmInstruction> {
-//         match c_statement {
-//             CStatement::Return(exp) => vec![
-//                 AsmInstruction::Comment("return statement".to_string()),
-//                 AsmInstruction::Mov(AsmOperand::from(exp), AsmOperand::Register),
-//                 AsmInstruction::Ret,
-//             ],
-//         }
-//     }
-// }
-//
-// impl From<CProgram> for AsmProgram {
-//     fn from(c_program: CProgram) -> Self {
-//         AsmProgram {
-//             function_definition: AsmFunctionDefinition::from(c_program.function_definition),
-//         }
-//     }
-// }
-//
-// impl From<CFunctionDefinition> for AsmFunctionDefinition {
-//     fn from(c_function_definition: CFunctionDefinition) -> Self {
-//         AsmFunctionDefinition {
-//             name: AsmIdetifier::from(c_function_definition.name),
-//             instructions: c_function_definition
-//                 .body
-//                 .iter()
-//                 // todo(fede) remove clone
-//                 .flat_map(|e| AsmInstruction::from(e.clone()))
-//                 .collect::<Vec<AsmInstruction>>(),
-//         }
-//     }
-// }
-//
-// impl From<CIdentifier> for AsmIdetifier {
-//     fn from(c_identifier: CIdentifier) -> Self {
-//         AsmIdetifier {
-//             value: c_identifier.value,
-//         }
-//     }
-// }
-//
-// impl From<CExpression> for AsmOperand {
-//     fn from(c_expression: CExpression) -> Self {
-//         match c_expression {
-//             CExpression::Constant(c) => AsmOperand::Imm(c),
-//             CExpression::Unary(_u, _e) => todo!(),
-//         }
-//     }
-// }

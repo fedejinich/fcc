@@ -1,7 +1,6 @@
-use log::{debug, trace};
-use std::{fmt, slice::Iter};
+use std::fmt;
 
-use crate::{lexer::Token, util::indent};
+use crate::util::indent;
 
 // todo(fede) disable warnings for 'variables can be used directly in the `format!` string'
 

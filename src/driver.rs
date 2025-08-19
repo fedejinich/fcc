@@ -4,8 +4,7 @@ use clap::Parser;
 use log::{debug, info};
 
 use crate::ast::CProgram;
-use crate::codegen::x64::asm::AsmProgram;
-use crate::codegen::x64::fixup::AsmPipe;
+use crate::codegen::x64::pipe::AsmPipe;
 use crate::lexer::lex;
 use crate::tacky::TackyProgram;
 use crate::util::replace_c_with_i;

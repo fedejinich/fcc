@@ -145,7 +145,7 @@ fn ids_offset_map(function_definition: &AsmFunctionDefinition) -> (HashMap<AsmOp
     let (map, last_offset) = function_definition
         .instructions
         .iter()
-        .flat_map(|i| operands(i))
+        .flat_map(operands)
         .flatten()
         .fold((HashMap::new(), -4i32), |(mut acc, mut next), op| {
             if let AsmOperand::Pseudo(_) = op {

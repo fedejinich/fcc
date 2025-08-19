@@ -2,11 +2,12 @@ use std::slice::Iter;
 
 use log::{debug, trace};
 
-use crate::{ast::{CExpression, CFunctionDefinition, CIdentifier, CProgram, CStatement, CUnaryOperator}, lexer::Token};
+use crate::{
+    ast::{CExpression, CFunctionDefinition, CIdentifier, CProgram, CStatement, CUnaryOperator},
+    lexer::Token,
+};
 
 type ParseResult<T> = Result<T, String>;
-
-// AST PARSER
 
 impl TryFrom<Vec<Token>> for CProgram {
     type Error = String;

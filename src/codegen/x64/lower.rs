@@ -1,7 +1,12 @@
 use log::debug;
 
-use crate::{ast::{CExpression, CFunctionDefinition, CIdentifier, CProgram, CStatement, CUnaryOperator}, tacky::{TackyProgram, TackyFunctionDefinition, TackyIdentifier, TackyInstruction, TackyValue, TackyUnaryOperator}};
-
+use crate::{
+    ast::{CExpression, CFunctionDefinition, CIdentifier, CProgram, CStatement, CUnaryOperator},
+    tacky::{
+        TackyFunctionDefinition, TackyIdentifier, TackyInstruction, TackyProgram,
+        TackyUnaryOperator, TackyValue,
+    },
+};
 
 impl From<CProgram> for TackyProgram {
     fn from(program: CProgram) -> Self {
@@ -16,7 +21,7 @@ impl From<CFunctionDefinition> for TackyFunctionDefinition {
         let instructions = function_definition
             .body
             .into_iter()
-            .flat_map(|s| TackyInstruction::from(s))
+            .flat_map(TackyInstruction::from)
             .collect();
 
         TackyFunctionDefinition {
@@ -76,4 +81,3 @@ impl From<CUnaryOperator> for TackyUnaryOperator {
         }
     }
 }
-
