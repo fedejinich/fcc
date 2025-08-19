@@ -3,15 +3,13 @@ use std::slice::Iter;
 use log::{debug, trace};
 
 use crate::{
-    ast::program::{
-        CExpression, CFunctionDefinition, CIdentifier, CProgram, CStatement, CUnaryOperator,
-    },
+    ast::program::{Expression, FunctionDefinition, Identifier, Program, Statement, UnaryOperator},
     lexer::Token,
 };
 
 type ParseResult<T> = Result<T, String>;
 
-impl TryFrom<Vec<Token>> for CProgram {
+impl TryFrom<Vec<Token>> for Program {
     type Error = String;
 
     fn try_from(tokens: Vec<Token>) -> Result<Self, Self::Error> {
@@ -21,7 +19,7 @@ impl TryFrom<Vec<Token>> for CProgram {
         debug!("Attempting to parse function definition");
 
         let mut iter = tokens.iter();
-        let function_definition = CFunctionDefinition::from(&mut iter)?;
+        let function_definition = FunctionDefinition::from(&mut iter)?;
 
         debug!(
             "Successfully parsed function definition: {}",
@@ -29,7 +27,7 @@ impl TryFrom<Vec<Token>> for CProgram {
         );
         trace!("Program parsing completed");
 
-        let program_ast = CProgram {
+        let program_ast = Program {
             function_definition,
         };
 
@@ -46,14 +44,14 @@ impl TryFrom<Vec<Token>> for CProgram {
     }
 }
 
-impl CFunctionDefinition {
+impl FunctionDefinition {
     fn from(tokens: &mut Iter<Token>) -> ParseResult<Self> {
         trace!("Parsing FunctionDefinition");
 
         token_eq(Token::Int, tokens)?;
 
         debug!("Parsing function identifier");
-        let identifier = CIdentifier::from(tokens)?;
+        let identifier = Identifier::from(tokens)?;
         debug!("Found function: {}", identifier.value);
 
         token_eq(Token::OpenParen, tokens)?;
@@ -62,25 +60,25 @@ impl CFunctionDefinition {
         token_eq(Token::OpenBrace, tokens)?;
 
         debug!("Parsing function body statement");
-        let body = CStatement::from(tokens)?;
+        let body = Statement::from(tokens)?;
 
         token_eq(Token::CloseBrace, tokens)?;
 
         trace!("FunctionDefinition parsing completed successfully");
-        Ok(CFunctionDefinition {
+        Ok(FunctionDefinition {
             name: identifier,
             body,
         })
     }
 }
 
-impl CIdentifier {
+impl Identifier {
     fn from(tokens: &mut Iter<Token>) -> ParseResult<Self> {
         trace!("Parsing Identifier");
 
         if let Some(Token::Identifier(n)) = tokens.next() {
             trace!("Found identifier: {}", n);
-            Ok(CIdentifier { value: n.clone() })
+            Ok(Identifier { value: n.clone() })
         } else {
             debug!("Expected identifier but found none");
             Err(String::from("expected identifier"))
@@ -88,7 +86,7 @@ impl CIdentifier {
     }
 }
 
-impl CStatement {
+impl Statement {
     fn from(tokens: &mut Iter<Token>) -> ParseResult<Vec<Self>> {
         trace!("Parsing Statement");
 
@@ -99,11 +97,11 @@ impl CStatement {
                     token_eq(Token::Return, tokens)?;
 
                     debug!("Parsing return expression");
-                    let expr = CExpression::from(tokens)?;
+                    let expr = Expression::from(tokens)?;
 
                     token_eq(Token::Semicolon, tokens)?;
 
-                    statements.push(CStatement::Return(expr));
+                    statements.push(Statement::Return(expr));
                 }
                 _ => break,
             };
@@ -119,7 +117,7 @@ impl CStatement {
     }
 }
 
-impl CExpression {
+impl Expression {
     fn from(tokens: &mut Iter<Token>) -> ParseResult<Self> {
         trace!("Parsing Expression");
 
@@ -129,19 +127,19 @@ impl CExpression {
                 trace!("Found integer constant: {}", n);
                 let _ = tokens.next();
 
-                Ok(CExpression::Constant(n.parse::<i32>().unwrap()))
+                Ok(Expression::Constant(n.parse::<i32>().unwrap()))
             }
             Token::Complement | Token::Negate => {
                 trace!("Found unary operator: {:?}", next_token);
-                let unary = CUnaryOperator::from(tokens)?;
-                let exp = CExpression::from(tokens)?;
+                let unary = UnaryOperator::from(tokens)?;
+                let exp = Expression::from(tokens)?;
 
-                Ok(CExpression::Unary(unary, Box::new(exp)))
+                Ok(Expression::Unary(unary, Box::new(exp)))
             }
             Token::OpenParen => {
                 trace!("Found open parenthesis");
                 let _ = tokens.next();
-                let exp = CExpression::from(tokens)?;
+                let exp = Expression::from(tokens)?;
                 token_eq(Token::CloseParen, tokens)?;
 
                 Ok(exp)
@@ -151,13 +149,13 @@ impl CExpression {
     }
 }
 
-impl CUnaryOperator {
-    fn from(tokens: &mut Iter<Token>) -> Result<CUnaryOperator, String> {
+impl UnaryOperator {
+    fn from(tokens: &mut Iter<Token>) -> Result<UnaryOperator, String> {
         trace!("Parsing UnaryOperator");
 
         match tokens.next().unwrap() {
-            Token::Complement => Ok(CUnaryOperator::Complement),
-            Token::Negate => Ok(CUnaryOperator::Negate),
+            Token::Complement => Ok(UnaryOperator::Complement),
+            Token::Negate => Ok(UnaryOperator::Negate),
             _ => Err("could not parse unary operator".to_string()),
         }
     }

@@ -3,25 +3,23 @@
 use log::debug;
 
 use crate::{
-    ast::program::{
-        CExpression, CFunctionDefinition, CIdentifier, CProgram, CStatement, CUnaryOperator,
-    },
+    ast::program::{Expression, FunctionDefinition, Identifier, Program, Statement, UnaryOperator},
     tacky::program::{
         TackyFunctionDefinition, TackyIdentifier, TackyInstruction, TackyProgram,
         TackyUnaryOperator, TackyValue,
     },
 };
 
-impl From<CProgram> for TackyProgram {
-    fn from(program: CProgram) -> Self {
+impl From<Program> for TackyProgram {
+    fn from(program: Program) -> Self {
         TackyProgram {
             function_definition: TackyFunctionDefinition::from(program.function_definition),
         }
     }
 }
 
-impl From<CFunctionDefinition> for TackyFunctionDefinition {
-    fn from(function_definition: CFunctionDefinition) -> Self {
+impl From<FunctionDefinition> for TackyFunctionDefinition {
+    fn from(function_definition: FunctionDefinition) -> Self {
         let instructions = function_definition
             .body
             .into_iter()
@@ -35,17 +33,17 @@ impl From<CFunctionDefinition> for TackyFunctionDefinition {
     }
 }
 
-impl From<CIdentifier> for TackyIdentifier {
-    fn from(value: CIdentifier) -> Self {
+impl From<Identifier> for TackyIdentifier {
+    fn from(value: Identifier) -> Self {
         TackyIdentifier { value: value.value }
     }
 }
 
 impl TackyInstruction {
-    fn from(statement: CStatement) -> Vec<TackyInstruction> {
+    fn from(statement: Statement) -> Vec<TackyInstruction> {
         let mut instructions = vec![];
         let i = match statement {
-            CStatement::Return(expr) => {
+            Statement::Return(expr) => {
                 let v = TackyInstruction::from_expr(expr, &mut instructions);
                 instructions.push(TackyInstruction::Return(v));
 
@@ -58,10 +56,10 @@ impl TackyInstruction {
         i
     }
 
-    fn from_expr(expr: CExpression, instructions: &mut Vec<TackyInstruction>) -> TackyValue {
+    fn from_expr(expr: Expression, instructions: &mut Vec<TackyInstruction>) -> TackyValue {
         match expr {
-            CExpression::Constant(c) => TackyValue::Constant(c),
-            CExpression::Unary(op, inner_exp) => {
+            Expression::Constant(c) => TackyValue::Constant(c),
+            Expression::Unary(op, inner_exp) => {
                 let src = TackyInstruction::from_expr(*inner_exp, instructions);
                 // todo(fede) provide a more descriptive name
                 let dst = TackyValue::Var(TackyIdentifier::new("tmp"));
@@ -77,11 +75,11 @@ impl TackyInstruction {
     }
 }
 
-impl From<CUnaryOperator> for TackyUnaryOperator {
-    fn from(op: CUnaryOperator) -> Self {
+impl From<UnaryOperator> for TackyUnaryOperator {
+    fn from(op: UnaryOperator) -> Self {
         match op {
-            CUnaryOperator::Complement => TackyUnaryOperator::Complement,
-            CUnaryOperator::Negate => TackyUnaryOperator::Negate,
+            UnaryOperator::Complement => TackyUnaryOperator::Complement,
+            UnaryOperator::Negate => TackyUnaryOperator::Negate,
         }
     }
 }

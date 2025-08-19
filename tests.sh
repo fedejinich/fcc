@@ -28,19 +28,36 @@ cargo build
 # echo "Integration tests"
 # ./test_compiler "$FCC_PATH" --chapter 1
 
-echo "Testing chapter 2"
+# echo "Testing chapter 2"
+#
+# echo "Testing lexer"
+# ./test_compiler "$FCC_PATH" --chapter 2 --stage lex
+#
+# echo "Testing parser"
+# ./test_compiler "$FCC_PATH" --chapter 2 --stage parse
+#
+# echo "Testing tacky"
+# ./test_compiler "$FCC_PATH" --chapter 2 --stage tacky
+#
+# echo "Testing codegen"
+# ./test_compiler "$FCC_PATH" --chapter 2 --stage codegen
+#
+# echo "Integration tests"
+# ./test_compiler "$FCC_PATH" --chapter 2
+
+echo "Testing chapter 3"
 
 echo "Testing lexer"
-./test_compiler "$FCC_PATH" --chapter 2 --stage lex
+./test_compiler "$FCC_PATH" --chapter 3 --stage lex
 
 echo "Testing parser"
-./test_compiler "$FCC_PATH" --chapter 2 --stage parse
+./test_compiler "$FCC_PATH" --chapter 3 --stage parse
 
-echo "Testing tacky"
-./test_compiler "$FCC_PATH" --chapter 2 --stage tacky
-
-echo "Testing codegen"
-./test_compiler "$FCC_PATH" --chapter 2 --stage codegen
-
-echo "Integration tests"
-./test_compiler "$FCC_PATH" --chapter 2
+# echo "Testing tacky"
+# ./test_compiler "$FCC_PATH" --chapter 2 --stage tacky
+#
+# echo "Testing codegen"
+# ./test_compiler "$FCC_PATH" --chapter 2 --stage codegen
+#
+# echo "Integration tests"
+# ./test_compiler "$FCC_PATH" --chapter 2

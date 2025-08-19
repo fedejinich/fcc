@@ -3,7 +3,7 @@ use std::{fs, path::Path, process::Command};
 use clap::Parser;
 use log::{debug, info};
 
-use crate::ast::program::CProgram;
+use crate::ast::program::Program;
 use crate::codegen::x64::pipe::AsmPipe;
 use crate::lexer::lex;
 use crate::tacky::program::TackyProgram;
@@ -127,7 +127,7 @@ impl CompilerDriver {
         }
 
         // parse tokens into ast
-        let c_program = CProgram::try_from(tokens)?;
+        let c_program = Program::try_from(tokens)?;
         if self.print_ast {
             println!("{c_program}");
         }
