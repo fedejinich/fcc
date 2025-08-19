@@ -6,8 +6,10 @@ use log::debug;
 use crate::driver::CompilerDriver;
 
 mod ast;
+mod codegen;
 mod driver;
 mod lexer;
+mod tacky;
 mod util;
 
 pub fn title() -> String {

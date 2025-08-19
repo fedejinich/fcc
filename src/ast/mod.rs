@@ -1,3 +1,2 @@
-pub mod asm;
-pub mod c;
-pub mod tacky;
+pub mod program;
+pub mod parser;
