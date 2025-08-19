@@ -1,4 +1,4 @@
-//! This module contains tacky AST which is an intermediate
+//! This module contains  tacky AST which is an intermediate
 //! representation of the source code.
 
 use std::{

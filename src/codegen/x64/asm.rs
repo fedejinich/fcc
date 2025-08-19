@@ -1,4 +1,4 @@
-use crate::util::indent;
+//! This module defines the structure of the x64 assembly code as an AST
 
 use crate::tacky::program::{
     TackyFunctionDefinition, TackyIdentifier, TackyInstruction, TackyProgram, TackyUnaryOperator,
@@ -58,68 +58,13 @@ impl AsmProgram {
     }
 
     pub fn code_emit(&self) -> String {
-        self.function_definition.code_emit()
+        self.to_string_asm()
     }
 }
 
 impl AsmFunctionDefinition {
     pub fn new(name: AsmIdetifier, instructions: Vec<AsmInstruction>) -> Self {
         AsmFunctionDefinition { name, instructions }
-    }
-
-    pub fn code_emit(&self) -> String {
-        let instructions = self
-            .instructions
-            .iter()
-            .map(|i| i.code_emit())
-            .collect::<Vec<String>>()
-            .join("\n");
-
-        [
-            indent(format!(".globl _{}", self.name.value).as_str(), 4),
-            format!("\n_{}:", self.name.value),
-            indent("pushq %rbp", 4),
-            indent("movq %rsp, %rbp", 4),
-            indent(instructions.as_str(), 4),
-        ]
-        .join("\n")
-    }
-}
-
-impl AsmInstruction {
-    pub fn code_emit(&self) -> String {
-        match self {
-            AsmInstruction::Comment(s) => format!("# {s}\n"),
-            AsmInstruction::Mov(src, dst) => {
-                format!("movl {}, {}\n", src.code_emit(), dst.code_emit())
-            }
-            AsmInstruction::Ret => ["movq %rbp, %rsp", "popq %rbp", "ret"].join("\n"),
-            AsmInstruction::Unary(unary_op, op) => {
-                format!("{} {}", unary_op.code_emit(), op.code_emit())
-            }
-            AsmInstruction::AllocateStack(val) => format!("subq ${val}, %rsp"),
-        }
-    }
-}
-
-impl AsmUnaryOperator {
-    fn code_emit(&self) -> String {
-        match self {
-            AsmUnaryOperator::Neg => "negl".to_string(),
-            AsmUnaryOperator::Not => "notl".to_string(),
-        }
-    }
-}
-
-impl AsmOperand {
-    fn code_emit(&self) -> String {
-        match self {
-            AsmOperand::Register(Reg::AX) => "%eax".to_string(),
-            AsmOperand::Register(Reg::R10) => "%r10d".to_string(),
-            AsmOperand::Stack(val) => format!("{val}(%rbp)"),
-            AsmOperand::Imm(num) => format!("${num}"),
-            _ => panic!("invalid operand"),
-        }
     }
 }
 
