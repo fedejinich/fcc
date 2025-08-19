@@ -3,10 +3,10 @@ use std::{fs, path::Path, process::Command};
 use clap::Parser;
 use log::{debug, info};
 
-use crate::ast::CProgram;
+use crate::ast::program::CProgram;
 use crate::codegen::x64::pipe::AsmPipe;
 use crate::lexer::lex;
-use crate::tacky::TackyProgram;
+use crate::tacky::program::TackyProgram;
 use crate::util::replace_c_with_i;
 
 #[derive(Parser, Debug)]

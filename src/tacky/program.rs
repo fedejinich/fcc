@@ -1,20 +1,13 @@
-#![allow(warnings)]
+//! This module contains tacky AST which is an intermediate
+//! representation of the source code.
 
 use std::{
     fmt,
     sync::atomic::{AtomicUsize, Ordering},
 };
 
-use log::debug;
+use crate::util::indent;
 
-use crate::{
-    ast::{CFunctionDefinition, CIdentifier, CProgram, CStatement},
-    util::indent,
-};
-
-use super::ast::{CExpression, CUnaryOperator};
-
-#[derive(Clone, Debug)]
 pub struct TackyProgram {
     pub function_definition: TackyFunctionDefinition,
 }
@@ -36,6 +29,18 @@ pub struct TackyIdentifier {
     pub value: String,
 }
 
+#[derive(Clone, Debug)]
+pub enum TackyValue {
+    Constant(i32),
+    Var(TackyIdentifier),
+}
+
+#[derive(Clone, Debug)]
+pub enum TackyUnaryOperator {
+    Complement,
+    Negate,
+}
+
 static COUNTER: AtomicUsize = AtomicUsize::new(0);
 
 fn next_id() -> usize {
@@ -50,22 +55,12 @@ impl TackyIdentifier {
     }
 }
 
-#[derive(Clone, Debug)]
-pub enum TackyValue {
-    Constant(i32),
-    Var(TackyIdentifier),
-}
-
-#[derive(Clone, Debug)]
-pub enum TackyUnaryOperator {
-    Complement,
-    Negate,
-}
+// Display impls
 
 impl fmt::Display for TackyProgram {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         writeln!(f, "TackyProgram(")?;
-        writeln!(f, "{})", indent(&self.function_definition.to_string(), 4));
+        writeln!(f, "{})", indent(&self.function_definition.to_string(), 4))?;
         writeln!(f, ")")
     }
 }
@@ -94,7 +89,7 @@ impl fmt::Display for TackyFunctionDefinition {
                 4
             )
         )?;
-        writeln!(f, "")
+        writeln!(f, " ") // this is on pourpose so it pretty prints
     }
 }
 
@@ -103,7 +98,7 @@ impl fmt::Display for TackyInstruction {
         match self {
             TackyInstruction::Return(value) => {
                 writeln!(f, "Return(")?;
-                writeln!(f, "{}", indent(&value.to_string(), 4));
+                writeln!(f, "{}", indent(&value.to_string(), 4))?;
                 writeln!(f, ")")
             }
             TackyInstruction::Unary(op, src, dst) => {

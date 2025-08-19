@@ -1,10 +1,12 @@
+//! This module contains the logic to apply actions on the tacky AST and pipe them into a new AST
+
 use std::collections::HashMap;
 
 use log::{debug, trace};
 
 use crate::{
     codegen::x64::asm::{AsmFunctionDefinition, AsmInstruction, AsmOperand, AsmProgram, Reg},
-    tacky::TackyProgram,
+    tacky::program::TackyProgram,
 };
 
 pub struct AsmPipe {

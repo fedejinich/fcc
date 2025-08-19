@@ -1,8 +1,12 @@
+//! This module contains the logic to lower the AST to tacky AST
+
 use log::debug;
 
 use crate::{
-    ast::{CExpression, CFunctionDefinition, CIdentifier, CProgram, CStatement, CUnaryOperator},
-    tacky::{
+    ast::program::{
+        CExpression, CFunctionDefinition, CIdentifier, CProgram, CStatement, CUnaryOperator,
+    },
+    tacky::program::{
         TackyFunctionDefinition, TackyIdentifier, TackyInstruction, TackyProgram,
         TackyUnaryOperator, TackyValue,
     },

@@ -6,12 +6,11 @@ use log::debug;
 use crate::driver::CompilerDriver;
 
 mod ast;
-mod tacky;
+mod codegen;
 mod driver;
 mod lexer;
-mod parser;
+mod tacky;
 mod util;
-mod codegen;
 
 pub fn title() -> String {
     String::from(

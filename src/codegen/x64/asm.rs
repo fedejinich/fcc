@@ -1,6 +1,6 @@
 use crate::util::indent;
 
-use crate::tacky::{
+use crate::tacky::program::{
     TackyFunctionDefinition, TackyIdentifier, TackyInstruction, TackyProgram, TackyUnaryOperator,
     TackyValue,
 };

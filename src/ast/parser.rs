@@ -3,7 +3,9 @@ use std::slice::Iter;
 use log::{debug, trace};
 
 use crate::{
-    ast::{CExpression, CFunctionDefinition, CIdentifier, CProgram, CStatement, CUnaryOperator},
+    ast::program::{
+        CExpression, CFunctionDefinition, CIdentifier, CProgram, CStatement, CUnaryOperator,
+    },
     lexer::Token,
 };
 
