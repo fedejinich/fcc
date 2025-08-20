@@ -100,7 +100,9 @@ impl Statement {
                     token_eq(Token::Return, tokens)?;
 
                     debug!("Parsing return expression");
-                    let expr = Expression::from(tokens)?;
+                    // start with a minimum precedence of zero so
+                    // the result includes operators at every precedence level
+                    let expr = Expression::from(tokens, 0)?;
 
                     token_eq(Token::Semicolon, tokens)?;
 
@@ -172,12 +174,33 @@ impl Expression {
     }
 
     fn from_factor(tokens: &mut Iter<Token>) -> ParseResult<Self> {
-        todo!()
+        let next_token = tokens.clone().next().unwrap();
+        match next_token {
+            Token::Int => todo!(),
+            Token::Complement | Token::Negate => {
+                let op = UnaryOperator::from(tokens)?;
+                let inner_exp = Expression::from_factor(tokens)?;
+
+                Ok(Expression::Unary(op, Box::new(inner_exp)))
+            }
+            Token::OpenParen => {
+                let _ = tokens.next();
+                let inner_exp = Expression::from(tokens, 0)?;
+                token_eq(Token::CloseParen, tokens)?;
+
+                Ok(inner_exp)
+            }
+            _ => Err("malformed factor".to_string()),
+        }
     }
 }
 
 fn precedence(token: &Token) -> i32 {
-    todo!()
+    match token {
+        Token::Multiply | Token::Divide | Token::Remainder => 50,
+        Token::Plus | Token::Negate => 45,
+        _ => 0,
+    }
 }
 
 impl BinaryOperator {
