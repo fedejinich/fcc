@@ -3,7 +3,10 @@ use std::slice::Iter;
 use log::{debug, trace};
 
 use crate::{
-    ast::program::{Expression, FunctionDefinition, Identifier, Program, Statement, UnaryOperator},
+    ast::program::{
+        BinaryOperator, Expression, FunctionDefinition, Identifier, Program, Statement,
+        UnaryOperator,
+    },
     lexer::Token,
 };
 
@@ -118,34 +121,68 @@ impl Statement {
 }
 
 impl Expression {
-    fn from(tokens: &mut Iter<Token>) -> ParseResult<Self> {
+    // fn from(tokens: &mut Iter<Token>) -> ParseResult<Self> {
+    //     trace!("Parsing Expression");
+    //
+    //     let next_token = tokens.clone().next().unwrap();
+    //     match next_token {
+    //         Token::Constant(n) => {
+    //             trace!("Found integer constant: {}", n);
+    //             let _ = tokens.next();
+    //
+    //             Ok(Expression::Constant(n.parse::<i32>().unwrap()))
+    //         }
+    //         Token::Complement | Token::Negate => {
+    //             trace!("Found unary operator: {:?}", next_token);
+    //             let unary = UnaryOperator::from(tokens)?;
+    //             let exp = Expression::from(tokens)?;
+    //
+    //             Ok(Expression::Unary(unary, Box::new(exp)))
+    //         }
+    //         Token::OpenParen => {
+    //             trace!("Found open parenthesis");
+    //             let _ = tokens.next();
+    //             let exp = Expression::from(tokens)?;
+    //             token_eq(Token::CloseParen, tokens)?;
+    //
+    //             Ok(exp)
+    //         }
+    //         _ => Err("could not parse expression".to_string()),
+    //     }
+    // }
+    fn from(tokens: &mut Iter<Token>, min_prec: i32) -> ParseResult<Self> {
         trace!("Parsing Expression");
+        let mut left = Expression::from_factor(tokens)?;
+        let mut next_token = tokens.clone().next().unwrap();
 
-        let next_token = tokens.clone().next().unwrap();
-        match next_token {
-            Token::Constant(n) => {
-                trace!("Found integer constant: {}", n);
-                let _ = tokens.next();
-
-                Ok(Expression::Constant(n.parse::<i32>().unwrap()))
+        let is_binary_op = match next_token {
+            Token::Plus | Token::Negate | Token::Multiply | Token::Divide | Token::Remainder => {
+                true
             }
-            Token::Complement | Token::Negate => {
-                trace!("Found unary operator: {:?}", next_token);
-                let unary = UnaryOperator::from(tokens)?;
-                let exp = Expression::from(tokens)?;
-
-                Ok(Expression::Unary(unary, Box::new(exp)))
-            }
-            Token::OpenParen => {
-                trace!("Found open parenthesis");
-                let _ = tokens.next();
-                let exp = Expression::from(tokens)?;
-                token_eq(Token::CloseParen, tokens)?;
-
-                Ok(exp)
-            }
-            _ => Err("could not parse expression".to_string()),
+            _ => false,
+        };
+        while is_binary_op && precedence(next_token) <= min_prec {
+            let op = BinaryOperator::from(tokens)?;
+            let right = Expression::from(tokens, precedence(next_token) + 1)?;
+            left = Expression::Binary(op, Box::new(left), Box::new(right));
+            next_token = tokens.clone().next().unwrap();
         }
+
+        Ok(left)
+    }
+
+    fn from_factor(tokens: &mut Iter<Token>) -> ParseResult<Self> {
+        todo!()
+    }
+}
+
+fn precedence(token: &Token) -> i32 {
+    todo!()
+}
+
+impl BinaryOperator {
+    fn from(tokens: &mut Iter<Token>) -> Result<BinaryOperator, String> {
+        todo!()
     }
 }
 
