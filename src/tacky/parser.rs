@@ -71,6 +71,7 @@ impl TackyInstruction {
 
                 dst
             }
+            Expression::Binary(_binary_op, _left, _right) => todo!(),
         }
     }
 }
