@@ -17,25 +17,25 @@ pub struct Identifier {
     pub value: String, //  todo(fede) this is still weird as fuck
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub enum Statement {
     Return(Expression),
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub enum Expression {
     Constant(i32),
     Unary(UnaryOperator, Box<Expression>),
     Binary(BinaryOperator, Box<Expression>, Box<Expression>),
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub enum UnaryOperator {
     Complement,
     Negate,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub enum BinaryOperator {
     Add,
     Subtract,
