@@ -127,15 +127,24 @@ impl Expression {
         let mut left = Expression::parse_fact(tokens)?;
         let mut next_token = tokens.clone().next().unwrap();
 
-        let is_binary_op = matches!(
-            next_token,
-            Token::Plus | Token::Negate | Token::Multiply | Token::Divide | Token::Remainder
-        );
-        while is_binary_op && precedence(next_token) <= min_prec {
-            debug!("Found <binop>: {:?} with precedence {}", next_token, precedence(next_token));
+        let is_binary_op = |t: &Token| {
+            matches!(
+                t, // TODO: remove clone
+                Token::Plus | Token::Negate | Token::Multiply | Token::Divide | Token::Remainder
+            )
+        };
+        while is_binary_op(next_token) && precedence(next_token) >= min_prec {
+            debug!(
+                "Found <binop>: {:?} with precedence {}",
+                next_token,
+                precedence(next_token)
+            );
             trace!("Parsing <binop>");
             let op = BinaryOperator::parse_bin(tokens)?;
-            trace!("Parsing right <exp> with precedence {}", precedence(next_token) + 1);
+            trace!(
+                "Parsing right <exp> with precedence {}",
+                precedence(next_token) + 1
+            );
             let right = Expression::parse_exp(tokens, precedence(next_token) + 1)?;
             left = Expression::Binary(op, Box::new(left), Box::new(right));
             trace!("Created binary <exp>");
@@ -180,6 +189,7 @@ impl Expression {
 }
 
 fn precedence(token: &Token) -> i32 {
+    debug!("<precedence>: {:?}", token);
     match token {
         Token::Multiply | Token::Divide | Token::Remainder => 50,
         Token::Plus | Token::Negate => 45,
