@@ -120,7 +120,7 @@ impl fmt::Display for TackyValue {
 impl fmt::Display for TackyUnaryOperator {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            // todo(fede) this might be replaced with derive debug
+            // TODO: this might be replaced with derive debug
             TackyUnaryOperator::Complement => write!(f, "Complement"),
             TackyUnaryOperator::Negate => write!(f, "Negate"),
         }

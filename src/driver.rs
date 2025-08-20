@@ -75,12 +75,12 @@ impl CompilerDriver {
     pub fn preprocess(&self, source_file: &str) -> Result<String, String> {
         info!("preprocessing {source_file}");
 
-        // todo(fede) this should be validated in another place
+        // TODO: this should be validated in another place
         if !source_file.ends_with(".c") {
             return Err(String::from("SOURCE_FILE should have a .c file extension"));
         }
 
-        // todo(fede) this should be tested and is not necesary here
+        // TODO: this should be tested and is not necesary here\
         let preprocessed_file = replace_c_with_i(source_file);
         if !preprocessed_file.ends_with(".i") {
             return Err(String::from(
@@ -122,7 +122,7 @@ impl CompilerDriver {
 
         // lex only
         if self.lex {
-            // todo(fede) find a better way to this
+            // TODO: find a better way to this
             std::process::exit(0);
         }
 
@@ -134,7 +134,7 @@ impl CompilerDriver {
 
         // parse only
         if self.parse {
-            // todo(fede) find a better way to this
+            // TODO: find a better way to this
             std::process::exit(0);
         }
 
@@ -142,7 +142,7 @@ impl CompilerDriver {
         if self.print_tacky {
             println!("{tacky_program}");
         }
-        // todo(fede) this should be unified with .parse
+        // TODO: this should be unified with .parse
         if self.tacky {
             std::process::exit(0);
         }

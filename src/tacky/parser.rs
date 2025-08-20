@@ -61,11 +61,11 @@ impl TackyInstruction {
             Expression::Constant(c) => TackyValue::Constant(c),
             Expression::Unary(op, inner_exp) => {
                 let src = TackyInstruction::from_expr(*inner_exp, instructions);
-                // todo(fede) provide a more descriptive name
+                // TODO: provide a more descriptive name
                 let dst = TackyValue::Var(TackyIdentifier::new("tmp"));
                 let unary_op = TackyUnaryOperator::from(op);
 
-                // todo(fede) this is a clone(hack?)
+                // TODO: this is a clone(hack?)
                 debug!("Moving {src:?} to {dst:?}");
                 instructions.push(TackyInstruction::Unary(unary_op, src, dst.clone()));
 

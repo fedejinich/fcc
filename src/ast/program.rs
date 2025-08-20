@@ -2,7 +2,7 @@ use std::fmt;
 
 use crate::util::indent;
 
-// todo(fede) disable warnings for 'variables can be used directly in the `format!` string'
+// TODO: disable warnings for 'variables can be used directly in the `format!` string'
 
 pub struct Program {
     pub function_definition: FunctionDefinition,
@@ -14,7 +14,7 @@ pub struct FunctionDefinition {
 }
 
 pub struct Identifier {
-    pub value: String, //  todo(fede) this is still weird as fuck
+    pub value: String, //  TODO: this is still weird as fuck
 }
 
 #[derive(Clone, Debug)]

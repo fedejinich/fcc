@@ -83,7 +83,7 @@ impl From<TackyFunctionDefinition> for AsmFunctionDefinition {
             instructions: tacky_function_definition
                 .instructions
                 .iter()
-                // todo(fede) remove clone
+                // TODO: remove clone
                 .flat_map(|i| AsmInstruction::from(i.clone()))
                 .collect::<Vec<AsmInstruction>>(),
         }
