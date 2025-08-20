@@ -26,6 +26,7 @@ pub enum Statement {
 pub enum Expression {
     Constant(i32),
     Unary(UnaryOperator, Box<Expression>),
+    Binary(BinaryOperator, Box<Expression>, Box<Expression>),
 }
 
 #[derive(Clone)]
@@ -94,6 +95,9 @@ impl fmt::Display for Expression {
         match self {
             Expression::Constant(c) => write!(f, "Constant({})", c),
             Expression::Unary(u, e) => write!(f, "Unary({}, {})", u, e),
+            Expression::Binary(op, exp_1, exp_2) => {
+                write!(f, "Binary({}, {}, {})", op, exp_1, exp_2)
+            }
         }
     }
 }
@@ -103,6 +107,18 @@ impl fmt::Display for UnaryOperator {
         match self {
             UnaryOperator::Complement => write!(f, "Complement"),
             UnaryOperator::Negate => write!(f, "Negate"),
+        }
+    }
+}
+
+impl fmt::Display for BinaryOperator {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            BinaryOperator::Add => write!(f, "Add"),
+            BinaryOperator::Subtract => write!(f, "Subtract"),
+            BinaryOperator::Multiply => write!(f, "Multiply"),
+            BinaryOperator::Divide => write!(f, "Divide"),
+            BinaryOperator::Remainder => write!(f, "Remainder"),
         }
     }
 }
