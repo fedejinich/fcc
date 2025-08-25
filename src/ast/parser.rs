@@ -10,6 +10,8 @@ use crate::{
     lexer::Token,
 };
 
+// ques: should i do a trait for 'from(tokens: Vec<Token>) -> ParseResult<Self>'?
+
 type ParseResult<T> = Result<T, String>;
 
 impl TryFrom<Vec<Token>> for Program {
@@ -127,9 +129,10 @@ impl Expression {
         let mut left = Expression::parse_fact(tokens)?;
         let mut next_token = tokens.clone().next().unwrap();
 
+        // ques: isn't this too expensive?
         let is_binary_op = |t: &Token| {
             matches!(
-                t, // TODO: remove clone
+                t, // ques: remove clone
                 Token::Plus | Token::Negate | Token::Multiply | Token::Divide | Token::Remainder
             )
         };
@@ -185,6 +188,7 @@ impl Expression {
                 Err("could not parse expression".to_string())
             }
         }
+
     }
 }
 
@@ -198,7 +202,7 @@ fn precedence(token: &Token) -> i32 {
 }
 
 impl BinaryOperator {
-    fn parse_bin(tokens: &mut Iter<Token>) -> Result<BinaryOperator, String> {
+    fn parse_bin(tokens: &mut Iter<Token>) -> ParseResult<Self> {
         let binop = match tokens.next().unwrap() {
             Token::Plus => BinaryOperator::Add,
             Token::Multiply => BinaryOperator::Multiply,
@@ -215,7 +219,7 @@ impl BinaryOperator {
 }
 
 impl UnaryOperator {
-    fn parse_un(tokens: &mut Iter<Token>) -> Result<UnaryOperator, String> {
+    fn parse_un(tokens: &mut Iter<Token>) -> ParseResult<Self> {
         let unop = match tokens.next().unwrap() {
             Token::Complement => UnaryOperator::Complement,
             Token::Negate => UnaryOperator::Negate,
