@@ -65,16 +65,23 @@ impl TackyInstruction {
             Expression::Unary(op, inner_exp) => {
                 let src = TackyInstruction::from_expr(*inner_exp, instructions);
                 // TODO: provide a more descriptive name
-                let dst = TackyValue::Var(TackyIdentifier::new("tmp"));
+                let dst = TackyValue::Var(TackyIdentifier::new("unary_op"));
                 let unary_op = TackyUnaryOperator::from(op);
 
-                // TODO: this is a clone(hack?)
                 debug!("Moving {src:?} to {dst:?}");
                 instructions.push(TackyInstruction::Unary(unary_op, src, dst.clone()));
 
                 dst
             }
-            Expression::Binary(_binary_op, _left, _right) => todo!(),
+            Expression::Binary(op, left, right) => {
+                let v1 = TackyInstruction::from_expr(*left, instructions);
+                let v2 = TackyInstruction::from_expr(*right, instructions);
+                let dst = TackyValue::Var(TackyIdentifier::new("binary_op"));
+                let binary_op = TackyBinaryOperator::from(op);
+                instructions.push(TackyInstruction::Binary(binary_op, v1, v2, dst.clone()));
+
+                dst
+            }
         }
     }
 }
