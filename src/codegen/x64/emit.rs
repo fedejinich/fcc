@@ -88,6 +88,9 @@ impl AsmInstruction {
                 em.line("popq %rbp")?;
                 em.line("ret")
             }
+            Binary(_, _, _) => todo!(),
+            Idiv(_) => todo!(),
+            Cdq => todo!(),
         }
     }
 }
@@ -114,7 +117,9 @@ impl AsmOperand {
             fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> fmt::Result {
                 match self.0 {
                     AsmOperand::Register(Reg::AX) => f.write_str("%eax"),
+                    AsmOperand::Register(Reg::DX) => f.write_str("%edx"),
                     AsmOperand::Register(Reg::R10) => f.write_str("%r10d"),
+                    AsmOperand::Register(Reg::R11) => todo!(),
                     AsmOperand::Stack(offset) => write!(f, "{}(%rbp)", offset),
                     AsmOperand::Imm(num) => write!(f, "${}", num),
                     AsmOperand::Pseudo(id) => write!(f, "{}", id.value), // o fallo si no debería aparecer

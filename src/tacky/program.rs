@@ -39,7 +39,7 @@ pub enum TackyUnaryOperator {
     Negate,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum TackyBinaryOperator {
     Add,
     Subtract,

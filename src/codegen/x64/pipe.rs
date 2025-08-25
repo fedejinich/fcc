@@ -24,7 +24,7 @@ impl From<TackyProgram> for AsmPipe {
 }
 
 impl AsmPipe {
-    /// allocates stack and fixes Mov instructions
+    /// fixes Mov instructions
     pub fn fix_instructions(mut self) -> Self {
         let last_offset = self
             .last_offset
@@ -36,8 +36,9 @@ impl AsmPipe {
         self
     }
 
+    /// replaces pseudoregisters with stack slots and returns the last stack memory address
     pub fn replace_pseudoregisters(mut self) -> Self {
-        let (program, last_offset) = replace_pseudoregisters(&self.program);
+        let (program, last_offset) = replace_pseudoregisters_program(&self.program);
         self.program = program;
         self.last_offset = Some(last_offset);
         self
@@ -84,7 +85,7 @@ fn fix_function_definition(
 }
 
 /// replaces pseudoregisters with stack slots and returns the last stack memory address
-fn replace_pseudoregisters(program: &AsmProgram) -> (AsmProgram, i32) {
+fn replace_pseudoregisters_program(program: &AsmProgram) -> (AsmProgram, i32) {
     let (new_fd, last_offset) = replace_pseudoregisters_fd(&program.function_definition);
 
     (AsmProgram::new(new_fd), last_offset)

@@ -1,8 +1,10 @@
 //! This module defines the structure of the x64 assembly code as an AST
 
+use log::debug;
+
 use crate::tacky::program::{
-    TackyFunctionDefinition, TackyIdentifier, TackyInstruction, TackyProgram, TackyUnaryOperator,
-    TackyValue,
+    TackyBinaryOperator, TackyFunctionDefinition, TackyIdentifier, TackyInstruction, TackyProgram,
+    TackyUnaryOperator, TackyValue,
 };
 
 #[derive(Clone)]
@@ -26,6 +28,9 @@ pub enum AsmInstruction {
     Comment(String),
     Mov(AsmOperand, AsmOperand),
     Unary(AsmUnaryOperator, AsmOperand),
+    Binary(AsmBinaryOperator, AsmOperand, AsmOperand),
+    Idiv(AsmOperand),
+    Cdq,
     AllocateStack(i32),
     Ret,
 }
@@ -34,6 +39,13 @@ pub enum AsmInstruction {
 pub enum AsmUnaryOperator {
     Neg,
     Not,
+}
+
+#[derive(Clone, Debug)]
+pub enum AsmBinaryOperator {
+    Add,
+    Sub,
+    Mult,
 }
 
 #[derive(Clone, Eq, PartialEq, Hash, Debug)]
@@ -47,7 +59,9 @@ pub enum AsmOperand {
 #[derive(Clone, Eq, PartialEq, Hash, Debug)]
 pub enum Reg {
     AX,
+    DX,
     R10,
+    R11,
 }
 
 impl AsmProgram {
@@ -101,7 +115,42 @@ impl AsmInstruction {
                 AsmInstruction::Mov(AsmOperand::from(src), AsmOperand::from(dst.clone())),
                 AsmInstruction::Unary(AsmUnaryOperator::from(unary_op), AsmOperand::from(dst)),
             ],
-            TackyInstruction::Binary(_, _, _, _) => todo!(),
+            TackyInstruction::Binary(op, src_1, src_2, dst) => {
+                let is_div = op == TackyBinaryOperator::Divide;
+                match &op {
+                    // “addition, subtraction, and multiplication,
+                    // we convert a single TACKY instruction into two assembly instructions”
+                    TackyBinaryOperator::Add
+                    | TackyBinaryOperator::Subtract
+                    | TackyBinaryOperator::Multiply => vec![
+                        AsmInstruction::Mov(AsmOperand::from(src_1), AsmOperand::from(dst.clone())),
+                        AsmInstruction::Binary(
+                            AsmBinaryOperator::from(op),
+                            AsmOperand::from(src_2),
+                            AsmOperand::from(dst),
+                        ),
+                    ],
+                    TackyBinaryOperator::Divide | TackyBinaryOperator::Remainder => {
+                        let reg = if is_div {
+                            debug!("is div");
+                            AsmOperand::Register(Reg::AX)
+                        } else {
+                            debug!("is rem");
+                            AsmOperand::Register(Reg::DX)
+                        };
+
+                        vec![
+                            AsmInstruction::Mov(
+                                AsmOperand::from(src_1),
+                                AsmOperand::Register(Reg::AX),
+                            ),
+                            AsmInstruction::Cdq,
+                            AsmInstruction::Idiv(AsmOperand::from(src_2)),
+                            AsmInstruction::Mov(reg, AsmOperand::from(dst)),
+                        ]
+                    }
+                }
+            }
         }
     }
 }
@@ -128,6 +177,17 @@ impl From<TackyUnaryOperator> for AsmUnaryOperator {
         match tacky_unary_operator {
             TackyUnaryOperator::Negate => AsmUnaryOperator::Neg,
             TackyUnaryOperator::Complement => AsmUnaryOperator::Not,
+        }
+    }
+}
+
+impl From<TackyBinaryOperator> for AsmBinaryOperator {
+    fn from(tacky_binary_operator: TackyBinaryOperator) -> Self {
+        match tacky_binary_operator {
+            TackyBinaryOperator::Add => AsmBinaryOperator::Add,
+            TackyBinaryOperator::Subtract => AsmBinaryOperator::Sub,
+            TackyBinaryOperator::Multiply => AsmBinaryOperator::Mult,
+            _ => panic!("this should never happen"),
         }
     }
 }
