@@ -101,6 +101,7 @@ impl AsmInstruction {
                 AsmInstruction::Mov(AsmOperand::from(src), AsmOperand::from(dst.clone())),
                 AsmInstruction::Unary(AsmUnaryOperator::from(unary_op), AsmOperand::from(dst)),
             ],
+            TackyInstruction::Binary(_, _, _, _) => todo!(),
         }
     }
 }

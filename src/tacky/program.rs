@@ -22,6 +22,7 @@ pub struct TackyFunctionDefinition {
 pub enum TackyInstruction {
     Return(TackyValue),
     Unary(TackyUnaryOperator, TackyValue, TackyValue),
+    Binary(TackyBinaryOperator, TackyValue, TackyValue, TackyValue),
 }
 
 #[derive(Clone, Debug)]
@@ -39,6 +40,15 @@ pub enum TackyValue {
 pub enum TackyUnaryOperator {
     Complement,
     Negate,
+}
+
+#[derive(Clone, Debug)]
+pub enum TackyBinaryOperator {
+    Add,
+    Subtract,
+    Multiply,
+    Divide,
+    Remainder,
 }
 
 static COUNTER: AtomicUsize = AtomicUsize::new(0);
@@ -103,7 +113,8 @@ impl fmt::Display for TackyInstruction {
             }
             TackyInstruction::Unary(op, src, dst) => {
                 writeln!(f, "Unary({}, {}, {})", op, src, dst)
-            }
+            },
+            TackyInstruction::Binary(_, _, _, _) => todo!(),
         }
     }
 }

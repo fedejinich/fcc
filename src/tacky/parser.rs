@@ -3,10 +3,13 @@
 use log::debug;
 
 use crate::{
-    ast::program::{Expression, FunctionDefinition, Identifier, Program, Statement, UnaryOperator},
+    ast::program::{
+        BinaryOperator, Expression, FunctionDefinition, Identifier, Program, Statement,
+        UnaryOperator,
+    },
     tacky::program::{
-        TackyFunctionDefinition, TackyIdentifier, TackyInstruction, TackyProgram,
-        TackyUnaryOperator, TackyValue,
+        TackyBinaryOperator, TackyFunctionDefinition, TackyIdentifier, TackyInstruction,
+        TackyProgram, TackyUnaryOperator, TackyValue,
     },
 };
 
@@ -41,9 +44,9 @@ impl From<Identifier> for TackyIdentifier {
 
 impl TackyInstruction {
     fn from(statement: Statement) -> Vec<TackyInstruction> {
-        let mut instructions = vec![];
         let i = match statement {
             Statement::Return(expr) => {
+                let mut instructions = vec![];
                 let v = TackyInstruction::from_expr(expr, &mut instructions);
                 instructions.push(TackyInstruction::Return(v));
 
@@ -81,6 +84,18 @@ impl From<UnaryOperator> for TackyUnaryOperator {
         match op {
             UnaryOperator::Complement => TackyUnaryOperator::Complement,
             UnaryOperator::Negate => TackyUnaryOperator::Negate,
+        }
+    }
+}
+
+impl From<BinaryOperator> for TackyBinaryOperator {
+    fn from(op: BinaryOperator) -> Self {
+        match op {
+            BinaryOperator::Add => TackyBinaryOperator::Add,
+            BinaryOperator::Divide => TackyBinaryOperator::Divide,
+            BinaryOperator::Multiply => TackyBinaryOperator::Multiply,
+            BinaryOperator::Remainder => TackyBinaryOperator::Remainder,
+            BinaryOperator::Subtract => TackyBinaryOperator::Subtract,
         }
     }
 }
