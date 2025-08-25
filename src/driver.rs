@@ -140,7 +140,7 @@ impl CompilerDriver {
 
         let tacky_program = TackyProgram::from(c_program);
         if self.print_tacky {
-            println!("{tacky_program}");
+            println!("{}", tacky_program.pretty_print());
         }
         // TODO: this should be unified with .parse
         if self.tacky {

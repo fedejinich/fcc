@@ -26,12 +26,6 @@ impl TryFrom<Vec<Token>> for Program {
         let mut iter = tokens.iter();
         let function_definition = FunctionDefinition::parse_fd(&mut iter)?;
 
-        debug!(
-            "Successfully parsed function definition: {}",
-            function_definition.name.value
-        );
-        trace!("Exiting <program> successfully");
-
         let program_ast = Program {
             function_definition,
         };
@@ -43,7 +37,9 @@ impl TryFrom<Vec<Token>> for Program {
             ));
         }
 
-        debug!("Parsing completed successfully");
+        trace!("<program> parsing completed successfully");
+
+        debug!("Parsed C source code successfully");
 
         Ok(program_ast)
     }
@@ -188,7 +184,6 @@ impl Expression {
                 Err("could not parse expression".to_string())
             }
         }
-
     }
 }
 
