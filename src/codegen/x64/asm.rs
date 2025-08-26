@@ -155,6 +155,17 @@ impl AsmInstruction {
     }
 }
 
+impl AsmOperand {
+    pub fn value(&self) -> &i32 {
+        match self {
+            Self::Imm(num) => num,
+            Self::Register(_) | Self::Stack(_) | Self::Pseudo(_) => {
+                panic!("this should never happen")
+            }
+        }
+    }
+}
+
 impl From<TackyValue> for AsmOperand {
     fn from(tacky_value: TackyValue) -> Self {
         match tacky_value {

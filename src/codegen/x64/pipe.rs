@@ -5,7 +5,9 @@ use std::collections::HashMap;
 use log::{debug, trace};
 
 use crate::{
-    codegen::x64::asm::{AsmFunctionDefinition, AsmInstruction, AsmOperand, AsmProgram, Reg},
+    codegen::x64::asm::{
+        AsmBinaryOperator, AsmFunctionDefinition, AsmInstruction, AsmOperand, AsmProgram, Reg,
+    },
     tacky::program::TackyProgram,
 };
 
@@ -33,6 +35,7 @@ impl AsmPipe {
             &self.program.function_definition,
             last_offset,
         ));
+
         self
     }
 
@@ -41,6 +44,7 @@ impl AsmPipe {
         let (program, last_offset) = replace_pseudoregisters_program(&self.program);
         self.program = program;
         self.last_offset = Some(last_offset);
+
         self
     }
 
@@ -75,6 +79,53 @@ fn fix_function_definition(
                         ),
                     ]
                 }
+                AsmInstruction::Idiv(AsmOperand::Imm(num)) => vec![
+                    AsmInstruction::Comment("splited idiv into mov idiv".to_string()),
+                    AsmInstruction::Mov(AsmOperand::Imm(*num), AsmOperand::Register(Reg::R10)),
+                    AsmInstruction::Idiv(AsmOperand::Register(Reg::R10)),
+                ],
+                AsmInstruction::Binary(
+                    AsmBinaryOperator::Add,
+                    AsmOperand::Stack(src),
+                    AsmOperand::Stack(dst),
+                ) => vec![
+                    AsmInstruction::Comment("splitted add into mov add instructions".to_string()),
+                    AsmInstruction::Mov(AsmOperand::Stack(*src), AsmOperand::Register(Reg::R10)),
+                    AsmInstruction::Binary(
+                        AsmBinaryOperator::Add,
+                        AsmOperand::Register(Reg::R10),
+                        AsmOperand::Stack(*dst),
+                    ),
+                ],
+                AsmInstruction::Binary(
+                    AsmBinaryOperator::Sub,
+                    AsmOperand::Stack(src),
+                    AsmOperand::Stack(dst),
+                ) => vec![
+                    AsmInstruction::Comment("splitted sub into mov sub instructions".to_string()),
+                    AsmInstruction::Mov(AsmOperand::Stack(*src), AsmOperand::Register(Reg::R10)),
+                    AsmInstruction::Binary(
+                        AsmBinaryOperator::Sub,
+                        AsmOperand::Register(Reg::R10),
+                        AsmOperand::Stack(*dst),
+                    ),
+                ],
+                AsmInstruction::Binary(
+                    AsmBinaryOperator::Mult,
+                    AsmOperand::Imm(num),
+                    AsmOperand::Stack(dst),
+                ) => vec![
+                    AsmInstruction::Comment(
+                        "splitted mul into mov mul mov instructions".to_string(),
+                    ),
+                    AsmInstruction::Mov(AsmOperand::Stack(*dst), AsmOperand::Register(Reg::R11)),
+                    AsmInstruction::Binary(
+                        AsmBinaryOperator::Mult,
+                        AsmOperand::Imm(*num),
+                        AsmOperand::Register(Reg::R11),
+                    ),
+                    AsmInstruction::Mov(AsmOperand::Register(Reg::R11), AsmOperand::Stack(*dst)),
+                ],
                 _ => vec![i.clone()],
             }
         })
