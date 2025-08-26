@@ -163,10 +163,14 @@ fn ids_offset_map(function_definition: &AsmFunctionDefinition) -> (HashMap<AsmOp
     (map, last_offset)
 }
 
+// TODO: this should return an empty list instead of None
+// TODO: find a way to fail if new instruction is not handled
 fn operands(instruction: &AsmInstruction) -> Option<Vec<AsmOperand>> {
     match instruction {
-        AsmInstruction::Mov(src, dst) => Some(vec![src.clone(), dst.clone()]),
+        AsmInstruction::Mov(op_1, op_2) => Some(vec![op_1.clone(), op_2.clone()]),
         AsmInstruction::Unary(_, op) => Some(vec![op.clone()]),
+        AsmInstruction::Binary(_, op_1, op_2) => Some(vec![op_1.clone(), op_2.clone()]),
+        AsmInstruction::Idiv(op) => Some(vec![op.clone()]),
         _ => None,
     }
 }
