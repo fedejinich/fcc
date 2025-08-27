@@ -110,22 +110,26 @@ fn fix_function_definition(
                         AsmOperand::Stack(*dst),
                     ),
                 ],
-                AsmInstruction::Binary(
-                    AsmBinaryOperator::Mult,
-                    AsmOperand::Imm(num),
-                    AsmOperand::Stack(dst),
-                ) => vec![
-                    AsmInstruction::Comment(
-                        "splitted mul into mov mul mov instructions".to_string(),
-                    ),
-                    AsmInstruction::Mov(AsmOperand::Stack(*dst), AsmOperand::Register(Reg::R11)),
-                    AsmInstruction::Binary(
-                        AsmBinaryOperator::Mult,
-                        AsmOperand::Imm(*num),
-                        AsmOperand::Register(Reg::R11),
-                    ),
-                    AsmInstruction::Mov(AsmOperand::Register(Reg::R11), AsmOperand::Stack(*dst)),
-                ],
+                AsmInstruction::Binary(AsmBinaryOperator::Mult, src, AsmOperand::Stack(dst)) => {
+                    vec![
+                        AsmInstruction::Comment(
+                            "splitted mul into mov mul mov instructions".to_string(),
+                        ),
+                        AsmInstruction::Mov(
+                            AsmOperand::Stack(*dst),
+                            AsmOperand::Register(Reg::R11),
+                        ),
+                        AsmInstruction::Binary(
+                            AsmBinaryOperator::Mult,
+                            src.clone(),
+                            AsmOperand::Register(Reg::R11),
+                        ),
+                        AsmInstruction::Mov(
+                            AsmOperand::Register(Reg::R11),
+                            AsmOperand::Stack(*dst),
+                        ),
+                    ]
+                }
                 _ => vec![i.clone()],
             }
         })
