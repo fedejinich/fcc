@@ -1,8 +1,10 @@
-use crate::util::indent;
+//! This module defines the structure of the x64 assembly code as an AST
+
+use log::debug;
 
 use crate::tacky::program::{
-    TackyFunctionDefinition, TackyIdentifier, TackyInstruction, TackyProgram, TackyUnaryOperator,
-    TackyValue,
+    TackyBinaryOperator, TackyFunctionDefinition, TackyIdentifier, TackyInstruction, TackyProgram,
+    TackyUnaryOperator, TackyValue,
 };
 
 #[derive(Clone)]
@@ -26,6 +28,9 @@ pub enum AsmInstruction {
     Comment(String),
     Mov(AsmOperand, AsmOperand),
     Unary(AsmUnaryOperator, AsmOperand),
+    Binary(AsmBinaryOperator, AsmOperand, AsmOperand),
+    Idiv(AsmOperand),
+    Cdq,
     AllocateStack(i32),
     Ret,
 }
@@ -34,6 +39,13 @@ pub enum AsmInstruction {
 pub enum AsmUnaryOperator {
     Neg,
     Not,
+}
+
+#[derive(Clone, Debug)]
+pub enum AsmBinaryOperator {
+    Add,
+    Sub,
+    Mult,
 }
 
 #[derive(Clone, Eq, PartialEq, Hash, Debug)]
@@ -47,7 +59,9 @@ pub enum AsmOperand {
 #[derive(Clone, Eq, PartialEq, Hash, Debug)]
 pub enum Reg {
     AX,
+    DX,
     R10,
+    R11,
 }
 
 impl AsmProgram {
@@ -58,68 +72,13 @@ impl AsmProgram {
     }
 
     pub fn code_emit(&self) -> String {
-        self.function_definition.code_emit()
+        self.to_string_asm()
     }
 }
 
 impl AsmFunctionDefinition {
     pub fn new(name: AsmIdetifier, instructions: Vec<AsmInstruction>) -> Self {
         AsmFunctionDefinition { name, instructions }
-    }
-
-    pub fn code_emit(&self) -> String {
-        let instructions = self
-            .instructions
-            .iter()
-            .map(|i| i.code_emit())
-            .collect::<Vec<String>>()
-            .join("\n");
-
-        [
-            indent(format!(".globl _{}", self.name.value).as_str(), 4),
-            format!("\n_{}:", self.name.value),
-            indent("pushq %rbp", 4),
-            indent("movq %rsp, %rbp", 4),
-            indent(instructions.as_str(), 4),
-        ]
-        .join("\n")
-    }
-}
-
-impl AsmInstruction {
-    pub fn code_emit(&self) -> String {
-        match self {
-            AsmInstruction::Comment(s) => format!("# {s}\n"),
-            AsmInstruction::Mov(src, dst) => {
-                format!("movl {}, {}\n", src.code_emit(), dst.code_emit())
-            }
-            AsmInstruction::Ret => ["movq %rbp, %rsp", "popq %rbp", "ret"].join("\n"),
-            AsmInstruction::Unary(unary_op, op) => {
-                format!("{} {}", unary_op.code_emit(), op.code_emit())
-            }
-            AsmInstruction::AllocateStack(val) => format!("subq ${val}, %rsp"),
-        }
-    }
-}
-
-impl AsmUnaryOperator {
-    fn code_emit(&self) -> String {
-        match self {
-            AsmUnaryOperator::Neg => "negl".to_string(),
-            AsmUnaryOperator::Not => "notl".to_string(),
-        }
-    }
-}
-
-impl AsmOperand {
-    fn code_emit(&self) -> String {
-        match self {
-            AsmOperand::Register(Reg::AX) => "%eax".to_string(),
-            AsmOperand::Register(Reg::R10) => "%r10d".to_string(),
-            AsmOperand::Stack(val) => format!("{val}(%rbp)"),
-            AsmOperand::Imm(num) => format!("${num}"),
-            _ => panic!("invalid operand"),
-        }
     }
 }
 
@@ -138,7 +97,7 @@ impl From<TackyFunctionDefinition> for AsmFunctionDefinition {
             instructions: tacky_function_definition
                 .instructions
                 .iter()
-                // todo(fede) remove clone
+                // TODO: remove clone
                 .flat_map(|i| AsmInstruction::from(i.clone()))
                 .collect::<Vec<AsmInstruction>>(),
         }
@@ -156,6 +115,53 @@ impl AsmInstruction {
                 AsmInstruction::Mov(AsmOperand::from(src), AsmOperand::from(dst.clone())),
                 AsmInstruction::Unary(AsmUnaryOperator::from(unary_op), AsmOperand::from(dst)),
             ],
+            TackyInstruction::Binary(op, src_1, src_2, dst) => {
+                let is_div = op == TackyBinaryOperator::Divide;
+                match &op {
+                    // “addition, subtraction, and multiplication,
+                    // we convert a single TACKY instruction into two assembly instructions”
+                    TackyBinaryOperator::Add
+                    | TackyBinaryOperator::Subtract
+                    | TackyBinaryOperator::Multiply => vec![
+                        AsmInstruction::Mov(AsmOperand::from(src_1), AsmOperand::from(dst.clone())),
+                        AsmInstruction::Binary(
+                            AsmBinaryOperator::from(op),
+                            AsmOperand::from(src_2),
+                            AsmOperand::from(dst),
+                        ),
+                    ],
+                    TackyBinaryOperator::Divide | TackyBinaryOperator::Remainder => {
+                        let reg = if is_div {
+                            debug!("is div");
+                            AsmOperand::Register(Reg::AX)
+                        } else {
+                            debug!("is rem");
+                            AsmOperand::Register(Reg::DX)
+                        };
+
+                        vec![
+                            AsmInstruction::Mov(
+                                AsmOperand::from(src_1),
+                                AsmOperand::Register(Reg::AX),
+                            ),
+                            AsmInstruction::Cdq,
+                            AsmInstruction::Idiv(AsmOperand::from(src_2)),
+                            AsmInstruction::Mov(reg, AsmOperand::from(dst)),
+                        ]
+                    }
+                }
+            }
+        }
+    }
+}
+
+impl AsmOperand {
+    pub fn value(&self) -> &i32 {
+        match self {
+            Self::Imm(num) => num,
+            Self::Register(_) | Self::Stack(_) | Self::Pseudo(_) => {
+                panic!("this should never happen")
+            }
         }
     }
 }
@@ -182,6 +188,17 @@ impl From<TackyUnaryOperator> for AsmUnaryOperator {
         match tacky_unary_operator {
             TackyUnaryOperator::Negate => AsmUnaryOperator::Neg,
             TackyUnaryOperator::Complement => AsmUnaryOperator::Not,
+        }
+    }
+}
+
+impl From<TackyBinaryOperator> for AsmBinaryOperator {
+    fn from(tacky_binary_operator: TackyBinaryOperator) -> Self {
+        match tacky_binary_operator {
+            TackyBinaryOperator::Add => AsmBinaryOperator::Add,
+            TackyBinaryOperator::Subtract => AsmBinaryOperator::Sub,
+            TackyBinaryOperator::Multiply => AsmBinaryOperator::Mult,
+            _ => panic!("this should never happen"),
         }
     }
 }

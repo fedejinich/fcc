@@ -20,10 +20,16 @@ pub enum Token {
 
     // unary operators
     Complement,
-    Negate,
+    Negate, // this is also the minus operator but we don't disitinguish this in lexing stage
 
     // ops
     Decrement,
+
+    // binary operators
+    Plus,
+    Multiply,
+    Divide,
+    Remainder,
 }
 
 pub fn lex(mut code: &str) -> Result<Vec<Token>, String> {
@@ -76,6 +82,10 @@ fn token_matchers() -> Vec<TokenMatcher> {
         TokenMatcher::new(|_| Token::Complement, r"^\~"),
         TokenMatcher::new(|_| Token::Negate, r"^\-"),
         TokenMatcher::new(|_| Token::Decrement, r"^\--"),
+        TokenMatcher::new(|_| Token::Plus, r"^\+"),
+        TokenMatcher::new(|_| Token::Multiply, r"^\*"),
+        TokenMatcher::new(|_| Token::Divide, r"^\/"),
+        TokenMatcher::new(|_| Token::Remainder, r"^\%"),
     ]
 }
 

@@ -5,7 +5,9 @@ use std::collections::HashMap;
 use log::{debug, trace};
 
 use crate::{
-    codegen::x64::asm::{AsmFunctionDefinition, AsmInstruction, AsmOperand, AsmProgram, Reg},
+    codegen::x64::asm::{
+        AsmBinaryOperator, AsmFunctionDefinition, AsmInstruction, AsmOperand, AsmProgram, Reg,
+    },
     tacky::program::TackyProgram,
 };
 
@@ -24,7 +26,7 @@ impl From<TackyProgram> for AsmPipe {
 }
 
 impl AsmPipe {
-    /// allocates stack and fixes Mov instructions
+    /// fixes Mov instructions
     pub fn fix_instructions(mut self) -> Self {
         let last_offset = self
             .last_offset
@@ -33,13 +35,16 @@ impl AsmPipe {
             &self.program.function_definition,
             last_offset,
         ));
+
         self
     }
 
+    /// replaces pseudoregisters with stack slots and returns the last stack memory address
     pub fn replace_pseudoregisters(mut self) -> Self {
-        let (program, last_offset) = replace_pseudoregisters(&self.program);
+        let (program, last_offset) = replace_pseudoregisters_program(&self.program);
         self.program = program;
         self.last_offset = Some(last_offset);
+
         self
     }
 
@@ -74,6 +79,57 @@ fn fix_function_definition(
                         ),
                     ]
                 }
+                AsmInstruction::Idiv(AsmOperand::Imm(num)) => vec![
+                    AsmInstruction::Comment("splited idiv into mov idiv".to_string()),
+                    AsmInstruction::Mov(AsmOperand::Imm(*num), AsmOperand::Register(Reg::R10)),
+                    AsmInstruction::Idiv(AsmOperand::Register(Reg::R10)),
+                ],
+                AsmInstruction::Binary(
+                    AsmBinaryOperator::Add,
+                    AsmOperand::Stack(src),
+                    AsmOperand::Stack(dst),
+                ) => vec![
+                    AsmInstruction::Comment("splitted add into mov add instructions".to_string()),
+                    AsmInstruction::Mov(AsmOperand::Stack(*src), AsmOperand::Register(Reg::R10)),
+                    AsmInstruction::Binary(
+                        AsmBinaryOperator::Add,
+                        AsmOperand::Register(Reg::R10),
+                        AsmOperand::Stack(*dst),
+                    ),
+                ],
+                AsmInstruction::Binary(
+                    AsmBinaryOperator::Sub,
+                    AsmOperand::Stack(src),
+                    AsmOperand::Stack(dst),
+                ) => vec![
+                    AsmInstruction::Comment("splitted sub into mov sub instructions".to_string()),
+                    AsmInstruction::Mov(AsmOperand::Stack(*src), AsmOperand::Register(Reg::R10)),
+                    AsmInstruction::Binary(
+                        AsmBinaryOperator::Sub,
+                        AsmOperand::Register(Reg::R10),
+                        AsmOperand::Stack(*dst),
+                    ),
+                ],
+                AsmInstruction::Binary(AsmBinaryOperator::Mult, src, AsmOperand::Stack(dst)) => {
+                    vec![
+                        AsmInstruction::Comment(
+                            "splitted mul into mov mul mov instructions".to_string(),
+                        ),
+                        AsmInstruction::Mov(
+                            AsmOperand::Stack(*dst),
+                            AsmOperand::Register(Reg::R11),
+                        ),
+                        AsmInstruction::Binary(
+                            AsmBinaryOperator::Mult,
+                            src.clone(),
+                            AsmOperand::Register(Reg::R11),
+                        ),
+                        AsmInstruction::Mov(
+                            AsmOperand::Register(Reg::R11),
+                            AsmOperand::Stack(*dst),
+                        ),
+                    ]
+                }
                 _ => vec![i.clone()],
             }
         })
@@ -84,7 +140,7 @@ fn fix_function_definition(
 }
 
 /// replaces pseudoregisters with stack slots and returns the last stack memory address
-fn replace_pseudoregisters(program: &AsmProgram) -> (AsmProgram, i32) {
+fn replace_pseudoregisters_program(program: &AsmProgram) -> (AsmProgram, i32) {
     let (new_fd, last_offset) = replace_pseudoregisters_fd(&program.function_definition);
 
     (AsmProgram::new(new_fd), last_offset)
@@ -127,6 +183,18 @@ fn replace_pseudoregisters_i(
             debug!("Replace pseudoregisters for Unary({unary_op:?}, {op:?})");
             AsmInstruction::Unary(unary_op.clone(), replace_pseudoregisters_op(op, offset_map))
         }
+        AsmInstruction::Binary(op, src, dst) => {
+            debug!("Replace pseudoregisters for Binary({op:?}, {src:?}, {dst:?})");
+            AsmInstruction::Binary(
+                op.clone(),
+                replace_pseudoregisters_op(src, offset_map),
+                replace_pseudoregisters_op(dst, offset_map),
+            )
+        }
+        AsmInstruction::Idiv(op) => {
+            AsmInstruction::Idiv(replace_pseudoregisters_op(op, offset_map))
+        }
+        // TODO: same problem here '_' makes errors (maybe this is solved with unit testing)
         _ => {
             debug!("Not replacing registers");
             instruction.clone()
@@ -162,10 +230,14 @@ fn ids_offset_map(function_definition: &AsmFunctionDefinition) -> (HashMap<AsmOp
     (map, last_offset)
 }
 
+// TODO: this should return an empty list instead of None
+// TODO: find a way to fail if new instruction is not handled
 fn operands(instruction: &AsmInstruction) -> Option<Vec<AsmOperand>> {
     match instruction {
-        AsmInstruction::Mov(src, dst) => Some(vec![src.clone(), dst.clone()]),
+        AsmInstruction::Mov(op_1, op_2) => Some(vec![op_1.clone(), op_2.clone()]),
         AsmInstruction::Unary(_, op) => Some(vec![op.clone()]),
+        AsmInstruction::Binary(_, op_1, op_2) => Some(vec![op_1.clone(), op_2.clone()]),
+        AsmInstruction::Idiv(op) => Some(vec![op.clone()]),
         _ => None,
     }
 }

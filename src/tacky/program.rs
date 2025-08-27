@@ -1,10 +1,7 @@
-//! This module contains tacky AST which is an intermediate
+//! This module contains  tacky AST which is an intermediate
 //! representation of the source code.
 
-use std::{
-    fmt,
-    sync::atomic::{AtomicUsize, Ordering},
-};
+use std::sync::atomic::{AtomicUsize, Ordering};
 
 use crate::util::indent;
 
@@ -22,6 +19,7 @@ pub struct TackyFunctionDefinition {
 pub enum TackyInstruction {
     Return(TackyValue),
     Unary(TackyUnaryOperator, TackyValue, TackyValue),
+    Binary(TackyBinaryOperator, TackyValue, TackyValue, TackyValue),
 }
 
 #[derive(Clone, Debug)]
@@ -41,6 +39,15 @@ pub enum TackyUnaryOperator {
     Negate,
 }
 
+#[derive(Clone, Debug, PartialEq)]
+pub enum TackyBinaryOperator {
+    Add,
+    Subtract,
+    Multiply,
+    Divide,
+    Remainder,
+}
+
 static COUNTER: AtomicUsize = AtomicUsize::new(0);
 
 fn next_id() -> usize {
@@ -55,74 +62,69 @@ impl TackyIdentifier {
     }
 }
 
-// Display impls
-
-impl fmt::Display for TackyProgram {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        writeln!(f, "TackyProgram(")?;
-        writeln!(f, "{})", indent(&self.function_definition.to_string(), 4))?;
-        writeln!(f, ")")
+impl TackyProgram {
+    pub fn pretty_print(&self) -> String {
+        format!(
+            "TackyProgram(\n{}\n)",
+            indent(&self.function_definition.pretty_print(), 4)
+        )
     }
 }
 
-impl fmt::Display for TackyFunctionDefinition {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        writeln!(f, "TackyFunction(")?;
-        writeln!(
-            f,
-            "{}",
-            indent(&format!("name=\"{}\",", self.name.value), 4)
-        )?;
-        writeln!(
-            f,
-            "{}",
+impl TackyFunctionDefinition {
+    pub fn pretty_print(&self) -> String {
+        format!(
+            "TackyFunction(\n{}\n{}\n)",
+            indent(&format!("name=\"{}\",", self.name.value), 4),
             indent(
                 &format!(
                     "instructions=[\n{}\n]",
                     self.instructions
-                        .clone()
-                        .into_iter()
-                        .map(|s| indent(&s.to_string(), 4))
+                        .iter()
+                        .map(|s| indent(&s.pretty_print(), 4))
                         .collect::<Vec<_>>()
                         .join("\n")
                 ),
                 4
             )
-        )?;
-        writeln!(f, " ") // this is on pourpose so it pretty prints
+        )
     }
 }
 
-impl fmt::Display for TackyInstruction {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+impl TackyInstruction {
+    pub fn pretty_print(&self) -> String {
         match self {
             TackyInstruction::Return(value) => {
-                writeln!(f, "Return(")?;
-                writeln!(f, "{}", indent(&value.to_string(), 4))?;
-                writeln!(f, ")")
+                format!("Return(\n{}\n)", indent(&value.pretty_print(), 4))
             }
             TackyInstruction::Unary(op, src, dst) => {
-                writeln!(f, "Unary({}, {}, {})", op, src, dst)
+                format!(
+                    "Unary({}, {}, {})",
+                    op.pretty_print(),
+                    src.pretty_print(),
+                    dst.pretty_print()
+                )
             }
+            TackyInstruction::Binary(_, _, _, _) => todo!(),
         }
     }
 }
 
-impl fmt::Display for TackyValue {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+impl TackyValue {
+    pub fn pretty_print(&self) -> String {
         match self {
-            TackyValue::Constant(c) => write!(f, "Constant({})", c),
-            TackyValue::Var(id) => write!(f, "Var({})", id.value),
+            TackyValue::Constant(c) => format!("Constant({})", c),
+            TackyValue::Var(id) => format!("Var(\"{}\")", id.value),
         }
     }
 }
 
-impl fmt::Display for TackyUnaryOperator {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+impl TackyUnaryOperator {
+    pub fn pretty_print(&self) -> String {
         match self {
-            // todo(fede) this might be replaced with derive debug
-            TackyUnaryOperator::Complement => write!(f, "Complement"),
-            TackyUnaryOperator::Negate => write!(f, "Negate"),
+            // TODO: this might be replaced with derive debug
+            TackyUnaryOperator::Complement => "Complement".to_string(),
+            TackyUnaryOperator::Negate => "Negate".to_string(),
         }
     }
 }
