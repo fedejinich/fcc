@@ -1,7 +1,8 @@
-use std::fmt::{self};
+use std::fmt::{self, Binary};
 
 use crate::codegen::x64::asm::{
-    AsmFunctionDefinition, AsmInstruction, AsmOperand, AsmProgram, AsmUnaryOperator, Reg,
+    AsmBinaryOperator, AsmFunctionDefinition, AsmInstruction, AsmOperand, AsmProgram,
+    AsmUnaryOperator, Reg,
 };
 
 pub struct Emitter<W: fmt::Write> {
@@ -88,9 +89,9 @@ impl AsmInstruction {
                 em.line("popq %rbp")?;
                 em.line("ret")
             }
-            Binary(_, _, _) => todo!(),
-            Idiv(_) => todo!(),
-            Cdq => todo!(),
+            Binary(op, src, dst) => em.line(&format!("{} {}, {}", op.fmt(), src.fmt(), dst.fmt())),
+            Idiv(op) => em.line(&format!("idivl {}", op.fmt())),
+            Cdq => em.line("cdq"),
         }
     }
 }
@@ -110,6 +111,23 @@ impl AsmUnaryOperator {
     }
 }
 
+impl AsmBinaryOperator {
+    pub fn fmt(&self) -> impl std::fmt::Display + '_ {
+        struct Disp<'a>(&'a AsmBinaryOperator);
+        impl<'a> std::fmt::Display for Disp<'a> {
+            fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> fmt::Result {
+                match self.0 {
+                    // instructions operate on 32-bit values, so they get l suffixes
+                    AsmBinaryOperator::Add => write!(f, "addl"),
+                    AsmBinaryOperator::Sub => write!(f, "subl"),
+                    AsmBinaryOperator::Mult => write!(f, "imull"),
+                }
+            }
+        }
+        Disp(self)
+    }
+}
+
 impl AsmOperand {
     pub fn fmt(&self) -> impl std::fmt::Display + '_ {
         struct Disp<'a>(&'a AsmOperand);
@@ -119,10 +137,13 @@ impl AsmOperand {
                     AsmOperand::Register(Reg::AX) => f.write_str("%eax"),
                     AsmOperand::Register(Reg::DX) => f.write_str("%edx"),
                     AsmOperand::Register(Reg::R10) => f.write_str("%r10d"),
-                    AsmOperand::Register(Reg::R11) => todo!(),
+                    AsmOperand::Register(Reg::R11) => f.write_str("%r11d"),
                     AsmOperand::Stack(offset) => write!(f, "{}(%rbp)", offset),
                     AsmOperand::Imm(num) => write!(f, "${}", num),
-                    AsmOperand::Pseudo(id) => write!(f, "{}", id.value), // o fallo si no debería aparecer
+                    AsmOperand::Pseudo(id) => {
+                        println!("id: {}", id.value);
+                        write!(f, "{}", id.value) // o fallo si no debería aparecer
+                    }
                 }
             }
         }

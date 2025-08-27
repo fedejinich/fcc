@@ -179,6 +179,14 @@ fn replace_pseudoregisters_i(
             debug!("Replace pseudoregisters for Unary({unary_op:?}, {op:?})");
             AsmInstruction::Unary(unary_op.clone(), replace_pseudoregisters_op(op, offset_map))
         }
+        AsmInstruction::Binary(op, src, dst) => {
+            debug!("Replace pseudoregisters for Binary({op:?}, {src:?}, {dst:?})");
+            AsmInstruction::Binary(
+                op.clone(),
+                replace_pseudoregisters_op(src, offset_map),
+                replace_pseudoregisters_op(dst, offset_map),
+            )
+        }
         _ => {
             debug!("Not replacing registers");
             instruction.clone()
