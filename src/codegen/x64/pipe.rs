@@ -191,6 +191,10 @@ fn replace_pseudoregisters_i(
                 replace_pseudoregisters_op(dst, offset_map),
             )
         }
+        AsmInstruction::Idiv(op) => {
+            AsmInstruction::Idiv(replace_pseudoregisters_op(op, offset_map))
+        }
+        // TODO: same problem here '_' makes errors (maybe this is solved with unit testing)
         _ => {
             debug!("Not replacing registers");
             instruction.clone()
