@@ -30,6 +30,13 @@ pub enum Token {
     Multiply,
     Divide,
     Remainder,
+
+    // bitwise operators
+    And,
+    Or,
+    Xor,
+    LeftShift,
+    RightShift,
 }
 
 pub fn lex(mut code: &str) -> Result<Vec<Token>, String> {
@@ -86,6 +93,11 @@ fn token_matchers() -> Vec<TokenMatcher> {
         TokenMatcher::new(|_| Token::Multiply, r"^\*"),
         TokenMatcher::new(|_| Token::Divide, r"^\/"),
         TokenMatcher::new(|_| Token::Remainder, r"^\%"),
+        TokenMatcher::new(|_| Token::And, r"^\&"),
+        TokenMatcher::new(|_| Token::Or, r"^\|"),
+        TokenMatcher::new(|_| Token::Xor, r"^\^"),
+        TokenMatcher::new(|_| Token::LeftShift, r"^<<"),
+        TokenMatcher::new(|_| Token::RightShift, r"^>>"),
     ]
 }
 
@@ -119,11 +131,15 @@ impl TokenMatcher {
     ) -> Option<regex::Match<'a>> {
         let m = Regex::new(self.regex).unwrap().find(code)?;
 
+        debug!("match: {:?}", m);
+
         if longest_match.is_none() {
             return Some(m);
         }
 
         let longest_match_value = longest_match.clone().unwrap().1;
+
+        debug!("match_value: {:?}", longest_match_value);
 
         // match if longer than longest match
         if m.len() > longest_match_value.len() {

@@ -60,4 +60,4 @@ echo "Testing chapter 3"
 # ./test_compiler "$FCC_PATH" --chapter 3 --stage codegen
 
 echo "Integration tests"
-./test_compiler "$FCC_PATH" --chapter 3
+./test_compiler "$FCC_PATH" --chapter 3 --bitwise --stage lex
