@@ -144,11 +144,11 @@ impl From<BinaryOperator> for TackyBinaryOperator {
             BinaryOperator::Multiply => TackyBinaryOperator::Multiply,
             BinaryOperator::Remainder => TackyBinaryOperator::Remainder,
             BinaryOperator::Subtract => TackyBinaryOperator::Subtract,
-            BinaryOperator::And => todo!(),
-            BinaryOperator::Or => todo!(),
-            BinaryOperator::Xor => todo!(),
-            BinaryOperator::LeftShift => todo!(),
-            BinaryOperator::RightShift => todo!(),
+            BinaryOperator::And => TackyBinaryOperator::And,
+            BinaryOperator::Or => TackyBinaryOperator::Or,
+            BinaryOperator::Xor => TackyBinaryOperator::Xor,
+            BinaryOperator::LeftShift => TackyBinaryOperator::LeftShift,
+            BinaryOperator::RightShift => TackyBinaryOperator::RightShift,
         };
         trace!("<binop> conversion completed: {:?}", tacky_op);
         tacky_op

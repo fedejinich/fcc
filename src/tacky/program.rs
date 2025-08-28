@@ -46,6 +46,11 @@ pub enum TackyBinaryOperator {
     Multiply,
     Divide,
     Remainder,
+    And,
+    Or,
+    Xor,
+    LeftShift,
+    RightShift,
 }
 
 static COUNTER: AtomicUsize = AtomicUsize::new(0);

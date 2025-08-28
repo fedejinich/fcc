@@ -197,15 +197,18 @@ impl Expression {
     }
 }
 
+// returns value representing precedence order
+// operators are sorted according to the official spec
+// https://en.cppreference.com/w/c/language/operator_precedence.html
 fn precedence(token: &Token) -> i32 {
     debug!("<precedence>: {:?}", token);
     match token {
         Token::Multiply | Token::Divide | Token::Remainder => 50,
         Token::Plus | Token::Negate => 45,
-        Token::LeftShift | Token::RightShift => 40,
-        Token::And => 39,
-        Token::Xor => 38,
-        Token::Or => 37,
+        Token::LeftShift | Token::RightShift => 44,
+        Token::And => 43,
+        Token::Xor => 42,
+        Token::Or => 40,
         _ => 0,
     }
 }

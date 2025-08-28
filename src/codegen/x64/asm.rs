@@ -149,6 +149,11 @@ impl AsmInstruction {
                             AsmInstruction::Mov(reg, AsmOperand::from(dst)),
                         ]
                     }
+                    TackyBinaryOperator::And
+                    | TackyBinaryOperator::Or
+                    | TackyBinaryOperator::Xor
+                    | TackyBinaryOperator::LeftShift
+                    | TackyBinaryOperator::RightShift => todo!(),
                 }
             }
         }
