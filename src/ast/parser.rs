@@ -192,6 +192,10 @@ fn precedence(token: &Token) -> i32 {
     match token {
         Token::Multiply | Token::Divide | Token::Remainder => 50,
         Token::Plus | Token::Negate => 45,
+        Token::LeftShift | Token::RightShift => 40,
+        Token::And => 39,
+        Token::Xor => 38,
+        Token::Or => 37,
         _ => 0,
     }
 }
