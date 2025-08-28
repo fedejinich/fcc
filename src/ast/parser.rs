@@ -128,8 +128,18 @@ impl Expression {
         // ques: isn't this too expensive?
         let is_binary_op = |t: &Token| {
             matches!(
-                t, // ques: remove clone
-                Token::Plus | Token::Negate | Token::Multiply | Token::Divide | Token::Remainder
+                t, // ques: remove clone?
+                Token::Plus
+                    | Token::Negate
+                    | Token::Multiply
+                    | Token::Divide
+                    | Token::Remainder
+                    // bitwise operators are binary operators as well
+                    | Token::And
+                    | Token::Or
+                    | Token::Xor
+                    | Token::LeftShift
+                    | Token::RightShift
             )
         };
         while is_binary_op(next_token) && precedence(next_token) >= min_prec {
@@ -208,6 +218,12 @@ impl BinaryOperator {
             Token::Divide => BinaryOperator::Divide,
             Token::Remainder => BinaryOperator::Remainder,
             Token::Negate => BinaryOperator::Subtract,
+            // bitwise operators are binary operators as well
+            Token::And => BinaryOperator::And,
+            Token::Or => BinaryOperator::Or,
+            Token::Xor => BinaryOperator::Xor,
+            Token::LeftShift => BinaryOperator::LeftShift,
+            Token::RightShift => BinaryOperator::RightShift,
             _ => return Err("could not parse binary operator".to_string()),
         };
 

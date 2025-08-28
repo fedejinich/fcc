@@ -82,7 +82,7 @@ impl TackyInstruction {
             Expression::Constant(c) => {
                 trace!("Found <constant>: {}", c);
                 TackyValue::Constant(c)
-            },
+            }
             Expression::Unary(op, inner_exp) => {
                 trace!("Found <unop>: {:?}", op);
                 let src = TackyInstruction::from_expr(*inner_exp, instructions);
@@ -144,6 +144,11 @@ impl From<BinaryOperator> for TackyBinaryOperator {
             BinaryOperator::Multiply => TackyBinaryOperator::Multiply,
             BinaryOperator::Remainder => TackyBinaryOperator::Remainder,
             BinaryOperator::Subtract => TackyBinaryOperator::Subtract,
+            BinaryOperator::And => todo!(),
+            BinaryOperator::Or => todo!(),
+            BinaryOperator::Xor => todo!(),
+            BinaryOperator::LeftShift => todo!(),
+            BinaryOperator::RightShift => todo!(),
         };
         trace!("<binop> conversion completed: {:?}", tacky_op);
         tacky_op

@@ -31,7 +31,7 @@ pub enum Token {
     Divide,
     Remainder,
 
-    // bitwise operators
+    // bitwise (binary) operators
     And,
     Or,
     Xor,
