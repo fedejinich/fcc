@@ -20,6 +20,10 @@ pub enum TackyInstruction {
     Return(TackyValue),
     Unary(TackyUnaryOperator, TackyValue, TackyValue),
     Binary(TackyBinaryOperator, TackyValue, TackyValue, TackyValue),
+    Copy(TackyValue, TackyValue),
+    Jump(TackyIdentifier),
+    JunpIfZero(TackyValue),
+    Label(TackyIdentifier),
 }
 
 #[derive(Clone, Debug)]
@@ -37,6 +41,8 @@ pub enum TackyValue {
 pub enum TackyUnaryOperator {
     Complement,
     Negate,
+    // logical operators
+    Not,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -46,11 +52,21 @@ pub enum TackyBinaryOperator {
     Multiply,
     Divide,
     Remainder,
+    // bitwise operators
     BitwiseAnd,
     BitwiseOr,
     BitwiseXor,
     LeftShift,
     RightShift,
+    // logical operators
+    And,
+    Or,
+    Equal,
+    NotEqual,
+    GreaterThan,
+    LessThan,
+    GreaterThanOrEqual,
+    LessThanOrEqual,
 }
 
 static COUNTER: AtomicUsize = AtomicUsize::new(0);
