@@ -126,7 +126,10 @@ impl AsmBinaryOperator {
                     AsmBinaryOperator::Or => write!(f, "orl"),
                     AsmBinaryOperator::Xor => write!(f, "xorl"),
                     AsmBinaryOperator::LeftShift => write!(f, "shll"),
-                    AsmBinaryOperator::RightShift => write!(f, "shrl"),
+                    // right bitshift of negative value is implementation-defined;
+                    // we follow GCC and use sign extension
+                    // (see https://gcc.gnu.org/onlinedocs/gcc/Integers-implementation.html)
+                    AsmBinaryOperator::RightShift => write!(f, "sarl"),
                 }
             }
         }
