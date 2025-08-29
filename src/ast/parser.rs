@@ -120,6 +120,7 @@ impl Statement {
 }
 
 impl Expression {
+    // TODO: this function is too long
     fn parse_exp(tokens: &mut Iter<Token>, min_prec: i32) -> ParseResult<Self> {
         trace!("Entering <exp> with min_prec: {}", min_prec);
         let mut left = Expression::parse_fact(tokens)?;
@@ -140,6 +141,15 @@ impl Expression {
                     | Token::BitwiseXor
                     | Token::LeftShift
                     | Token::RightShift
+                    // logical operators
+                    | Token::And
+                    | Token::Or
+                    | Token::Equal
+                    | Token::NotEqual
+                    | Token::GreaterThan
+                    | Token::LessThan
+                    | Token::GreaterThanOrEqual
+                    | Token::LessThanOrEqual
             )
         };
         while is_binary_op(next_token) && precedence(next_token) >= min_prec {
@@ -174,7 +184,9 @@ impl Expression {
                 trace!("Exiting <factor> (int)");
                 Ok(Expression::Constant(n.parse::<i32>().unwrap()))
             }
-            Token::Complement | Token::Negate => {
+            // TODO: extract this conditions to representative functions
+            // or any kind of restriction
+            Token::Complement | Token::Negate | Token::Not => {
                 trace!("Found <unop>: {:?}", next_token);
                 let unary = UnaryOperator::parse_un(tokens)?;
                 let exp = Expression::parse_fact(tokens)?;
@@ -209,6 +221,14 @@ fn precedence(token: &Token) -> i32 {
         Token::BitwiseAnd => 43,
         Token::BitwiseXor => 42,
         Token::BitwiseOr => 40,
+        Token::LessThan |
+        Token::LessThanOrEqual |
+        Token::GreaterThan  |
+        Token::GreaterThanOrEqual => 35,
+        Token::Equal => 30,
+        Token::NotEqual => 30,
+        Token::And => 10,
+        Token::Or => 5,
         _ => 0,
     }
 }
@@ -227,6 +247,15 @@ impl BinaryOperator {
             Token::BitwiseXor => BinaryOperator::BitwiseXor,
             Token::LeftShift => BinaryOperator::LeftShift,
             Token::RightShift => BinaryOperator::RightShift,
+            // logical operators
+            Token::And => BinaryOperator::And,
+            Token::Or => BinaryOperator::Or,
+            Token::Equal => BinaryOperator::Equal,
+            Token::NotEqual => BinaryOperator::NotEqual,
+            Token::GreaterThan => BinaryOperator::GreaterThan,
+            Token::LessThan => BinaryOperator::LessThan,
+            Token::GreaterThanOrEqual => BinaryOperator::GreaterThanOrEqual,
+            Token::LessThanOrEqual => BinaryOperator::LessThanOrEqual,
             _ => return Err("could not parse binary operator".to_string()),
         };
 
@@ -241,6 +270,7 @@ impl UnaryOperator {
         let unop = match tokens.next().unwrap() {
             Token::Complement => UnaryOperator::Complement,
             Token::Negate => UnaryOperator::Negate,
+            Token::Not => UnaryOperator::Not,
             _ => return Err("could not parse unary operator".to_string()),
         };
 

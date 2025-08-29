@@ -154,6 +154,7 @@ impl From<BinaryOperator> for TackyBinaryOperator {
             BinaryOperator::Or => todo!(),
             BinaryOperator::Xor => todo!(),
             BinaryOperator::Equal => todo!(),
+            BinaryOperator::NotEqual => todo!(),
             BinaryOperator::GreaterThan => todo!(),
             BinaryOperator::LessThan => todo!(),
             BinaryOperator::GreaterThanOrEqual => todo!(),
