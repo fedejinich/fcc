@@ -135,9 +135,9 @@ impl Expression {
                     | Token::Divide
                     | Token::Remainder
                     // bitwise operators are binary operators as well
-                    | Token::And
-                    | Token::Or
-                    | Token::Xor
+                    | Token::BitwiseAnd
+                    | Token::BitwiseOr
+                    | Token::BitwiseXor
                     | Token::LeftShift
                     | Token::RightShift
             )
@@ -206,9 +206,9 @@ fn precedence(token: &Token) -> i32 {
         Token::Multiply | Token::Divide | Token::Remainder => 50,
         Token::Plus | Token::Negate => 45,
         Token::LeftShift | Token::RightShift => 44,
-        Token::And => 43,
-        Token::Xor => 42,
-        Token::Or => 40,
+        Token::BitwiseAnd => 43,
+        Token::BitwiseXor => 42,
+        Token::BitwiseOr => 40,
         _ => 0,
     }
 }
@@ -222,9 +222,9 @@ impl BinaryOperator {
             Token::Remainder => BinaryOperator::Remainder,
             Token::Negate => BinaryOperator::Subtract,
             // bitwise operators are binary operators as well
-            Token::And => BinaryOperator::And,
-            Token::Or => BinaryOperator::Or,
-            Token::Xor => BinaryOperator::Xor,
+            Token::BitwiseAnd => BinaryOperator::BitwiseAnd,
+            Token::BitwiseOr => BinaryOperator::BitwiseOr,
+            Token::BitwiseXor => BinaryOperator::BitwiseXor,
             Token::LeftShift => BinaryOperator::LeftShift,
             Token::RightShift => BinaryOperator::RightShift,
             _ => return Err("could not parse binary operator".to_string()),

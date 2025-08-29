@@ -32,11 +32,22 @@ pub enum Token {
     Remainder,
 
     // bitwise (binary) operators
-    And,
-    Or,
-    Xor,
+    BitwiseAnd,
+    BitwiseOr,
+    BitwiseXor,
     LeftShift,
     RightShift,
+
+    // logical operators
+    Not,
+    LogicalAnd,
+    LogicalOr,
+    Equal,
+    NotEqual,
+    LessThan,
+    GreaterThan,
+    LessThanOrEqual,
+    GreaterThanOrEqual,
 }
 
 pub fn lex(mut code: &str) -> Result<Vec<Token>, String> {
@@ -93,11 +104,20 @@ fn token_matchers() -> Vec<TokenMatcher> {
         TokenMatcher::new(|_| Token::Multiply, r"^\*"),
         TokenMatcher::new(|_| Token::Divide, r"^\/"),
         TokenMatcher::new(|_| Token::Remainder, r"^\%"),
-        TokenMatcher::new(|_| Token::And, r"^\&"),
-        TokenMatcher::new(|_| Token::Or, r"^\|"),
-        TokenMatcher::new(|_| Token::Xor, r"^\^"),
+        TokenMatcher::new(|_| Token::BitwiseAnd, r"^\&"),
+        TokenMatcher::new(|_| Token::BitwiseOr, r"^\|"),
+        TokenMatcher::new(|_| Token::BitwiseXor, r"^\^"),
         TokenMatcher::new(|_| Token::LeftShift, r"^<<"),
         TokenMatcher::new(|_| Token::RightShift, r"^>>"),
+        TokenMatcher::new(|_| Token::Not, r"^!"),
+        TokenMatcher::new(|_| Token::LogicalAnd, r"^&&"),
+        TokenMatcher::new(|_| Token::LogicalOr, r"^\|\|"),
+        TokenMatcher::new(|_| Token::Equal, r"^=="),
+        TokenMatcher::new(|_| Token::NotEqual, r"^!="),
+        TokenMatcher::new(|_| Token::LessThan, r"^<"),
+        TokenMatcher::new(|_| Token::LessThanOrEqual, r"^<="),
+        TokenMatcher::new(|_| Token::GreaterThan, r"^>"),
+        TokenMatcher::new(|_| Token::GreaterThanOrEqual, r"^>="),
     ]
 }
 

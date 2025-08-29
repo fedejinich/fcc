@@ -144,9 +144,9 @@ impl From<BinaryOperator> for TackyBinaryOperator {
             BinaryOperator::Multiply => TackyBinaryOperator::Multiply,
             BinaryOperator::Remainder => TackyBinaryOperator::Remainder,
             BinaryOperator::Subtract => TackyBinaryOperator::Subtract,
-            BinaryOperator::And => TackyBinaryOperator::And,
-            BinaryOperator::Or => TackyBinaryOperator::Or,
-            BinaryOperator::Xor => TackyBinaryOperator::Xor,
+            BinaryOperator::BitwiseAnd => TackyBinaryOperator::And,
+            BinaryOperator::BitwiseOr => TackyBinaryOperator::Or,
+            BinaryOperator::BitwiseXor => TackyBinaryOperator::Xor,
             BinaryOperator::LeftShift => TackyBinaryOperator::LeftShift,
             BinaryOperator::RightShift => TackyBinaryOperator::RightShift,
         };
