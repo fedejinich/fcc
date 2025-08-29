@@ -21,6 +21,7 @@ pub enum Token {
     // unary operators
     Complement,
     Negate, // this is also the minus operator but we don't disitinguish this in lexing stage
+    Not,
 
     // ops
     Decrement,
@@ -39,9 +40,10 @@ pub enum Token {
     RightShift,
 
     // logical operators
-    Not,
     And,
     Or,
+
+    // relational operators
     Equal,
     NotEqual,
     LessThan,

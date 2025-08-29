@@ -150,15 +150,14 @@ impl From<BinaryOperator> for TackyBinaryOperator {
             BinaryOperator::BitwiseXor => TackyBinaryOperator::BitwiseXor,
             BinaryOperator::LeftShift => TackyBinaryOperator::LeftShift,
             BinaryOperator::RightShift => TackyBinaryOperator::RightShift,
-            BinaryOperator::And => todo!(),
-            BinaryOperator::Or => todo!(),
-            BinaryOperator::Xor => todo!(),
-            BinaryOperator::Equal => todo!(),
-            BinaryOperator::NotEqual => todo!(),
-            BinaryOperator::GreaterThan => todo!(),
-            BinaryOperator::LessThan => todo!(),
-            BinaryOperator::GreaterThanOrEqual => todo!(),
-            BinaryOperator::LessThanOrEqual => todo!(),
+            BinaryOperator::And => TackyBinaryOperator::And,
+            BinaryOperator::Or => TackyBinaryOperator::Or,
+            BinaryOperator::Equal => TackyBinaryOperator::Equal,
+            BinaryOperator::NotEqual => TackyBinaryOperator::NotEqual,
+            BinaryOperator::GreaterThan => TackyBinaryOperator::GreaterThan,
+            BinaryOperator::LessThan => TackyBinaryOperator::LessThan,
+            BinaryOperator::GreaterThanOrEqual => TackyBinaryOperator::GreaterThanOrEqual,
+            BinaryOperator::LessThanOrEqual => TackyBinaryOperator::LessThanOrEqual,
         };
         trace!("<binop> conversion completed: {:?}", tacky_op);
         tacky_op

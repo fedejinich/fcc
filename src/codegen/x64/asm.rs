@@ -145,6 +145,10 @@ impl AsmInstruction {
                             AsmOperand::from(dst),
                         ),
                     ],
+                    TackyBinaryOperator::And | TackyBinaryOperator::Or | TackyBinaryOperator::Equal 
+                    | TackyBinaryOperator::NotEqual | TackyBinaryOperator::GreaterThan
+                    | TackyBinaryOperator::LessThan | TackyBinaryOperator::LessThanOrEqual 
+                    | TackyBinaryOperator::GreaterThanOrEqual => todo!(),
                     TackyBinaryOperator::Divide | TackyBinaryOperator::Remainder => {
                         let reg = if is_div {
                             debug!("is div");
@@ -166,6 +170,10 @@ impl AsmInstruction {
                     }
                 }
             }
+            TackyInstruction::Copy(_, _) => todo!(),
+            TackyInstruction::Jump(_) => todo!(),
+            TackyInstruction::JunpIfZero(_) => todo!(),
+            TackyInstruction::Label(_) => todo!(),
         }
     }
 }
@@ -203,6 +211,8 @@ impl From<TackyUnaryOperator> for AsmUnaryOperator {
         match tacky_unary_operator {
             TackyUnaryOperator::Negate => AsmUnaryOperator::Neg,
             TackyUnaryOperator::Complement => AsmUnaryOperator::Not,
+            // logical unary operators
+            TackyUnaryOperator::Not => AsmUnaryOperator::Not,
         }
     }
 }

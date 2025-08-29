@@ -41,7 +41,7 @@ pub enum TackyValue {
 pub enum TackyUnaryOperator {
     Complement,
     Negate,
-    // logical operators
+    // logical unary operators
     Not,
 }
 
@@ -61,6 +61,7 @@ pub enum TackyBinaryOperator {
     // logical operators
     And,
     Or,
+    // relational operators
     Equal,
     NotEqual,
     GreaterThan,
@@ -131,6 +132,12 @@ impl TackyInstruction {
                 src_2.pretty_print(),
                 dst.pretty_print()
             ),
+            TackyInstruction::Copy(src, dst) => {
+                format!("Copy({}, {})", src.pretty_print(), dst.pretty_print())
+            }
+            TackyInstruction::Jump(id) => format!("Jump({})", id.value),
+            TackyInstruction::JunpIfZero(val) => format!("JunpIfZero({})", val.pretty_print()),
+            TackyInstruction::Label(id) => format!("Label({})", id.value),
         }
     }
 }
@@ -150,6 +157,8 @@ impl TackyUnaryOperator {
             // TODO: this might be replaced with derive debug
             TackyUnaryOperator::Complement => "Complement",
             TackyUnaryOperator::Negate => "Negate",
+            // logical unary operators
+            TackyUnaryOperator::Not => "Not",
         }
         .to_string()
     }
@@ -163,11 +172,19 @@ impl TackyBinaryOperator {
             TackyBinaryOperator::Multiply => "Multiply",
             TackyBinaryOperator::Divide => "Divide",
             TackyBinaryOperator::Remainder => "Remainder",
-            TackyBinaryOperator::BitwiseAnd => "And",
-            TackyBinaryOperator::BitwiseOr => "Or",
-            TackyBinaryOperator::BitwiseXor => "Xor",
+            TackyBinaryOperator::BitwiseAnd => "BitwiseAnd",
+            TackyBinaryOperator::BitwiseOr => "BitwiseOr",
+            TackyBinaryOperator::BitwiseXor => "BitwiseXor",
             TackyBinaryOperator::LeftShift => "LeftShift",
             TackyBinaryOperator::RightShift => "RightShift",
+            TackyBinaryOperator::And => "And",
+            TackyBinaryOperator::Or => "Or",
+            TackyBinaryOperator::Equal => "Equal",
+            TackyBinaryOperator::NotEqual => "NotEqual",
+            TackyBinaryOperator::GreaterThan => "GreaterThan",
+            TackyBinaryOperator::LessThan => "LessThan",
+            TackyBinaryOperator::GreaterThanOrEqual => "GreaterThanOrEqual",
+            TackyBinaryOperator::LessThanOrEqual => "LessThanOrEqual",
         }
         .to_string()
     }

@@ -43,16 +43,19 @@ pub enum BinaryOperator {
     Multiply,
     Divide,
     Remainder,
+
     // bitwise operators are binary operators as well
     BitwiseAnd,
     BitwiseOr,
     BitwiseXor,
     LeftShift,
     RightShift,
+
     // logical operators
     And,
     Or,
-    Xor,
+
+    // relational operators
     Equal,
     NotEqual,
     GreaterThan,
@@ -145,7 +148,6 @@ impl fmt::Display for BinaryOperator {
             BinaryOperator::RightShift => write!(f, "RightShift"),
             BinaryOperator::And => write!(f, "And"),
             BinaryOperator::Or => write!(f, "Or"),
-            BinaryOperator::Xor => write!(f, "Xor"),
             BinaryOperator::Equal => write!(f, "Equal"),
             BinaryOperator::NotEqual => write!(f, "NotEqual"),
             BinaryOperator::GreaterThan => write!(f, "GreaterThan"),

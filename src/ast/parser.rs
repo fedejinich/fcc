@@ -135,15 +135,19 @@ impl Expression {
                     | Token::Multiply
                     | Token::Divide
                     | Token::Remainder
-                    // bitwise operators are binary operators as well
+
+                    // bitwise operators
                     | Token::BitwiseAnd
                     | Token::BitwiseOr
                     | Token::BitwiseXor
                     | Token::LeftShift
                     | Token::RightShift
+
                     // logical operators
                     | Token::And
                     | Token::Or
+
+                    // relational operators
                     | Token::Equal
                     | Token::NotEqual
                     | Token::GreaterThan
@@ -221,10 +225,10 @@ fn precedence(token: &Token) -> i32 {
         Token::BitwiseAnd => 43,
         Token::BitwiseXor => 42,
         Token::BitwiseOr => 40,
-        Token::LessThan |
-        Token::LessThanOrEqual |
-        Token::GreaterThan  |
-        Token::GreaterThanOrEqual => 35,
+        Token::LessThan
+        | Token::LessThanOrEqual
+        | Token::GreaterThan
+        | Token::GreaterThanOrEqual => 35,
         Token::Equal => 30,
         Token::NotEqual => 30,
         Token::And => 10,
@@ -241,7 +245,7 @@ impl BinaryOperator {
             Token::Divide => BinaryOperator::Divide,
             Token::Remainder => BinaryOperator::Remainder,
             Token::Negate => BinaryOperator::Subtract,
-            // bitwise operators are binary operators as well
+            // binary operators
             Token::BitwiseAnd => BinaryOperator::BitwiseAnd,
             Token::BitwiseOr => BinaryOperator::BitwiseOr,
             Token::BitwiseXor => BinaryOperator::BitwiseXor,
@@ -250,6 +254,7 @@ impl BinaryOperator {
             // logical operators
             Token::And => BinaryOperator::And,
             Token::Or => BinaryOperator::Or,
+            // relational operators
             Token::Equal => BinaryOperator::Equal,
             Token::NotEqual => BinaryOperator::NotEqual,
             Token::GreaterThan => BinaryOperator::GreaterThan,
