@@ -46,6 +46,13 @@ pub enum AsmBinaryOperator {
     Add,
     Sub,
     Mult,
+
+    // bitwise operators
+    And,
+    Or,
+    Xor,
+    LeftShift,
+    RightShift,
 }
 
 #[derive(Clone, Eq, PartialEq, Hash, Debug)]
@@ -60,6 +67,8 @@ pub enum AsmOperand {
 pub enum Reg {
     AX,
     DX,
+    CX,
+    CL,
     R10,
     R11,
 }
@@ -122,7 +131,13 @@ impl AsmInstruction {
                     // we convert a single TACKY instruction into two assembly instructions”
                     TackyBinaryOperator::Add
                     | TackyBinaryOperator::Subtract
-                    | TackyBinaryOperator::Multiply => vec![
+                    | TackyBinaryOperator::Multiply
+                    // bitwise operators
+                    | TackyBinaryOperator::And
+                    | TackyBinaryOperator::Or
+                    | TackyBinaryOperator::Xor
+                    | TackyBinaryOperator::LeftShift
+                    | TackyBinaryOperator::RightShift => vec![
                         AsmInstruction::Mov(AsmOperand::from(src_1), AsmOperand::from(dst.clone())),
                         AsmInstruction::Binary(
                             AsmBinaryOperator::from(op),
@@ -149,11 +164,6 @@ impl AsmInstruction {
                             AsmInstruction::Mov(reg, AsmOperand::from(dst)),
                         ]
                     }
-                    TackyBinaryOperator::And
-                    | TackyBinaryOperator::Or
-                    | TackyBinaryOperator::Xor
-                    | TackyBinaryOperator::LeftShift
-                    | TackyBinaryOperator::RightShift => todo!(),
                 }
             }
         }
@@ -203,6 +213,11 @@ impl From<TackyBinaryOperator> for AsmBinaryOperator {
             TackyBinaryOperator::Add => AsmBinaryOperator::Add,
             TackyBinaryOperator::Subtract => AsmBinaryOperator::Sub,
             TackyBinaryOperator::Multiply => AsmBinaryOperator::Mult,
+            TackyBinaryOperator::And => AsmBinaryOperator::And,
+            TackyBinaryOperator::Or => AsmBinaryOperator::Or,
+            TackyBinaryOperator::Xor => AsmBinaryOperator::Xor,
+            TackyBinaryOperator::LeftShift => AsmBinaryOperator::LeftShift,
+            TackyBinaryOperator::RightShift => AsmBinaryOperator::RightShift,
             _ => panic!("this should never happen"),
         }
     }
