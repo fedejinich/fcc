@@ -102,15 +102,19 @@ impl TackyInstruction {
             TackyInstruction::Return(value) => {
                 format!("Return(\n{}\n)", indent(&value.pretty_print(), 4))
             }
-            TackyInstruction::Unary(op, src, dst) => {
-                format!(
-                    "Unary({}, {}, {})",
-                    op.pretty_print(),
-                    src.pretty_print(),
-                    dst.pretty_print()
-                )
-            }
-            TackyInstruction::Binary(_, _, _, _) => todo!(),
+            TackyInstruction::Unary(op, src, dst) => format!(
+                "Unary({}, {}, {})",
+                op.pretty_print(),
+                src.pretty_print(),
+                dst.pretty_print()
+            ),
+            TackyInstruction::Binary(op, src_1, src_2, dst) => format!(
+                "Binary({}, {}, {}, {})",
+                op.pretty_print(),
+                src_1.pretty_print(),
+                src_2.pretty_print(),
+                dst.pretty_print()
+            ),
         }
     }
 }
@@ -128,8 +132,27 @@ impl TackyUnaryOperator {
     pub fn pretty_print(&self) -> String {
         match self {
             // TODO: this might be replaced with derive debug
-            TackyUnaryOperator::Complement => "Complement".to_string(),
-            TackyUnaryOperator::Negate => "Negate".to_string(),
+            TackyUnaryOperator::Complement => "Complement",
+            TackyUnaryOperator::Negate => "Negate",
         }
+        .to_string()
+    }
+}
+
+impl TackyBinaryOperator {
+    pub fn pretty_print(&self) -> String {
+        match self {
+            TackyBinaryOperator::Add => "Add",
+            TackyBinaryOperator::Subtract => "Subtract",
+            TackyBinaryOperator::Multiply => "Multiply",
+            TackyBinaryOperator::Divide => "Divide",
+            TackyBinaryOperator::Remainder => "Remainder",
+            TackyBinaryOperator::And => "And",
+            TackyBinaryOperator::Or => "Or",
+            TackyBinaryOperator::Xor => "Xor",
+            TackyBinaryOperator::LeftShift => "LeftShift",
+            TackyBinaryOperator::RightShift => "RightShift",
+        }
+        .to_string()
     }
 }
