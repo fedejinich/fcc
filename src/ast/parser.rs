@@ -128,8 +128,18 @@ impl Expression {
         // ques: isn't this too expensive?
         let is_binary_op = |t: &Token| {
             matches!(
-                t, // ques: remove clone
-                Token::Plus | Token::Negate | Token::Multiply | Token::Divide | Token::Remainder
+                t, // ques: remove clone?
+                Token::Plus
+                    | Token::Negate
+                    | Token::Multiply
+                    | Token::Divide
+                    | Token::Remainder
+                    // bitwise operators are binary operators as well
+                    | Token::And
+                    | Token::Or
+                    | Token::Xor
+                    | Token::LeftShift
+                    | Token::RightShift
             )
         };
         while is_binary_op(next_token) && precedence(next_token) >= min_prec {
@@ -187,11 +197,18 @@ impl Expression {
     }
 }
 
+// returns value representing precedence order
+// operators are sorted according to the official spec
+// https://en.cppreference.com/w/c/language/operator_precedence.html
 fn precedence(token: &Token) -> i32 {
     debug!("<precedence>: {:?}", token);
     match token {
         Token::Multiply | Token::Divide | Token::Remainder => 50,
         Token::Plus | Token::Negate => 45,
+        Token::LeftShift | Token::RightShift => 44,
+        Token::And => 43,
+        Token::Xor => 42,
+        Token::Or => 40,
         _ => 0,
     }
 }
@@ -204,6 +221,12 @@ impl BinaryOperator {
             Token::Divide => BinaryOperator::Divide,
             Token::Remainder => BinaryOperator::Remainder,
             Token::Negate => BinaryOperator::Subtract,
+            // bitwise operators are binary operators as well
+            Token::And => BinaryOperator::And,
+            Token::Or => BinaryOperator::Or,
+            Token::Xor => BinaryOperator::Xor,
+            Token::LeftShift => BinaryOperator::LeftShift,
+            Token::RightShift => BinaryOperator::RightShift,
             _ => return Err("could not parse binary operator".to_string()),
         };
 

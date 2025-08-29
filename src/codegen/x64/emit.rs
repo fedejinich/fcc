@@ -121,6 +121,15 @@ impl AsmBinaryOperator {
                     AsmBinaryOperator::Add => write!(f, "addl"),
                     AsmBinaryOperator::Sub => write!(f, "subl"),
                     AsmBinaryOperator::Mult => write!(f, "imull"),
+                    // bitwise operators
+                    AsmBinaryOperator::And => write!(f, "andl"),
+                    AsmBinaryOperator::Or => write!(f, "orl"),
+                    AsmBinaryOperator::Xor => write!(f, "xorl"),
+                    AsmBinaryOperator::LeftShift => write!(f, "shll"),
+                    // right bitshift of negative value is implementation-defined;
+                    // we follow GCC and use sign extension
+                    // (see https://gcc.gnu.org/onlinedocs/gcc/Integers-implementation.html)
+                    AsmBinaryOperator::RightShift => write!(f, "sarl"),
                 }
             }
         }
@@ -136,14 +145,13 @@ impl AsmOperand {
                 match self.0 {
                     AsmOperand::Register(Reg::AX) => f.write_str("%eax"),
                     AsmOperand::Register(Reg::DX) => f.write_str("%edx"),
+                    AsmOperand::Register(Reg::CX) => f.write_str("%ecx"),
+                    AsmOperand::Register(Reg::CL) => f.write_str("%cl"),
                     AsmOperand::Register(Reg::R10) => f.write_str("%r10d"),
                     AsmOperand::Register(Reg::R11) => f.write_str("%r11d"),
                     AsmOperand::Stack(offset) => write!(f, "{}(%rbp)", offset),
                     AsmOperand::Imm(num) => write!(f, "${}", num),
-                    AsmOperand::Pseudo(id) => {
-                        println!("id: {}", id.value);
-                        write!(f, "{}", id.value) // o fallo si no debería aparecer
-                    }
+                    AsmOperand::Pseudo(id) => write!(f, "{}", id.value),
                 }
             }
         }
