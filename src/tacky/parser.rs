@@ -129,6 +129,7 @@ impl From<UnaryOperator> for TackyUnaryOperator {
         let tacky_op = match op {
             UnaryOperator::Complement => TackyUnaryOperator::Complement,
             UnaryOperator::Negate => TackyUnaryOperator::Negate,
+            UnaryOperator::Not => todo!(),
         };
         trace!("<unop> conversion completed: {:?}", tacky_op);
         tacky_op
@@ -144,11 +145,19 @@ impl From<BinaryOperator> for TackyBinaryOperator {
             BinaryOperator::Multiply => TackyBinaryOperator::Multiply,
             BinaryOperator::Remainder => TackyBinaryOperator::Remainder,
             BinaryOperator::Subtract => TackyBinaryOperator::Subtract,
-            BinaryOperator::BitwiseAnd => TackyBinaryOperator::And,
-            BinaryOperator::BitwiseOr => TackyBinaryOperator::Or,
-            BinaryOperator::BitwiseXor => TackyBinaryOperator::Xor,
+            BinaryOperator::BitwiseAnd => TackyBinaryOperator::BitwiseAnd,
+            BinaryOperator::BitwiseOr => TackyBinaryOperator::BitwiseOr,
+            BinaryOperator::BitwiseXor => TackyBinaryOperator::BitwiseXor,
             BinaryOperator::LeftShift => TackyBinaryOperator::LeftShift,
             BinaryOperator::RightShift => TackyBinaryOperator::RightShift,
+            BinaryOperator::And => todo!(),
+            BinaryOperator::Or => todo!(),
+            BinaryOperator::Xor => todo!(),
+            BinaryOperator::Equal => todo!(),
+            BinaryOperator::GreaterThan => todo!(),
+            BinaryOperator::LessThan => todo!(),
+            BinaryOperator::GreaterThanOrEqual => todo!(),
+            BinaryOperator::LessThanOrEqual => todo!(),
         };
         trace!("<binop> conversion completed: {:?}", tacky_op);
         tacky_op

@@ -48,9 +48,9 @@ pub enum AsmBinaryOperator {
     Mult,
 
     // bitwise operators
-    And,
-    Or,
-    Xor,
+    BitwiseAnd,
+    BitwiseOr,
+    BitwiseXor,
     LeftShift,
     RightShift,
 }
@@ -133,9 +133,9 @@ impl AsmInstruction {
                     | TackyBinaryOperator::Subtract
                     | TackyBinaryOperator::Multiply
                     // bitwise operators
-                    | TackyBinaryOperator::And
-                    | TackyBinaryOperator::Or
-                    | TackyBinaryOperator::Xor
+                    | TackyBinaryOperator::BitwiseAnd
+                    | TackyBinaryOperator::BitwiseOr
+                    | TackyBinaryOperator::BitwiseXor
                     | TackyBinaryOperator::LeftShift
                     | TackyBinaryOperator::RightShift => vec![
                         AsmInstruction::Mov(AsmOperand::from(src_1), AsmOperand::from(dst.clone())),
@@ -213,9 +213,9 @@ impl From<TackyBinaryOperator> for AsmBinaryOperator {
             TackyBinaryOperator::Add => AsmBinaryOperator::Add,
             TackyBinaryOperator::Subtract => AsmBinaryOperator::Sub,
             TackyBinaryOperator::Multiply => AsmBinaryOperator::Mult,
-            TackyBinaryOperator::And => AsmBinaryOperator::And,
-            TackyBinaryOperator::Or => AsmBinaryOperator::Or,
-            TackyBinaryOperator::Xor => AsmBinaryOperator::Xor,
+            TackyBinaryOperator::BitwiseAnd => AsmBinaryOperator::BitwiseAnd,
+            TackyBinaryOperator::BitwiseOr => AsmBinaryOperator::BitwiseOr,
+            TackyBinaryOperator::BitwiseXor => AsmBinaryOperator::BitwiseXor,
             TackyBinaryOperator::LeftShift => AsmBinaryOperator::LeftShift,
             TackyBinaryOperator::RightShift => AsmBinaryOperator::RightShift,
             _ => panic!("this should never happen"),

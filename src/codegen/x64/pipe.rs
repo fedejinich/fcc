@@ -132,40 +132,40 @@ fn fix_function_definition(
                     ]
                 }
                 AsmInstruction::Binary(
-                    AsmBinaryOperator::And,
+                    AsmBinaryOperator::BitwiseAnd,
                     AsmOperand::Stack(src),
                     AsmOperand::Stack(dst),
                 ) => vec![
                     AsmInstruction::Comment("splitted and into mov and instructions".to_string()),
                     AsmInstruction::Mov(AsmOperand::Stack(*src), AsmOperand::Register(Reg::R10)),
                     AsmInstruction::Binary(
-                        AsmBinaryOperator::And,
+                        AsmBinaryOperator::BitwiseAnd,
                         AsmOperand::Register(Reg::R10),
                         AsmOperand::Stack(*dst),
                     ),
                 ],
                 AsmInstruction::Binary(
-                    AsmBinaryOperator::Or,
+                    AsmBinaryOperator::BitwiseOr,
                     AsmOperand::Stack(src),
                     AsmOperand::Stack(dst),
                 ) => vec![
                     AsmInstruction::Comment("splitted or into mov and instructions".to_string()),
                     AsmInstruction::Mov(AsmOperand::Stack(*src), AsmOperand::Register(Reg::R10)),
                     AsmInstruction::Binary(
-                        AsmBinaryOperator::Or,
+                        AsmBinaryOperator::BitwiseOr,
                         AsmOperand::Register(Reg::R10),
                         AsmOperand::Stack(*dst),
                     ),
                 ],
                 AsmInstruction::Binary(
-                    AsmBinaryOperator::Xor,
+                    AsmBinaryOperator::BitwiseXor,
                     AsmOperand::Stack(src),
                     AsmOperand::Stack(dst),
                 ) => vec![
                     AsmInstruction::Comment("splitted xor into mov and instructions".to_string()),
                     AsmInstruction::Mov(AsmOperand::Stack(*src), AsmOperand::Register(Reg::R10)),
                     AsmInstruction::Binary(
-                        AsmBinaryOperator::Xor,
+                        AsmBinaryOperator::BitwiseXor,
                         AsmOperand::Register(Reg::R10),
                         AsmOperand::Stack(*dst),
                     ),

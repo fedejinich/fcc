@@ -122,9 +122,9 @@ impl AsmBinaryOperator {
                     AsmBinaryOperator::Sub => write!(f, "subl"),
                     AsmBinaryOperator::Mult => write!(f, "imull"),
                     // bitwise operators
-                    AsmBinaryOperator::And => write!(f, "andl"),
-                    AsmBinaryOperator::Or => write!(f, "orl"),
-                    AsmBinaryOperator::Xor => write!(f, "xorl"),
+                    AsmBinaryOperator::BitwiseAnd => write!(f, "andl"),
+                    AsmBinaryOperator::BitwiseOr => write!(f, "orl"),
+                    AsmBinaryOperator::BitwiseXor => write!(f, "xorl"),
                     AsmBinaryOperator::LeftShift => write!(f, "shll"),
                     // right bitshift of negative value is implementation-defined;
                     // we follow GCC and use sign extension

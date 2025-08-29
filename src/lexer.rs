@@ -40,8 +40,8 @@ pub enum Token {
 
     // logical operators
     Not,
-    LogicalAnd,
-    LogicalOr,
+    And,
+    Or,
     Equal,
     NotEqual,
     LessThan,
@@ -110,8 +110,8 @@ fn token_matchers() -> Vec<TokenMatcher> {
         TokenMatcher::new(|_| Token::LeftShift, r"^<<"),
         TokenMatcher::new(|_| Token::RightShift, r"^>>"),
         TokenMatcher::new(|_| Token::Not, r"^!"),
-        TokenMatcher::new(|_| Token::LogicalAnd, r"^&&"),
-        TokenMatcher::new(|_| Token::LogicalOr, r"^\|\|"),
+        TokenMatcher::new(|_| Token::And, r"^&&"),
+        TokenMatcher::new(|_| Token::Or, r"^\|\|"),
         TokenMatcher::new(|_| Token::Equal, r"^=="),
         TokenMatcher::new(|_| Token::NotEqual, r"^!="),
         TokenMatcher::new(|_| Token::LessThan, r"^<"),
