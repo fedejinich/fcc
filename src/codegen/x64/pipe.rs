@@ -53,6 +53,7 @@ impl AsmPipe {
     }
 }
 
+// TODO: this function has too many code
 fn fix_function_definition(
     function_definition: &AsmFunctionDefinition,
     last_offset: i32,
@@ -130,6 +131,103 @@ fn fix_function_definition(
                         ),
                     ]
                 }
+                AsmInstruction::Binary(
+                    AsmBinaryOperator::And,
+                    AsmOperand::Stack(src),
+                    AsmOperand::Stack(dst),
+                ) => vec![
+                    AsmInstruction::Comment("splitted and into mov and instructions".to_string()),
+                    AsmInstruction::Mov(AsmOperand::Stack(*src), AsmOperand::Register(Reg::R10)),
+                    AsmInstruction::Binary(
+                        AsmBinaryOperator::And,
+                        AsmOperand::Register(Reg::R10),
+                        AsmOperand::Stack(*dst),
+                    ),
+                ],
+                AsmInstruction::Binary(
+                    AsmBinaryOperator::Or,
+                    AsmOperand::Stack(src),
+                    AsmOperand::Stack(dst),
+                ) => vec![
+                    AsmInstruction::Comment("splitted or into mov and instructions".to_string()),
+                    AsmInstruction::Mov(AsmOperand::Stack(*src), AsmOperand::Register(Reg::R10)),
+                    AsmInstruction::Binary(
+                        AsmBinaryOperator::Or,
+                        AsmOperand::Register(Reg::R10),
+                        AsmOperand::Stack(*dst),
+                    ),
+                ],
+                AsmInstruction::Binary(
+                    AsmBinaryOperator::Xor,
+                    AsmOperand::Stack(src),
+                    AsmOperand::Stack(dst),
+                ) => vec![
+                    AsmInstruction::Comment("splitted xor into mov and instructions".to_string()),
+                    AsmInstruction::Mov(AsmOperand::Stack(*src), AsmOperand::Register(Reg::R10)),
+                    AsmInstruction::Binary(
+                        AsmBinaryOperator::Xor,
+                        AsmOperand::Register(Reg::R10),
+                        AsmOperand::Stack(*dst),
+                    ),
+                ],
+                AsmInstruction::Binary(
+                    AsmBinaryOperator::LeftShift,
+                    AsmOperand::Register(Reg::R10),
+                    AsmOperand::Stack(dst),
+                ) => vec![
+                    AsmInstruction::Comment("splitted shl into mov and instructions".to_string()),
+                    AsmInstruction::Mov(
+                        AsmOperand::Register(Reg::R10),
+                        AsmOperand::Register(Reg::CX),
+                    ),
+                    AsmInstruction::Binary(
+                        AsmBinaryOperator::LeftShift,
+                        AsmOperand::Register(Reg::CL),
+                        AsmOperand::Stack(*dst),
+                    ),
+                ],
+                AsmInstruction::Binary(
+                    AsmBinaryOperator::RightShift,
+                    AsmOperand::Register(Reg::R10),
+                    AsmOperand::Stack(dst),
+                ) => vec![
+                    AsmInstruction::Comment("splitted shr into mov and instructions".to_string()),
+                    AsmInstruction::Mov(
+                        AsmOperand::Register(Reg::R10),
+                        AsmOperand::Register(Reg::CX),
+                    ),
+                    AsmInstruction::Binary(
+                        AsmBinaryOperator::RightShift,
+                        AsmOperand::Register(Reg::CL),
+                        AsmOperand::Stack(*dst),
+                    ),
+                ],
+                AsmInstruction::Binary(
+                    AsmBinaryOperator::LeftShift,
+                    AsmOperand::Stack(src),
+                    AsmOperand::Stack(dst),
+                ) => vec![
+                    AsmInstruction::Comment("splitted shl into mov and instructions".to_string()),
+                    AsmInstruction::Mov(AsmOperand::Stack(*src), AsmOperand::Register(Reg::CX)),
+                    AsmInstruction::Binary(
+                        AsmBinaryOperator::LeftShift,
+                        AsmOperand::Register(Reg::CL),
+                        AsmOperand::Stack(*dst),
+                    ),
+                ],
+                AsmInstruction::Binary(
+                    AsmBinaryOperator::RightShift,
+                    AsmOperand::Stack(src),
+                    AsmOperand::Stack(dst),
+                ) => vec![
+                    AsmInstruction::Comment("splitted shr into mov and instructions".to_string()),
+                    AsmInstruction::Mov(AsmOperand::Stack(*src), AsmOperand::Register(Reg::CX)),
+                    AsmInstruction::Binary(
+                        AsmBinaryOperator::RightShift,
+                        AsmOperand::Register(Reg::CL),
+                        AsmOperand::Stack(*dst),
+                    ),
+                ],
                 _ => vec![i.clone()],
             }
         })
