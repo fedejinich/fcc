@@ -1,7 +1,10 @@
 //! This module contains  tacky AST which is an intermediate
 //! representation of the source code.
 
-use std::sync::atomic::{AtomicUsize, Ordering};
+use std::{
+    fmt::format,
+    sync::atomic::{AtomicUsize, Ordering},
+};
 
 use crate::util::indent;
 
@@ -22,7 +25,8 @@ pub enum TackyInstruction {
     Binary(TackyBinaryOperator, TackyValue, TackyValue, TackyValue),
     Copy(TackyValue, TackyValue),
     Jump(TackyIdentifier),
-    JunpIfZero(TackyValue),
+    JumpIfZero(TackyValue, TackyIdentifier),
+    JumpIfNotZero(TackyValue, TackyIdentifier),
     Label(TackyIdentifier),
 }
 
@@ -136,7 +140,12 @@ impl TackyInstruction {
                 format!("Copy({}, {})", src.pretty_print(), dst.pretty_print())
             }
             TackyInstruction::Jump(id) => format!("Jump({})", id.value),
-            TackyInstruction::JunpIfZero(val) => format!("JunpIfZero({})", val.pretty_print()),
+            TackyInstruction::JumpIfZero(val, id) => {
+                format!("JunpIfZero({}, {})", val.pretty_print(), id.value)
+            }
+            TackyInstruction::JumpIfNotZero(val, id) => {
+                format!("JumpIfNotZero({}, {})", val.pretty_print(), id.value)
+            }
             TackyInstruction::Label(id) => format!("Label({})", id.value),
         }
     }

@@ -172,7 +172,8 @@ impl AsmInstruction {
             }
             TackyInstruction::Copy(_, _) => todo!(),
             TackyInstruction::Jump(_) => todo!(),
-            TackyInstruction::JunpIfZero(_) => todo!(),
+            TackyInstruction::JumpIfZero(_, _) => todo!(),
+            TackyInstruction::JumpIfNotZero(_, _) => todo!(),
             TackyInstruction::Label(_) => todo!(),
         }
     }
@@ -183,6 +184,7 @@ impl AsmOperand {
         match self {
             Self::Imm(num) => num,
             Self::Register(_) | Self::Stack(_) | Self::Pseudo(_) => {
+                debug!("{self:?}");
                 panic!("this should never happen")
             }
         }
@@ -228,7 +230,10 @@ impl From<TackyBinaryOperator> for AsmBinaryOperator {
             TackyBinaryOperator::BitwiseXor => AsmBinaryOperator::BitwiseXor,
             TackyBinaryOperator::LeftShift => AsmBinaryOperator::LeftShift,
             TackyBinaryOperator::RightShift => AsmBinaryOperator::RightShift,
-            _ => panic!("this should never happen"),
+            _ => {
+                debug!("{tacky_binary_operator:?}");
+                panic!("this should never happen")
+            }
         }
     }
 }

@@ -239,7 +239,8 @@ fn precedence(token: &Token) -> i32 {
 
 impl BinaryOperator {
     fn parse_bin(tokens: &mut Iter<Token>) -> ParseResult<Self> {
-        let binop = match tokens.next().unwrap() {
+        let token = tokens.next().unwrap();
+        let binop = match token {
             Token::Plus => BinaryOperator::Add,
             Token::Multiply => BinaryOperator::Multiply,
             Token::Divide => BinaryOperator::Divide,

@@ -15,4 +15,4 @@ echo "Building fcc"
 cargo build
 
 echo "Running tests"
-./test_compiler "$FCC_PATH" --chapter 4 --bitwise --stage parse
+./test_compiler "$FCC_PATH" --chapter 4 --bitwise --stage tacky

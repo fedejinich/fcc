@@ -62,7 +62,6 @@ pub enum BinaryOperator {
     LessThan,
     GreaterThanOrEqual,
     LessThanOrEqual,
-    // wip
 }
 
 impl fmt::Display for Program {

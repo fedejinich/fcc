@@ -103,21 +103,77 @@ impl TackyInstruction {
             }
             Expression::Binary(op, left, right) => {
                 trace!("Found <binop>: {:?}", op);
-                let v1 = TackyInstruction::from_expr(*left, instructions);
-                let v2 = TackyInstruction::from_expr(*right, instructions);
-                let dst = TackyValue::Var(TackyIdentifier::new("binary_op"));
-                let binary_op = TackyBinaryOperator::from(op);
+                match op {
+                    BinaryOperator::And | BinaryOperator::Or => {
+                        let is_and = matches!(op, BinaryOperator::And);
+                        let result = if is_and {
+                            TackyValue::Var(TackyIdentifier::new("and_result"))
+                        } else {
+                            TackyValue::Var(TackyIdentifier::new("or_result"))
+                        };
+                        let false_label = TackyIdentifier::new("false_label");
+                        let end_label = TackyIdentifier::new("end");
 
-                debug!(
-                    "Binary {} {} to {}",
-                    v1.pretty_print(),
-                    v2.pretty_print(),
-                    dst.pretty_print()
-                );
-                instructions.push(TackyInstruction::Binary(binary_op, v1, v2, dst.clone()));
-                trace!("<binop> conversion completed");
+                        // TODO: extract this to a function
+                        let v1 = TackyInstruction::from_expr(*left, instructions);
+                        let jump_if_v1 = if is_and {
+                            TackyInstruction::JumpIfZero(v1, false_label.clone())
+                        } else {
+                            // then it's an or
+                            TackyInstruction::JumpIfNotZero(v1, false_label.clone())
+                        };
 
-                dst
+                        let v2 = TackyInstruction::from_expr(*right, instructions);
+                        let jump_if_v2 = if is_and {
+                            TackyInstruction::JumpIfZero(v2, false_label.clone())
+                        } else {
+                            // then it's an or
+                            TackyInstruction::JumpIfNotZero(v2, false_label.clone())
+                        };
+
+                        let copy_1 =
+                            TackyInstruction::Copy(TackyValue::Constant(1), result.clone());
+                        let jump = TackyInstruction::Jump(end_label.clone());
+
+                        let false_label = TackyInstruction::Label(false_label);
+                        let copy_0 =
+                            TackyInstruction::Copy(TackyValue::Constant(0), result.clone());
+
+                        let end = TackyInstruction::Label(end_label);
+
+                        // TODO: not sure about this part
+                        vec![
+                            jump_if_v1,
+                            jump_if_v2,
+                            copy_1,
+                            jump,
+                            false_label,
+                            copy_0,
+                            end,
+                        ]
+                        .iter()
+                        .for_each(|i| instructions.push(i.clone()));
+
+                        result
+                    }
+                    _ => {
+                        let v1 = TackyInstruction::from_expr(*left, instructions);
+                        let v2 = TackyInstruction::from_expr(*right, instructions);
+                        let dst = TackyValue::Var(TackyIdentifier::new("binary_op"));
+                        let binary_op = TackyBinaryOperator::from(op);
+
+                        debug!(
+                            "Binary {} {} to {}",
+                            v1.pretty_print(),
+                            v2.pretty_print(),
+                            dst.pretty_print()
+                        );
+                        instructions.push(TackyInstruction::Binary(binary_op, v1, v2, dst.clone()));
+                        trace!("<binop> conversion completed");
+
+                        dst
+                    }
+                }
             }
         }
     }
@@ -129,7 +185,7 @@ impl From<UnaryOperator> for TackyUnaryOperator {
         let tacky_op = match op {
             UnaryOperator::Complement => TackyUnaryOperator::Complement,
             UnaryOperator::Negate => TackyUnaryOperator::Negate,
-            UnaryOperator::Not => todo!(),
+            UnaryOperator::Not => TackyUnaryOperator::Not,
         };
         trace!("<unop> conversion completed: {:?}", tacky_op);
         tacky_op
@@ -150,6 +206,7 @@ impl From<BinaryOperator> for TackyBinaryOperator {
             BinaryOperator::BitwiseXor => TackyBinaryOperator::BitwiseXor,
             BinaryOperator::LeftShift => TackyBinaryOperator::LeftShift,
             BinaryOperator::RightShift => TackyBinaryOperator::RightShift,
+            // logical operators
             BinaryOperator::And => TackyBinaryOperator::And,
             BinaryOperator::Or => TackyBinaryOperator::Or,
             BinaryOperator::Equal => TackyBinaryOperator::Equal,
