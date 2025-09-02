@@ -228,7 +228,29 @@ fn fix_function_definition(
                         AsmOperand::Stack(*dst),
                     ),
                 ],
-                _ => vec![i.clone()],
+                AsmInstruction::Cmp(AsmOperand::Stack(op_1), AsmOperand::Stack(op_2)) => vec![
+                    AsmInstruction::Comment(
+                        "splitted cmp into mov and cmpl instructions".to_string(),
+                    ),
+                    AsmInstruction::Mov(AsmOperand::Stack(*op_1), AsmOperand::Register(Reg::R10)),
+                    AsmInstruction::Cmp(AsmOperand::Register(Reg::R10), AsmOperand::Stack(*op_2)),
+                ],
+                AsmInstruction::Cmp(AsmOperand::Register(reg), AsmOperand::Imm(constant)) => {
+                    vec![
+                        AsmInstruction::Comment(
+                            "splitted cmp into mov and cmpl instructions".to_string(),
+                        ),
+                        AsmInstruction::Mov(
+                            AsmOperand::Imm(*constant),
+                            AsmOperand::Register(Reg::R11),
+                        ),
+                        AsmInstruction::Cmp(
+                            AsmOperand::Register(reg.clone()),
+                            AsmOperand::Register(Reg::R11),
+                        ),
+                    ]
+                }
+                _ => vec![i.clone()], // TODO: this clone is weird
             }
         })
         .collect();
