@@ -92,6 +92,11 @@ impl AsmInstruction {
             Binary(op, src, dst) => em.line(&format!("{} {}, {}", op.fmt(), src.fmt(), dst.fmt())),
             Idiv(op) => em.line(&format!("idivl {}", op.fmt())),
             Cdq => em.line("cdq"),
+            Cmp(_, _) => todo!(),
+            Jmp(_) => todo!(),
+            JmpCC(_, _) => todo!(),
+            SetCC(_, _) => todo!(),
+            Label(_) => todo!(),
         }
     }
 }

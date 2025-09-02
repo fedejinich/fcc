@@ -29,8 +29,13 @@ pub enum AsmInstruction {
     Mov(AsmOperand, AsmOperand),
     Unary(AsmUnaryOperator, AsmOperand),
     Binary(AsmBinaryOperator, AsmOperand, AsmOperand),
+    Cmp(AsmOperand, AsmOperand),
     Idiv(AsmOperand),
     Cdq,
+    Jmp(AsmIdetifier),
+    JmpCC(AsmCondCode, AsmIdetifier),
+    SetCC(AsmCondCode, AsmOperand),
+    Label(AsmIdetifier),
     AllocateStack(i32),
     Ret,
 }
@@ -71,6 +76,16 @@ pub enum Reg {
     CL,
     R10,
     R11,
+}
+
+#[derive(Clone, Eq, PartialEq, Hash, Debug)]
+pub enum AsmCondCode {
+    E,
+    NE,
+    G,
+    GE,
+    L,
+    LE,
 }
 
 impl AsmProgram {
@@ -120,6 +135,11 @@ impl AsmInstruction {
                 AsmInstruction::Mov(AsmOperand::from(val), AsmOperand::Register(Reg::AX)),
                 AsmInstruction::Ret,
             ],
+            TackyInstruction::Unary(TackyUnaryOperator::Not, src, dst) => vec![
+                AsmInstruction::Cmp(AsmOperand::Imm(0), AsmOperand::from(src)),
+                AsmInstruction::Mov(AsmOperand::Imm(0), AsmOperand::from(dst.clone())),
+                AsmInstruction::SetCC(AsmCondCode::E, AsmOperand::from(dst)),
+            ],
             TackyInstruction::Unary(unary_op, src, dst) => vec![
                 AsmInstruction::Mov(AsmOperand::from(src), AsmOperand::from(dst.clone())),
                 AsmInstruction::Unary(AsmUnaryOperator::from(unary_op), AsmOperand::from(dst)),
@@ -145,10 +165,17 @@ impl AsmInstruction {
                             AsmOperand::from(dst),
                         ),
                     ],
-                    TackyBinaryOperator::And | TackyBinaryOperator::Or | TackyBinaryOperator::Equal 
+                    // relational operators
+                    TackyBinaryOperator::Equal 
                     | TackyBinaryOperator::NotEqual | TackyBinaryOperator::GreaterThan
                     | TackyBinaryOperator::LessThan | TackyBinaryOperator::LessThanOrEqual 
-                    | TackyBinaryOperator::GreaterThanOrEqual => todo!(),
+                    | TackyBinaryOperator::GreaterThanOrEqual => vec![
+                        AsmInstruction::Cmp(AsmOperand::from(src_2), AsmOperand::from(src_1)),
+                        AsmInstruction::Mov(AsmOperand::Imm(0), AsmOperand::from(dst.clone())),
+                        AsmInstruction::SetCC(AsmCondCode::from(op), AsmOperand::from(dst)),
+                    ],
+                    // logical operators
+                    TackyBinaryOperator::And | TackyBinaryOperator::Or => todo!(),
                     TackyBinaryOperator::Divide | TackyBinaryOperator::Remainder => {
                         let reg = if is_div {
                             debug!("is div");
@@ -170,23 +197,20 @@ impl AsmInstruction {
                     }
                 }
             }
-            TackyInstruction::Copy(_, _) => todo!(),
-            TackyInstruction::Jump(_) => todo!(),
-            TackyInstruction::JumpIfZero(_, _) => todo!(),
-            TackyInstruction::JumpIfNotZero(_, _) => todo!(),
-            TackyInstruction::Label(_) => todo!(),
-        }
-    }
-}
-
-impl AsmOperand {
-    pub fn value(&self) -> &i32 {
-        match self {
-            Self::Imm(num) => num,
-            Self::Register(_) | Self::Stack(_) | Self::Pseudo(_) => {
-                debug!("{self:?}");
-                panic!("this should never happen")
-            }
+            TackyInstruction::Jump(id) => vec![AsmInstruction::Jmp(AsmIdetifier::from(id))],
+            // TODO: this is almost same as JumpIfNotZero
+            TackyInstruction::JumpIfZero(condition, target) => vec![
+                AsmInstruction::Cmp(AsmOperand::Imm(0), AsmOperand::from(condition)),
+                AsmInstruction::JmpCC(AsmCondCode::E, AsmIdetifier::from(target)),
+            ],
+            TackyInstruction::JumpIfNotZero(condition, target) => vec![
+                AsmInstruction::Cmp(AsmOperand::Imm(0), AsmOperand::from(condition)),
+                AsmInstruction::JmpCC(AsmCondCode::NE, AsmIdetifier::from(target)),
+            ],
+            TackyInstruction::Copy(src, dst) => vec![
+                AsmInstruction::Mov(AsmOperand::from(src), AsmOperand::from(dst)),
+            ],
+            TackyInstruction::Label(id) => vec![AsmInstruction::Label(AsmIdetifier::from(id))],
         }
     }
 }
@@ -232,6 +256,23 @@ impl From<TackyBinaryOperator> for AsmBinaryOperator {
             TackyBinaryOperator::RightShift => AsmBinaryOperator::RightShift,
             _ => {
                 debug!("{tacky_binary_operator:?}");
+                panic!("this should never happen")
+            }
+        }
+    }
+}
+
+impl From<TackyBinaryOperator> for AsmCondCode {
+    fn from(op: TackyBinaryOperator) -> Self {
+        match op {
+            TackyBinaryOperator::Equal => AsmCondCode::E,
+            TackyBinaryOperator::NotEqual => AsmCondCode::NE,
+            TackyBinaryOperator::GreaterThan => AsmCondCode::G,
+            TackyBinaryOperator::LessThan => AsmCondCode::L,
+            TackyBinaryOperator::GreaterThanOrEqual => AsmCondCode::GE,
+            TackyBinaryOperator::LessThanOrEqual => AsmCondCode::LE,
+            _ => {
+                debug!("{op:?}");
                 panic!("this should never happen")
             }
         }
