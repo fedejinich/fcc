@@ -62,9 +62,6 @@ pub enum TackyBinaryOperator {
     BitwiseXor,
     LeftShift,
     RightShift,
-    // logical operators
-    And,
-    Or,
     // relational operators
     Equal,
     NotEqual,
@@ -141,7 +138,7 @@ impl TackyInstruction {
             }
             TackyInstruction::Jump(id) => format!("Jump({})", id.value),
             TackyInstruction::JumpIfZero(val, id) => {
-                format!("JunpIfZero({}, {})", val.pretty_print(), id.value)
+                format!("JumpIfZero({}, {})", val.pretty_print(), id.value)
             }
             TackyInstruction::JumpIfNotZero(val, id) => {
                 format!("JumpIfNotZero({}, {})", val.pretty_print(), id.value)
@@ -186,8 +183,6 @@ impl TackyBinaryOperator {
             TackyBinaryOperator::BitwiseXor => "BitwiseXor",
             TackyBinaryOperator::LeftShift => "LeftShift",
             TackyBinaryOperator::RightShift => "RightShift",
-            TackyBinaryOperator::And => "And",
-            TackyBinaryOperator::Or => "Or",
             TackyBinaryOperator::Equal => "Equal",
             TackyBinaryOperator::NotEqual => "NotEqual",
             TackyBinaryOperator::GreaterThan => "GreaterThan",

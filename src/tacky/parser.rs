@@ -116,12 +116,15 @@ impl TackyInstruction {
 
                         // TODO: extract this to a function
                         let v1 = TackyInstruction::from_expr(*left, instructions);
+
                         let jump_if_v1 = if is_and {
                             TackyInstruction::JumpIfZero(v1, false_label.clone())
                         } else {
                             // then it's an or
                             TackyInstruction::JumpIfNotZero(v1, false_label.clone())
                         };
+
+                        instructions.push(jump_if_v1.clone());
 
                         let v2 = TackyInstruction::from_expr(*right, instructions);
                         let jump_if_v2 = if is_and {
@@ -131,28 +134,29 @@ impl TackyInstruction {
                             TackyInstruction::JumpIfNotZero(v2, false_label.clone())
                         };
 
+                        instructions.push(jump_if_v2.clone());
+
                         let copy_1 =
                             TackyInstruction::Copy(TackyValue::Constant(1), result.clone());
-                        let jump = TackyInstruction::Jump(end_label.clone());
-
-                        let false_label = TackyInstruction::Label(false_label);
                         let copy_0 =
                             TackyInstruction::Copy(TackyValue::Constant(0), result.clone());
 
-                        let end = TackyInstruction::Label(end_label);
+                        if is_and {
+                            instructions.push(copy_1.clone());
+                        } else {
+                            instructions.push(copy_0.clone());
+                        }
 
-                        // TODO: not sure about this part
-                        vec![
-                            jump_if_v1,
-                            jump_if_v2,
-                            copy_1,
-                            jump,
-                            false_label,
-                            copy_0,
-                            end,
-                        ]
-                        .iter()
-                        .for_each(|i| instructions.push(i.clone()));
+                        instructions.push(TackyInstruction::Jump(end_label.clone()));
+
+                        instructions.push(TackyInstruction::Label(false_label));
+                        if is_and {
+                            instructions.push(copy_0);
+                        } else {
+                            instructions.push(copy_1);
+                        }
+
+                        instructions.push(TackyInstruction::Label(end_label));
 
                         result
                     }
@@ -207,14 +211,13 @@ impl From<BinaryOperator> for TackyBinaryOperator {
             BinaryOperator::LeftShift => TackyBinaryOperator::LeftShift,
             BinaryOperator::RightShift => TackyBinaryOperator::RightShift,
             // logical operators
-            BinaryOperator::And => TackyBinaryOperator::And,
-            BinaryOperator::Or => TackyBinaryOperator::Or,
             BinaryOperator::Equal => TackyBinaryOperator::Equal,
             BinaryOperator::NotEqual => TackyBinaryOperator::NotEqual,
             BinaryOperator::GreaterThan => TackyBinaryOperator::GreaterThan,
             BinaryOperator::LessThan => TackyBinaryOperator::LessThan,
             BinaryOperator::GreaterThanOrEqual => TackyBinaryOperator::GreaterThanOrEqual,
             BinaryOperator::LessThanOrEqual => TackyBinaryOperator::LessThanOrEqual,
+            BinaryOperator::And | BinaryOperator::Or => panic!("this should never happen"),
         };
         trace!("<binop> conversion completed: {:?}", tacky_op);
         tacky_op

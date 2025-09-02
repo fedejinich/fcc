@@ -23,7 +23,7 @@ pub struct AsmIdetifier {
     pub value: String,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub enum AsmInstruction {
     Comment(String),
     Mov(AsmOperand, AsmOperand),
@@ -158,6 +158,7 @@ impl AsmInstruction {
                     | TackyBinaryOperator::BitwiseXor
                     | TackyBinaryOperator::LeftShift
                     | TackyBinaryOperator::RightShift => vec![
+                        AsmInstruction::Comment(format!("add/sub/mul/bitwise operator: {:?}", op.clone())),
                         AsmInstruction::Mov(AsmOperand::from(src_1), AsmOperand::from(dst.clone())),
                         AsmInstruction::Binary(
                             AsmBinaryOperator::from(op),
@@ -170,12 +171,11 @@ impl AsmInstruction {
                     | TackyBinaryOperator::NotEqual | TackyBinaryOperator::GreaterThan
                     | TackyBinaryOperator::LessThan | TackyBinaryOperator::LessThanOrEqual 
                     | TackyBinaryOperator::GreaterThanOrEqual => vec![
+                        AsmInstruction::Comment(format!("relational operator: {:?}", op.clone())),
                         AsmInstruction::Cmp(AsmOperand::from(src_2), AsmOperand::from(src_1)),
                         AsmInstruction::Mov(AsmOperand::Imm(0), AsmOperand::from(dst.clone())),
                         AsmInstruction::SetCC(AsmCondCode::from(op), AsmOperand::from(dst)),
                     ],
-                    // logical operators
-                    TackyBinaryOperator::And | TackyBinaryOperator::Or => todo!(),
                     TackyBinaryOperator::Divide | TackyBinaryOperator::Remainder => {
                         let reg = if is_div {
                             debug!("is div");
@@ -186,6 +186,7 @@ impl AsmInstruction {
                         };
 
                         vec![
+                            AsmInstruction::Comment(format!("div/rem operator: {:?}", op.clone())),
                             AsmInstruction::Mov(
                                 AsmOperand::from(src_1),
                                 AsmOperand::Register(Reg::AX),

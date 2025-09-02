@@ -26,6 +26,15 @@ impl From<TackyProgram> for AsmPipe {
 }
 
 impl AsmPipe {
+    /// replaces pseudoregisters with stack slots and returns the last stack memory address
+    pub fn replace_pseudoregisters(mut self) -> Self {
+        let (program, last_offset) = replace_pseudoregisters_program(&self.program);
+        self.program = program;
+        self.last_offset = Some(last_offset);
+
+        self
+    }
+
     /// fixes Mov instructions
     pub fn fix_instructions(mut self) -> Self {
         let last_offset = self
@@ -35,15 +44,6 @@ impl AsmPipe {
             &self.program.function_definition,
             last_offset,
         ));
-
-        self
-    }
-
-    /// replaces pseudoregisters with stack slots and returns the last stack memory address
-    pub fn replace_pseudoregisters(mut self) -> Self {
-        let (program, last_offset) = replace_pseudoregisters_program(&self.program);
-        self.program = program;
-        self.last_offset = Some(last_offset);
 
         self
     }
@@ -235,7 +235,7 @@ fn fix_function_definition(
                     AsmInstruction::Mov(AsmOperand::Stack(*op_1), AsmOperand::Register(Reg::R10)),
                     AsmInstruction::Cmp(AsmOperand::Register(Reg::R10), AsmOperand::Stack(*op_2)),
                 ],
-                AsmInstruction::Cmp(AsmOperand::Register(reg), AsmOperand::Imm(constant)) => {
+                AsmInstruction::Cmp(op_1, AsmOperand::Imm(constant)) => {
                     vec![
                         AsmInstruction::Comment(
                             "splitted cmp into mov and cmpl instructions".to_string(),
@@ -244,10 +244,7 @@ fn fix_function_definition(
                             AsmOperand::Imm(*constant),
                             AsmOperand::Register(Reg::R11),
                         ),
-                        AsmInstruction::Cmp(
-                            AsmOperand::Register(reg.clone()),
-                            AsmOperand::Register(Reg::R11),
-                        ),
+                        AsmInstruction::Cmp(op_1.clone(), AsmOperand::Register(Reg::R11)),
                     ]
                 }
                 _ => vec![i.clone()], // TODO: this clone is weird
@@ -293,18 +290,18 @@ fn replace_pseudoregisters_i(
 ) -> AsmInstruction {
     match instruction {
         AsmInstruction::Mov(src, dst) => {
-            debug!("Replace pseudoregisters for Mov({src:?}, {dst:?})");
+            trace!("Replace pseudoregisters for Mov({src:?}, {dst:?})");
             AsmInstruction::Mov(
                 replace_pseudoregisters_op(src, offset_map),
                 replace_pseudoregisters_op(dst, offset_map),
             )
         }
         AsmInstruction::Unary(unary_op, op) => {
-            debug!("Replace pseudoregisters for Unary({unary_op:?}, {op:?})");
+            trace!("Replace pseudoregisters for Unary({unary_op:?}, {op:?})");
             AsmInstruction::Unary(unary_op.clone(), replace_pseudoregisters_op(op, offset_map))
         }
         AsmInstruction::Binary(op, src, dst) => {
-            debug!("Replace pseudoregisters for Binary({op:?}, {src:?}, {dst:?})");
+            trace!("Replace pseudoregisters for Binary({op:?}, {src:?}, {dst:?})");
             AsmInstruction::Binary(
                 op.clone(),
                 replace_pseudoregisters_op(src, offset_map),
@@ -312,11 +309,26 @@ fn replace_pseudoregisters_i(
             )
         }
         AsmInstruction::Idiv(op) => {
+            trace!("Replace pseudoregisters for Idiv({op:?})");
             AsmInstruction::Idiv(replace_pseudoregisters_op(op, offset_map))
+        }
+        AsmInstruction::SetCC(cond_code, op) => {
+            trace!("Replace pseudoregisters for SetCC({cond_code:?}, {op:?})");
+            AsmInstruction::SetCC(
+                cond_code.clone(),
+                replace_pseudoregisters_op(op, offset_map),
+            )
+        }
+        AsmInstruction::Cmp(op_1, op_2) => {
+            trace!("Replace pseudoregisters for Cmp({op_1:?}, {op_2:?})");
+            AsmInstruction::Cmp(
+                replace_pseudoregisters_op(op_1, offset_map),
+                replace_pseudoregisters_op(op_2, offset_map),
+            )
         }
         // TODO: same problem here '_' makes errors (maybe this is solved with unit testing)
         _ => {
-            debug!("Not replacing registers");
+            debug!("Not replacing registers {:?}", &instruction);
             instruction.clone()
         }
     }
@@ -341,7 +353,7 @@ fn ids_offset_map(function_definition: &AsmFunctionDefinition) -> (HashMap<AsmOp
             if let AsmOperand::Pseudo(_) = op {
                 if !acc.contains_key(&op) {
                     acc.insert(op.clone(), next);
-                    next -= 4; // siguiente slot hacia abajo
+                    next -= 4;
                 }
             }
             (acc, next)
