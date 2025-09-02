@@ -336,6 +336,8 @@ fn operands(instruction: &AsmInstruction) -> Option<Vec<AsmOperand>> {
         AsmInstruction::Unary(_, op) => Some(vec![op.clone()]),
         AsmInstruction::Binary(_, op_1, op_2) => Some(vec![op_1.clone(), op_2.clone()]),
         AsmInstruction::Idiv(op) => Some(vec![op.clone()]),
+        AsmInstruction::Cmp(op_1, op_2) => Some(vec![op_1.clone(), op_2.clone()]),
+        AsmInstruction::SetCC(_, op) => Some(vec![op.clone()]),
         _ => None,
     }
 }
