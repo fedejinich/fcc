@@ -1,2 +1,2 @@
-pub mod parser;
+pub mod from;
 pub mod program;

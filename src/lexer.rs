@@ -171,3 +171,29 @@ impl TokenMatcher {
         None
     }
 }
+
+pub fn binary_operators() -> Vec<Token> {
+    vec![
+        Token::Plus,
+        Token::Negate,
+        Token::Multiply,
+        Token::Divide,
+        Token::Remainder,
+        // bitwise operators
+        Token::BitwiseAnd,
+        Token::BitwiseOr,
+        Token::BitwiseXor,
+        Token::LeftShift,
+        Token::RightShift,
+        // logical operators
+        Token::And,
+        Token::Or,
+        // relational operators
+        Token::Equal,
+        Token::NotEqual,
+        Token::GreaterThan,
+        Token::LessThan,
+        Token::GreaterThanOrEqual,
+        Token::LessThanOrEqual,
+    ]
+}
