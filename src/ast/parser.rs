@@ -222,15 +222,19 @@ fn precedence(token: &Token) -> i32 {
         Token::Multiply | Token::Divide | Token::Remainder => 50,
         Token::Plus | Token::Negate => 45,
         Token::LeftShift | Token::RightShift => 44,
-        Token::BitwiseAnd => 43,
-        Token::BitwiseXor => 42,
-        Token::BitwiseOr => 40,
+        // Token::BitwiseAnd => 43,
+        // Token::BitwiseXor => 42,
+        // Token::BitwiseOr => 40,
         Token::LessThan
         | Token::LessThanOrEqual
         | Token::GreaterThan
         | Token::GreaterThanOrEqual => 35,
+        // Token::BitwiseXor => 31,
         Token::Equal => 30,
         Token::NotEqual => 30,
+        Token::BitwiseAnd => 24,
+        Token::BitwiseXor => 23,
+        Token::BitwiseOr => 22,
         Token::And => 10,
         Token::Or => 5,
         _ => 0,
