@@ -1,4 +1,4 @@
-use std::fmt::{self, Binary};
+use std::fmt::{self};
 
 use log::debug;
 

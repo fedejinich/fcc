@@ -1,10 +1,7 @@
 //! This module contains  tacky AST which is an intermediate
 //! representation of the source code.
 
-use std::{
-    fmt::format,
-    sync::atomic::{AtomicUsize, Ordering},
-};
+use std::sync::atomic::{AtomicUsize, Ordering};
 
 use crate::util::indent;
 
