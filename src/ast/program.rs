@@ -33,6 +33,7 @@ pub enum Expression {
 pub enum UnaryOperator {
     Complement,
     Negate,
+    Not,
 }
 
 #[derive(Clone, Debug)]
@@ -42,12 +43,25 @@ pub enum BinaryOperator {
     Multiply,
     Divide,
     Remainder,
+
     // bitwise operators are binary operators as well
-    And,
-    Or,
-    Xor,
+    BitwiseAnd,
+    BitwiseOr,
+    BitwiseXor,
     LeftShift,
     RightShift,
+
+    // logical operators
+    And,
+    Or,
+
+    // relational operators
+    Equal,
+    NotEqual,
+    GreaterThan,
+    LessThan,
+    GreaterThanOrEqual,
+    LessThanOrEqual,
 }
 
 impl fmt::Display for Program {
@@ -113,6 +127,7 @@ impl fmt::Display for UnaryOperator {
         match self {
             UnaryOperator::Complement => write!(f, "Complement"),
             UnaryOperator::Negate => write!(f, "Negate"),
+            UnaryOperator::Not => write!(f, "Not"),
         }
     }
 }
@@ -125,11 +140,19 @@ impl fmt::Display for BinaryOperator {
             BinaryOperator::Multiply => write!(f, "Multiply"),
             BinaryOperator::Divide => write!(f, "Divide"),
             BinaryOperator::Remainder => write!(f, "Remainder"),
-            BinaryOperator::And => write!(f, "And"),
-            BinaryOperator::Or => write!(f, "Or"),
-            BinaryOperator::Xor => write!(f, "Xor"),
+            BinaryOperator::BitwiseAnd => write!(f, "BitwiseAnd"),
+            BinaryOperator::BitwiseOr => write!(f, "BitwiseOr"),
+            BinaryOperator::BitwiseXor => write!(f, "BitwiseXor"),
             BinaryOperator::LeftShift => write!(f, "LeftShift"),
             BinaryOperator::RightShift => write!(f, "RightShift"),
+            BinaryOperator::And => write!(f, "And"),
+            BinaryOperator::Or => write!(f, "Or"),
+            BinaryOperator::Equal => write!(f, "Equal"),
+            BinaryOperator::NotEqual => write!(f, "NotEqual"),
+            BinaryOperator::GreaterThan => write!(f, "GreaterThan"),
+            BinaryOperator::LessThan => write!(f, "LessThan"),
+            BinaryOperator::GreaterThanOrEqual => write!(f, "GreaterThanOrEqual"),
+            BinaryOperator::LessThanOrEqual => write!(f, "LessThanOrEqual"),
         }
     }
 }

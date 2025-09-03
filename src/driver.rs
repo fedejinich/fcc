@@ -122,7 +122,6 @@ impl CompilerDriver {
 
         // lex only
         if self.lex {
-            // TODO: find a better way to this
             std::process::exit(0);
         }
 
@@ -134,15 +133,15 @@ impl CompilerDriver {
 
         // parse only
         if self.parse {
-            // TODO: find a better way to this
             std::process::exit(0);
         }
 
         let tacky_program = TackyProgram::from(c_program);
+
         if self.print_tacky {
             println!("{}", tacky_program.pretty_print());
         }
-        // TODO: this should be unified with .parse
+
         if self.tacky {
             std::process::exit(0);
         }

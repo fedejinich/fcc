@@ -21,6 +21,7 @@ pub enum Token {
     // unary operators
     Complement,
     Negate, // this is also the minus operator but we don't disitinguish this in lexing stage
+    Not,
 
     // ops
     Decrement,
@@ -32,11 +33,23 @@ pub enum Token {
     Remainder,
 
     // bitwise (binary) operators
-    And,
-    Or,
-    Xor,
+    BitwiseAnd,
+    BitwiseOr,
+    BitwiseXor,
     LeftShift,
     RightShift,
+
+    // logical operators
+    And,
+    Or,
+
+    // relational operators
+    Equal,
+    NotEqual,
+    LessThan,
+    GreaterThan,
+    LessThanOrEqual,
+    GreaterThanOrEqual,
 }
 
 pub fn lex(mut code: &str) -> Result<Vec<Token>, String> {
@@ -93,11 +106,20 @@ fn token_matchers() -> Vec<TokenMatcher> {
         TokenMatcher::new(|_| Token::Multiply, r"^\*"),
         TokenMatcher::new(|_| Token::Divide, r"^\/"),
         TokenMatcher::new(|_| Token::Remainder, r"^\%"),
-        TokenMatcher::new(|_| Token::And, r"^\&"),
-        TokenMatcher::new(|_| Token::Or, r"^\|"),
-        TokenMatcher::new(|_| Token::Xor, r"^\^"),
+        TokenMatcher::new(|_| Token::BitwiseAnd, r"^\&"),
+        TokenMatcher::new(|_| Token::BitwiseOr, r"^\|"),
+        TokenMatcher::new(|_| Token::BitwiseXor, r"^\^"),
         TokenMatcher::new(|_| Token::LeftShift, r"^<<"),
         TokenMatcher::new(|_| Token::RightShift, r"^>>"),
+        TokenMatcher::new(|_| Token::Not, r"^!"),
+        TokenMatcher::new(|_| Token::And, r"^&&"),
+        TokenMatcher::new(|_| Token::Or, r"^\|\|"),
+        TokenMatcher::new(|_| Token::Equal, r"^=="),
+        TokenMatcher::new(|_| Token::NotEqual, r"^!="),
+        TokenMatcher::new(|_| Token::LessThan, r"^<"),
+        TokenMatcher::new(|_| Token::LessThanOrEqual, r"^<="),
+        TokenMatcher::new(|_| Token::GreaterThan, r"^>"),
+        TokenMatcher::new(|_| Token::GreaterThanOrEqual, r"^>="),
     ]
 }
 
@@ -148,4 +170,30 @@ impl TokenMatcher {
 
         None
     }
+}
+
+pub fn binary_operators() -> Vec<Token> {
+    vec![
+        Token::Plus,
+        Token::Negate,
+        Token::Multiply,
+        Token::Divide,
+        Token::Remainder,
+        // bitwise operators
+        Token::BitwiseAnd,
+        Token::BitwiseOr,
+        Token::BitwiseXor,
+        Token::LeftShift,
+        Token::RightShift,
+        // logical operators
+        Token::And,
+        Token::Or,
+        // relational operators
+        Token::Equal,
+        Token::NotEqual,
+        Token::GreaterThan,
+        Token::LessThan,
+        Token::GreaterThanOrEqual,
+        Token::LessThanOrEqual,
+    ]
 }
