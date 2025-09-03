@@ -25,6 +25,7 @@ pub enum Token {
 
     // ops
     Decrement,
+    Assignment,
 
     // binary operators
     Plus,
@@ -120,6 +121,7 @@ fn token_matchers() -> Vec<TokenMatcher> {
         TokenMatcher::new(|_| Token::LessThanOrEqual, r"^<="),
         TokenMatcher::new(|_| Token::GreaterThan, r"^>"),
         TokenMatcher::new(|_| Token::GreaterThanOrEqual, r"^>="),
+        TokenMatcher::new(|_| Token::Assignment, r"^="),
     ]
 }
 
