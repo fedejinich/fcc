@@ -86,15 +86,10 @@ fn fix_instruction(instruction: &AsmInstruction) -> Vec<AsmInstruction> {
             Mov(Imm(*num), Register(Reg::R10)),
             Idiv(Register(Reg::R10)),
         ],
-        Binary(Add, Stack(src), Stack(dst)) => vec![
-            Comment("splitted add into mov add instructions".to_string()),
+        Binary(bin_op @ (Add | Sub), Stack(src), Stack(dst)) => vec![
+            Comment("splitted add/sub into mov add/sub instructions".to_string()),
             Mov(Stack(*src), Register(Reg::R10)),
-            Binary(Add, Register(Reg::R10), Stack(*dst)),
-        ],
-        Binary(Sub, Stack(src), Stack(dst)) => vec![
-            Comment("splitted sub into mov sub instructions".to_string()),
-            Mov(Stack(*src), Register(Reg::R10)),
-            Binary(Sub, Register(Reg::R10), Stack(*dst)),
+            Binary(bin_op.clone(), Register(Reg::R10), Stack(*dst)),
         ],
         Binary(Mult, src, Stack(dst)) => {
             vec![
@@ -104,49 +99,23 @@ fn fix_instruction(instruction: &AsmInstruction) -> Vec<AsmInstruction> {
                 Mov(Register(Reg::R11), Stack(*dst)),
             ]
         }
-        Binary(BitwiseAnd, Stack(src), Stack(dst)) => {
+        Binary(bin_op @ (BitwiseAnd | BitwiseOr | BitwiseXor), Stack(src), Stack(dst)) => {
             vec![
-                Comment("splitted and into mov and instructions".to_string()),
+                Comment("splitted bitwise and/or/xor into mov and/or/xor instructions".to_string()),
                 Mov(Stack(*src), Register(Reg::R10)),
-                Binary(BitwiseAnd, Register(Reg::R10), Stack(*dst)),
+                Binary(bin_op.clone(), Register(Reg::R10), Stack(*dst)),
             ]
         }
-        Binary(BitwiseOr, Stack(src), Stack(dst)) => {
-            vec![
-                Comment("splitted or into mov and instructions".to_string()),
-                Mov(Stack(*src), Register(Reg::R10)),
-                Binary(BitwiseOr, Register(Reg::R10), Stack(*dst)),
-            ]
-        }
-        Binary(BitwiseXor, Stack(src), Stack(dst)) => {
-            vec![
-                Comment("splitted xor into mov and instructions".to_string()),
-                Mov(Stack(*src), Register(Reg::R10)),
-                Binary(BitwiseXor, Register(Reg::R10), Stack(*dst)),
-            ]
-        }
-        Binary(LeftShift, Register(Reg::R10), Stack(dst)) => vec![
-            Comment("splitted shl into mov and instructions".to_string()),
+        Binary(bin_op @ (LeftShift | RightShift), Register(Reg::R10), Stack(dst)) => vec![
+            Comment("splitted shl/shr into mov and instructions".to_string()),
             Mov(Register(Reg::R10), Register(Reg::CX)),
-            Binary(LeftShift, Register(Reg::CL), Stack(*dst)),
+            Binary(bin_op.clone(), Register(Reg::CL), Stack(*dst)),
         ],
-        Binary(RightShift, Register(Reg::R10), Stack(dst)) => vec![
-            Comment("splitted shr into mov and instructions".to_string()),
-            Mov(Register(Reg::R10), Register(Reg::CX)),
-            Binary(RightShift, Register(Reg::CL), Stack(*dst)),
-        ],
-        Binary(LeftShift, Stack(src), Stack(dst)) => {
+        Binary(bin_op @ (LeftShift | RightShift), Stack(src), Stack(dst)) => {
             vec![
-                Comment("splitted shl into mov and instructions".to_string()),
+                Comment("splitted shl/shr into mov and instructions".to_string()),
                 Mov(Stack(*src), Register(Reg::CX)),
-                Binary(LeftShift, Register(Reg::CL), Stack(*dst)),
-            ]
-        }
-        Binary(RightShift, Stack(src), Stack(dst)) => {
-            vec![
-                Comment("splitted shr into mov and instructions".to_string()),
-                Mov(Stack(*src), Register(Reg::CX)),
-                Binary(RightShift, Register(Reg::CL), Stack(*dst)),
+                Binary(bin_op.clone(), Register(Reg::CL), Stack(*dst)),
             ]
         }
         Cmp(Stack(op_1), Stack(op_2)) => vec![
@@ -209,10 +178,10 @@ fn replace_pseudoregisters_i(
             trace!("Replace pseudoregisters for Unary({unary_op:?}, {op:?})");
             Unary(unary_op.clone(), replace_pseudoregisters_op(op, offset_map))
         }
-        Binary(op, src, dst) => {
-            trace!("Replace pseudoregisters for Binary({op:?}, {src:?}, {dst:?})");
+        Binary(bin_op, src, dst) => {
+            trace!("Replace pseudoregisters for Binary({bin_op:?}, {src:?}, {dst:?})");
             Binary(
-                op.clone(),
+                bin_op.clone(),
                 replace_pseudoregisters_op(src, offset_map),
                 replace_pseudoregisters_op(dst, offset_map),
             )
