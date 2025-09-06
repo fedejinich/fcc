@@ -79,6 +79,8 @@ impl TackyInstruction {
     fn from_expr(expr: Expression, instructions: &mut Vec<TackyInstruction>) -> TackyValue {
         trace!("Entering <exp> conversion to Tacky");
         match expr {
+            Expression::Assignment(left, right) => todo!(),
+            Expression::Var(id) => todo!(),
             Expression::Constant(c) => {
                 trace!("Found <constant>: {}", c);
                 TackyValue::Constant(c)

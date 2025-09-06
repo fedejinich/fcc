@@ -13,6 +13,7 @@ pub struct FunctionDefinition {
     pub body: Vec<Statement>,
 }
 
+#[derive(Clone, Debug)]
 pub struct Identifier {
     pub value: String, //  TODO: this is still weird as fuck
 }
@@ -25,8 +26,10 @@ pub enum Statement {
 #[derive(Clone, Debug)]
 pub enum Expression {
     Constant(i32),
+    Var(Identifier),
     Unary(UnaryOperator, Box<Expression>),
     Binary(BinaryOperator, Box<Expression>, Box<Expression>),
+    Assignment(Box<Expression>, Box<Expression>),
 }
 
 #[derive(Clone, Debug)]
@@ -118,6 +121,8 @@ impl fmt::Display for Expression {
             Expression::Binary(op, exp_1, exp_2) => {
                 write!(f, "Binary({}, {}, {})", op, exp_1, exp_2)
             }
+            Expression::Assignment(left, right) => write!(f, "Assignment({}, {})", left, right),
+            Expression::Var(id) => write!(f, "Var({})", id.value),
         }
     }
 }

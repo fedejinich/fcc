@@ -129,20 +129,29 @@ impl Expression {
         // ques: isn't this too expensive?
         let is_binary_op = |t: &Token| lexer::binary_operators().contains(t);
         while is_binary_op(next_token) && precedence(next_token) >= min_prec {
-            debug!(
-                "Found <binop>: {:?} with precedence {}",
-                next_token,
-                precedence(next_token)
-            );
-            trace!("Parsing <binop>");
-            let op = BinaryOperator::parse_bin(tokens)?;
-            trace!(
-                "Parsing right <exp> with precedence {}",
-                precedence(next_token) + 1
-            );
-            let right = Expression::parse_exp(tokens, precedence(next_token) + 1)?;
-            left = Expression::Binary(op, Box::new(left), Box::new(right));
-            trace!("Created binary <exp>");
+            if next_token == &Token::Assignment {
+                trace!(
+                    "Parsing assignment <exp> with precedence {}",
+                    precedence(next_token)
+                );
+                let _ = tokens.next(); // consume '='
+                let right = Expression::parse_exp(tokens, precedence(next_token))?;
+                left = Expression::Assignment(Box::new(left), Box::new(right));
+            } else {
+                debug!(
+                    "Found <binop>: {:?} with precedence {}",
+                    next_token,
+                    precedence(next_token)
+                );
+                let op = BinaryOperator::parse_bin(tokens)?;
+                trace!(
+                    "Parsing right <exp> with precedence {}",
+                    precedence(next_token) + 1
+                );
+                let right = Expression::parse_exp(tokens, precedence(next_token) + 1)?;
+                left = Expression::Binary(op, Box::new(left), Box::new(right));
+                trace!("Created binary <exp>");
+            }
             next_token = tokens.clone().next().unwrap();
         }
 
@@ -205,6 +214,7 @@ fn precedence(token: &Token) -> i32 {
         Token::BitwiseOr => 20,
         Token::And => 10,
         Token::Or => 5,
+        Token::Assignment => 1,
         _ => 0,
     }
 }
