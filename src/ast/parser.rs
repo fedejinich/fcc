@@ -4,8 +4,8 @@ use log::{debug, trace};
 
 use crate::{
     ast::program::{
-        BinaryOperator, BlockItem, Expression, FunctionDefinition, Identifier, Program, Statement,
-        UnaryOperator,
+        BinaryOperator, BlockItem, Declaration, Expression, FunctionDefinition, Identifier,
+        Program, Statement, UnaryOperator,
     },
     lexer::{self, Token},
 };
@@ -59,8 +59,22 @@ impl FunctionDefinition {
         token_eq(Token::CloseParen, tokens)?;
         token_eq(Token::OpenBrace, tokens)?;
 
-        // let body = Statement::parse_st(tokens)?;
-        let body = BlockItem::parse_bi(tokens)?;
+        trace!("Parsing {{ <block_item> }}");
+
+        let mut body = vec![];
+        let mut next_token = tokens.clone().next().unwrap();
+        while next_token != &Token::CloseBrace {
+            let block_item = BlockItem::parse_bi(tokens);
+            if let Ok(item) = block_item {
+                body.push(item);
+            }
+            next_token = tokens.clone().next().unwrap();
+        }
+
+        // TODO: not sure about this
+        if body.is_empty() {
+            return Err(String::from("could not parse any block item"));
+        }
 
         token_eq(Token::CloseBrace, tokens)?;
 
@@ -72,57 +86,67 @@ impl FunctionDefinition {
     }
 }
 
-impl Identifier {
-    fn parse_id(tokens: &mut Iter<Token>) -> ParseResult<Self> {
-        trace!("Parsing <identifier>");
+impl BlockItem {
+    fn parse_bi(tokens: &mut Iter<Token>) -> ParseResult<Self> {
+        trace!("Parsing <block_item>");
+        let block_item = match tokens.clone().next().unwrap() {
+            Token::Identifier(s) if s.as_str() == "int" => {
+                BlockItem::D(Declaration::parse_decl(tokens)?)
+            }
+            _ => BlockItem::S(Statement::parse_st(tokens)?),
+        };
 
-        if let Some(Token::Identifier(n)) = tokens.next() {
-            trace!("Found <identifier>: {}", n);
-            Ok(Identifier { value: n.clone() })
-        } else {
-            debug!("Expected <identifier> but found none");
-            Err("could not parse identifier".to_string())
-        }
+        Ok(block_item)
     }
 }
 
-impl BlockItem {
-    fn parse_bi(tokens: &mut Iter<Token>) -> ParseResult<Vec<Self>> {
-        todo!()
+impl Declaration {
+    fn parse_decl(tokens: &mut Iter<Token>) -> ParseResult<Self> {
+        token_eq(Token::Identifier("int".to_string()), tokens)?;
+        let name = Identifier::parse_id(tokens)?;
+
+        let mut initializer = None;
+        if let Some(Token::Equal) = tokens.clone().next() {
+            initializer = Some(Expression::parse_exp(tokens, 0)?);
+        }
+
+        token_eq(Token::Semicolon, tokens)?;
+
+        Ok(Declaration { name, initializer })
     }
 }
 
 impl Statement {
-    fn parse_st(tokens: &mut Iter<Token>) -> ParseResult<Vec<Self>> {
+    fn parse_st(tokens: &mut Iter<Token>) -> ParseResult<Self> {
         trace!("Parsing <statement>");
+        let next_token = tokens.clone().next().unwrap();
+        let statement = match next_token {
+            Token::Semicolon => Statement::Null,
+            Token::Return => {
+                // let _ = tokens.next();
+                token_eq(Token::Return, tokens)?;
 
-        let mut statements = Vec::new();
-        while let Some(t) = tokens.clone().next() {
-            match t {
-                Token::Return => {
-                    let _ = tokens.next();
+                trace!("Found <statement>: return");
 
-                    trace!("Found <statement>: return");
+                // start with a minimum precedence of zero so
+                // the result includes operators at every precedence level
+                let expr = Expression::parse_exp(tokens, 0)?;
 
-                    // start with a minimum precedence of zero so
-                    // the result includes operators at every precedence level
-                    let expr = Expression::parse_exp(tokens, 0)?;
+                token_eq(Token::Semicolon, tokens)?;
 
-                    token_eq(Token::Semicolon, tokens)?;
-
-                    statements.push(Statement::Return(expr));
-                }
-                _ => break,
-            };
-        }
-
-        if statements.is_empty() {
-            return Err(String::from("could not parse any statement"));
-        }
+                Statement::Return(expr)
+            }
+            // TODO: this one is weird
+            _ => {
+                let exp = Expression::parse_exp(tokens, 0)?;
+                token_eq(Token::Semicolon, tokens)?;
+                Statement::Expression(exp)
+            } // _ => return Err(String::from("could not parse statement")),
+        };
 
         trace!("Parsed <statement>");
 
-        Ok(statements)
+        Ok(statement)
     }
 }
 
@@ -169,21 +193,19 @@ impl Expression {
     fn parse_fact(tokens: &mut Iter<Token>) -> ParseResult<Self> {
         trace!("Entering <factor>");
         let next_token = tokens.clone().next().unwrap();
-        match next_token {
+        let factor = match next_token {
             Token::Constant(n) => {
                 trace!("Parsed <int>: {}", n);
                 let _ = tokens.next();
                 trace!("Exiting <factor> (int)");
-                Ok(Expression::Constant(n.parse::<i32>().unwrap()))
+                Expression::Constant(n.parse::<i32>().unwrap())
             }
-            // TODO: extract this conditions to representative functions
-            // or any kind of restriction
             Token::Complement | Token::Negate | Token::Not => {
                 trace!("Found <unop>: {:?}", next_token);
                 let unary = UnaryOperator::parse_un(tokens)?;
                 let exp = Expression::parse_fact(tokens)?;
                 trace!("Exiting <factor> (unop)");
-                Ok(Expression::Unary(unary, Box::new(exp)))
+                Expression::Unary(unary, Box::new(exp))
             }
             Token::OpenParen => {
                 trace!("Found \"(\" - parsing parenthesized <exp>");
@@ -191,13 +213,16 @@ impl Expression {
                 let exp = Expression::parse_exp(tokens, 0)?;
                 token_eq(Token::CloseParen, tokens)?;
                 trace!("Exiting <factor> (parenthesized)");
-                Ok(exp)
+                exp
             }
+            Token::Identifier(_) => Expression::Var(Identifier::parse_id(tokens)?),
             _ => {
                 trace!("Exiting <factor> (error)");
-                Err("could not parse expression".to_string())
+                return Err("could not parse expression".to_string());
             }
-        }
+        };
+
+        Ok(factor)
     }
 }
 
@@ -272,6 +297,20 @@ impl UnaryOperator {
         trace!("Parsed <unop>: {:?}", unop);
 
         Ok(unop)
+    }
+}
+
+impl Identifier {
+    fn parse_id(tokens: &mut Iter<Token>) -> ParseResult<Self> {
+        trace!("Parsing <identifier>");
+
+        if let Some(Token::Identifier(n)) = tokens.next() {
+            trace!("Found <identifier>: {}", n);
+            Ok(Identifier { value: n.clone() })
+        } else {
+            debug!("Expected <identifier> but found none");
+            Err("could not parse identifier".to_string())
+        }
     }
 }
 

@@ -27,7 +27,7 @@ pub enum BlockItem {
 #[derive(Clone, Debug)]
 pub struct Declaration {
     pub name: Identifier,
-    pub value: Option<Expression>,
+    pub initializer: Option<Expression>,
 }
 
 #[derive(Clone, Debug)]
@@ -133,7 +133,7 @@ impl fmt::Display for Declaration {
             "{}",
             indent(&format!("name=\"{}\",", self.name.value), 4)
         )?;
-        if let Some(v) = &self.value {
+        if let Some(v) = &self.initializer {
             writeln!(f, "{}", indent(&format!("value=\"{}\",", v.clone()), 4))?;
         }
         Ok(())
