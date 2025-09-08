@@ -10,7 +10,7 @@ pub struct Program {
 
 pub struct FunctionDefinition {
     pub name: Identifier,
-    pub body: Vec<Statement>,
+    pub body: Vec<BlockItem>,
 }
 
 #[derive(Clone, Debug)]
@@ -19,8 +19,22 @@ pub struct Identifier {
 }
 
 #[derive(Clone, Debug)]
+pub enum BlockItem {
+    S(Statement),
+    D(Declaration),
+}
+
+#[derive(Clone, Debug)]
+pub struct Declaration {
+    pub name: Identifier,
+    pub value: Option<Expression>,
+}
+
+#[derive(Clone, Debug)]
 pub enum Statement {
     Return(Expression),
+    Expression(Expression),
+    Null,
 }
 
 #[derive(Clone, Debug)]
@@ -102,6 +116,30 @@ impl fmt::Display for FunctionDefinition {
     }
 }
 
+impl fmt::Display for BlockItem {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            BlockItem::S(s) => write!(f, "S({})", s),
+            BlockItem::D(d) => write!(f, "D({})", d),
+        }
+    }
+}
+
+impl fmt::Display for Declaration {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        writeln!(f, "Declaration(")?;
+        writeln!(
+            f,
+            "{}",
+            indent(&format!("name=\"{}\",", self.name.value), 4)
+        )?;
+        if let Some(v) = &self.value {
+            writeln!(f, "{}", indent(&format!("value=\"{}\",", v.clone()), 4))?;
+        }
+        Ok(())
+    }
+}
+
 impl fmt::Display for Statement {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
@@ -109,6 +147,11 @@ impl fmt::Display for Statement {
                 writeln!(f, "Return(")?;
                 write!(f, "{}\n)", indent(&expr.to_string(), 4))
             }
+            Statement::Expression(expr) => {
+                writeln!(f, "Expression(")?;
+                write!(f, "{}\n)", indent(&expr.to_string(), 4))
+            }
+            Statement::Null => writeln!(f, "Null"),
         }
     }
 }

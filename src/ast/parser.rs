@@ -4,7 +4,7 @@ use log::{debug, trace};
 
 use crate::{
     ast::program::{
-        BinaryOperator, Expression, FunctionDefinition, Identifier, Program, Statement,
+        BinaryOperator, BlockItem, Expression, FunctionDefinition, Identifier, Program, Statement,
         UnaryOperator,
     },
     lexer::{self, Token},
@@ -59,7 +59,8 @@ impl FunctionDefinition {
         token_eq(Token::CloseParen, tokens)?;
         token_eq(Token::OpenBrace, tokens)?;
 
-        let body = Statement::parse_st(tokens)?;
+        // let body = Statement::parse_st(tokens)?;
+        let body = BlockItem::parse_bi(tokens)?;
 
         token_eq(Token::CloseBrace, tokens)?;
 
@@ -82,6 +83,12 @@ impl Identifier {
             debug!("Expected <identifier> but found none");
             Err("could not parse identifier".to_string())
         }
+    }
+}
+
+impl BlockItem {
+    fn parse_bi(tokens: &mut Iter<Token>) -> ParseResult<Vec<Self>> {
+        todo!()
     }
 }
 

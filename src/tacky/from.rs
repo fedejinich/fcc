@@ -4,7 +4,7 @@ use log::{debug, trace};
 
 use crate::{
     ast::program::{
-        BinaryOperator, Expression, FunctionDefinition, Identifier, Program, Statement,
+        BinaryOperator, BlockItem, Expression, FunctionDefinition, Identifier, Program, Statement,
         UnaryOperator,
     },
     tacky::program::{
@@ -33,11 +33,13 @@ impl From<FunctionDefinition> for TackyFunctionDefinition {
     fn from(function_definition: FunctionDefinition) -> Self {
         trace!("Entering <function> conversion to Tacky");
         debug!("Found <function>: {}", function_definition.name.value);
-        trace!("Converting <function> body statements to Tacky instructions");
+        // trace!("Converting <function> body statements to Tacky instructions");
+        trace!("Converting <function> body block items to Tacky instructions");
         let instructions = function_definition
             .body
             .into_iter()
-            .flat_map(TackyInstruction::from)
+            .flat_map(TackyInstruction::from_bi)
+            // .flat_map(TackyInstruction::from)
             .collect();
 
         trace!("<function> conversion to Tacky completed successfully");
@@ -56,6 +58,20 @@ impl From<Identifier> for TackyIdentifier {
 }
 
 impl TackyInstruction {
+    fn from_bi(block_item: BlockItem) -> Vec<TackyInstruction> {
+        trace!("Entering <block_item> conversion to Tacky instructions");
+
+        let i = match block_item {
+            BlockItem::S(statement) => TackyInstruction::from(statement),
+            BlockItem::D(declaration) => todo!(),
+        };
+
+        trace!("<block_item> conversion to Tacky instructions completed successfully");
+        debug!("Generated Tacky instructions: {i:?}");
+
+        i
+    }
+
     fn from(statement: Statement) -> Vec<TackyInstruction> {
         trace!("Entering <statement> conversion to Tacky instructions");
         let i = match statement {
@@ -68,6 +84,8 @@ impl TackyInstruction {
 
                 instructions
             }
+            Statement::Expression(expr) => todo!(),
+            Statement::Null => todo!(),
         };
 
         debug!("Generated Tacky instructions: {i:?}");
