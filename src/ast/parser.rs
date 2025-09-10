@@ -18,10 +18,7 @@ impl TryFrom<Vec<Token>> for Program {
     type Error = String;
 
     fn try_from(tokens: Vec<Token>) -> Result<Self, Self::Error> {
-        trace!("Entering <program>");
-        debug!("Starting parsing with {} tokens", tokens.len());
-        trace!("Token stream: {:?}", tokens);
-        debug!("Attempting to parse function definition");
+        trace!("Parsing <program>");
 
         let mut iter = tokens.iter();
         let function_definition = FunctionDefinition::parse_fd(&mut iter)?;
@@ -52,7 +49,6 @@ impl FunctionDefinition {
         token_eq(Token::Int, tokens)?;
 
         let identifier = Identifier::parse_id(tokens)?;
-        debug!("Found <function>: {}", identifier.value);
 
         token_eq(Token::OpenParen, tokens)?;
         token_eq(Token::Void, tokens)?;
@@ -91,9 +87,13 @@ impl BlockItem {
         trace!("Parsing <block_item>");
         let block_item = match tokens.clone().next().unwrap() {
             Token::Identifier(s) if s.as_str() == "int" => {
+                trace!("Parsing <block_item> ::= <declaration>");
                 BlockItem::D(Declaration::parse_decl(tokens)?)
             }
-            _ => BlockItem::S(Statement::parse_st(tokens)?),
+            _ => {
+                trace!("Parsing <block_item> ::= <statement>");
+                BlockItem::S(Statement::parse_st(tokens)?)
+            }
         };
 
         Ok(block_item)
@@ -102,6 +102,8 @@ impl BlockItem {
 
 impl Declaration {
     fn parse_decl(tokens: &mut Iter<Token>) -> ParseResult<Self> {
+        trace!("Parsing <declaration> := \"int\" <identifier> [ \"=\" <exp> ] \";\"");
+
         token_eq(Token::Identifier("int".to_string()), tokens)?;
         let name = Identifier::parse_id(tokens)?;
 
@@ -112,7 +114,11 @@ impl Declaration {
 
         token_eq(Token::Semicolon, tokens)?;
 
-        Ok(Declaration { name, initializer })
+        let dec = Declaration { name, initializer };
+
+        trace!("Parsed <declaration> {:?}", dec);
+
+        Ok(dec)
     }
 }
 
@@ -121,12 +127,14 @@ impl Statement {
         trace!("Parsing <statement>");
         let next_token = tokens.clone().next().unwrap();
         let statement = match next_token {
-            Token::Semicolon => Statement::Null,
+            Token::Semicolon => {
+                trace!("Parsing <statement> ::= ;");
+                Statement::Null
+            }
             Token::Return => {
                 // let _ = tokens.next();
+                trace!("Parsing <statement> ::= return <exp> ;");
                 token_eq(Token::Return, tokens)?;
-
-                trace!("Found <statement>: return");
 
                 // start with a minimum precedence of zero so
                 // the result includes operators at every precedence level
@@ -138,6 +146,7 @@ impl Statement {
             }
             // TODO: this one is weird
             _ => {
+                trace!("Parsing <statement> ::= <exp> ;");
                 let exp = Expression::parse_exp(tokens, 0)?;
                 token_eq(Token::Semicolon, tokens)?;
                 Statement::Expression(exp)
@@ -153,71 +162,62 @@ impl Statement {
 impl Expression {
     // TODO: this function is too long
     fn parse_exp(tokens: &mut Iter<Token>, min_prec: i32) -> ParseResult<Self> {
-        trace!("Entering <exp> with min_prec: {}", min_prec);
+        trace!("Parsing <exp> with min_prec: {}", min_prec);
         let mut left = Expression::parse_fact(tokens)?;
         let mut next_token = tokens.clone().next().unwrap();
 
         // ques: isn't this too expensive?
         let is_binary_op = |t: &Token| lexer::binary_operators().contains(t);
         while is_binary_op(next_token) && precedence(next_token) >= min_prec {
+            trace!("Parsing <exp> ::= <exp> <binop> <exp>");
             if next_token == &Token::Assignment {
-                trace!(
-                    "Parsing assignment <exp> with precedence {}",
-                    precedence(next_token)
-                );
+                trace!("Parsing assignment");
                 let _ = tokens.next(); // consume '='
                 let right = Expression::parse_exp(tokens, precedence(next_token))?;
                 left = Expression::Assignment(Box::new(left), Box::new(right));
             } else {
-                debug!(
-                    "Found <binop>: {:?} with precedence {}",
-                    next_token,
-                    precedence(next_token)
-                );
                 let op = BinaryOperator::parse_bin(tokens)?;
                 trace!(
-                    "Parsing right <exp> with precedence {}",
+                    "Parsing binary operator <exp> with precedence {}",
                     precedence(next_token) + 1
                 );
                 let right = Expression::parse_exp(tokens, precedence(next_token) + 1)?;
                 left = Expression::Binary(op, Box::new(left), Box::new(right));
-                trace!("Created binary <exp>");
             }
             next_token = tokens.clone().next().unwrap();
         }
 
-        trace!("Exiting <exp>");
+        trace!("Parsed <exp> {:?}", left.clone());
+
         Ok(left)
     }
 
     fn parse_fact(tokens: &mut Iter<Token>) -> ParseResult<Self> {
-        trace!("Entering <factor>");
+        trace!("Parsing <factor>");
         let next_token = tokens.clone().next().unwrap();
         let factor = match next_token {
             Token::Constant(n) => {
-                trace!("Parsed <int>: {}", n);
+                trace!("Parsing <factor> ::= <int>");
                 let _ = tokens.next();
-                trace!("Exiting <factor> (int)");
                 Expression::Constant(n.parse::<i32>().unwrap())
             }
             Token::Complement | Token::Negate | Token::Not => {
-                trace!("Found <unop>: {:?}", next_token);
+                trace!("Parsing <unop> <factor>");
                 let unary = UnaryOperator::parse_un(tokens)?;
                 let exp = Expression::parse_fact(tokens)?;
-                trace!("Exiting <factor> (unop)");
                 Expression::Unary(unary, Box::new(exp))
             }
             Token::OpenParen => {
-                trace!("Found \"(\" - parsing parenthesized <exp>");
+                trace!("Parsing \"(\" <exp> \")\"");
                 let _ = tokens.next();
                 let exp = Expression::parse_exp(tokens, 0)?;
                 token_eq(Token::CloseParen, tokens)?;
-                trace!("Exiting <factor> (parenthesized)");
                 exp
             }
             Token::Identifier(_) => Expression::Var(Identifier::parse_id(tokens)?),
             _ => {
-                trace!("Exiting <factor> (error)");
+                trace!("Exiting <factor> (error) {:?}", next_token);
+                let _ = tokens.next();
                 return Err("could not parse expression".to_string());
             }
         };
@@ -302,10 +302,8 @@ impl UnaryOperator {
 
 impl Identifier {
     fn parse_id(tokens: &mut Iter<Token>) -> ParseResult<Self> {
-        trace!("Parsing <identifier>");
-
         if let Some(Token::Identifier(n)) = tokens.next() {
-            trace!("Found <identifier>: {}", n);
+            trace!("Parsing <identifier>: {}", n);
             Ok(Identifier { value: n.clone() })
         } else {
             debug!("Expected <identifier> but found none");
@@ -320,7 +318,7 @@ fn token_eq(expected: Token, tokens: &mut Iter<Token>) -> Result<(), String> {
             debug!("Token mismatch - expected: {:?}, got: {:?}", expected, t);
             return Err(format!("expected {:?}, got {:?}", expected, t));
         }
-        trace!("Successfully matched token: {:?}", expected);
+        debug!("Successfully matched token: {:?}", expected);
         return Ok(());
     }
 

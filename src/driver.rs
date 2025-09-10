@@ -1,7 +1,7 @@
 use std::{fs, path::Path, process::Command};
 
 use clap::Parser;
-use log::{debug, info};
+use log::{debug, info, trace};
 
 use crate::ast::program::Program;
 use crate::codegen::x64::pipe::AsmPipe;
@@ -126,6 +126,7 @@ impl CompilerDriver {
         }
 
         // parse tokens into ast
+        trace!("Token stream: {:?}", tokens);
         let c_program = Program::try_from(tokens)?;
         if self.print_ast {
             println!("{c_program}");
