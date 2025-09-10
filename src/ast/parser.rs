@@ -66,11 +66,6 @@ impl FunctionDefinition {
             body.push(block_item);
         }
 
-        // TODO: not sure about this
-        if body.is_empty() {
-            return Err(String::from("could not parse any block item"));
-        }
-
         token_eq(Token::CloseBrace, tokens)?;
 
         trace!("<function> parsing completed successfully");
@@ -108,7 +103,7 @@ impl Declaration {
         let name = Identifier::parse_id(tokens)?;
 
         let mut initializer = None;
-        if let Some(Token::Equal) = tokens.peek() {
+        if let Some(Token::Assignment) = tokens.peek() {
             let _ = tokens.next(); // consume '='
             initializer = Some(Expression::parse_exp(tokens, 0)?);
         }
@@ -129,6 +124,7 @@ impl Statement {
         let statement = match next_token {
             Token::Semicolon => {
                 trace!("Parsing <statement> ::= ;");
+                let _ = tokens.next();
                 Statement::Null
             }
             Token::Return => {
@@ -150,7 +146,7 @@ impl Statement {
                 let exp = Expression::parse_exp(tokens, 0)?;
                 token_eq(Token::Semicolon, tokens)?;
                 Statement::Expression(exp)
-            } // _ => return Err(String::from("could not parse statement")),
+            }
         };
 
         trace!("Parsed <statement>");
@@ -170,6 +166,7 @@ impl Expression {
         let is_binary_op = |t: &Token| lexer::binary_operators().contains(t);
         while let Some(token) = next_token {
             if !is_binary_op(token) || precedence(token) < min_prec {
+                trace!("No bin op");
                 break;
             }
             trace!("Parsing <exp> ::= <exp> <binop> <exp>");
@@ -217,7 +214,10 @@ impl Expression {
                 token_eq(Token::CloseParen, tokens)?;
                 exp
             }
-            Token::Identifier(_) => Expression::Var(Identifier::parse_id(tokens)?),
+            Token::Identifier(_) => {
+                let id = Identifier::parse_id(tokens)?;
+                Expression::Var(id)
+            }
             _ => {
                 trace!("Exiting <factor> (error) {:?}", next_token);
                 let _ = tokens.next();

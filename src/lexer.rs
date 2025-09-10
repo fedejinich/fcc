@@ -201,3 +201,25 @@ pub fn binary_operators() -> Vec<Token> {
         Token::Assignment,
     ]
 }
+
+#[allow(dead_code)]
+pub fn unary_operators() -> Vec<Token> {
+    vec![Token::Complement, Token::Negate, Token::Not]
+}
+
+mod tests {
+    #[allow(unused_imports)]
+    use crate::lexer::{binary_operators, unary_operators};
+
+    #[test]
+    fn binary_operator_count_test() {
+        let bin_op = binary_operators();
+        assert_eq!(bin_op.len(), 19);
+    }
+
+    #[test]
+    fn unary_operator_count_test() {
+        let un_op = unary_operators();
+        assert_eq!(un_op.len(), 3);
+    }
+}
