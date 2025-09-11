@@ -1,4 +1,4 @@
-//! This module contains the logic to lower the AST to tacky AST
+//! This module contains the logic to lower the AST to tacky IR
 
 use log::{debug, trace};
 
@@ -15,10 +15,8 @@ use crate::{
 
 impl From<Program> for TackyProgram {
     fn from(program: Program) -> Self {
-        trace!("Entering <program> conversion to Tacky IR");
-        debug!("Converting C AST to Tacky IR");
+        trace!("Converting C AST to Tacky IR");
 
-        trace!("Converting <function> definition to Tacky");
         let p = TackyProgram {
             function_definition: TackyFunctionDefinition::from(program.function_definition),
         };
@@ -31,18 +29,14 @@ impl From<Program> for TackyProgram {
 
 impl From<FunctionDefinition> for TackyFunctionDefinition {
     fn from(function_definition: FunctionDefinition) -> Self {
-        trace!("Entering <function> conversion to Tacky");
-        debug!("Found <function>: {}", function_definition.name.value);
-        // trace!("Converting <function> body statements to Tacky instructions");
         trace!("Converting <function> body block items to Tacky instructions");
+        debug!("<function>: {}", function_definition.name.value);
         let instructions = function_definition
             .body
             .into_iter()
             .flat_map(TackyInstruction::from_bi)
-            // .flat_map(TackyInstruction::from)
             .collect();
 
-        trace!("<function> conversion to Tacky completed successfully");
         TackyFunctionDefinition {
             name: TackyIdentifier::from(function_definition.name),
             instructions,
@@ -59,28 +53,26 @@ impl From<Identifier> for TackyIdentifier {
 
 impl TackyInstruction {
     fn from_bi(block_item: BlockItem) -> Vec<TackyInstruction> {
-        trace!("Entering <block_item> conversion to Tacky instructions");
+        trace!("Converting <block_item> to Tacky instructions");
 
         let i = match block_item {
-            BlockItem::S(statement) => TackyInstruction::from(statement),
+            BlockItem::S(statement) => TackyInstruction::from_st(statement),
             BlockItem::D(declaration) => todo!(),
         };
 
-        trace!("<block_item> conversion to Tacky instructions completed successfully");
         debug!("Generated Tacky instructions: {i:?}");
 
         i
     }
 
-    fn from(statement: Statement) -> Vec<TackyInstruction> {
-        trace!("Entering <statement> conversion to Tacky instructions");
+    fn from_st(statement: Statement) -> Vec<TackyInstruction> {
+        trace!("Converting <statement> to Tacky instructions");
         let i = match statement {
             Statement::Return(expr) => {
-                trace!("Found <statement>: return");
+                trace!("Converting <statement>: return");
                 let mut instructions = vec![];
                 let v = TackyInstruction::from_expr(expr, &mut instructions);
                 instructions.push(TackyInstruction::Return(v));
-                trace!("<statement> return conversion completed");
 
                 instructions
             }
@@ -89,7 +81,6 @@ impl TackyInstruction {
         };
 
         debug!("Generated Tacky instructions: {i:?}");
-        trace!("<statement> conversion to Tacky instructions completed successfully");
 
         i
     }
@@ -100,11 +91,11 @@ impl TackyInstruction {
             Expression::Assignment(left, right) => todo!(),
             Expression::Var(id) => todo!(),
             Expression::Constant(c) => {
-                trace!("Found <constant>: {}", c);
+                trace!("Converting <constant>: {}", c);
                 TackyValue::Constant(c)
             }
             Expression::Unary(op, inner_exp) => {
-                trace!("Found <unop>: {:?}", op);
+                trace!("Converting <unop>: {:?}", op);
                 let src = TackyInstruction::from_expr(*inner_exp, instructions);
                 // TODO: provide a more descriptive name
                 let dst = TackyValue::Var(TackyIdentifier::new("unary_op"));
@@ -117,12 +108,11 @@ impl TackyInstruction {
                     dst.pretty_print()
                 );
                 instructions.push(TackyInstruction::Unary(unary_op, src, dst.clone()));
-                trace!("<unop> conversion completed");
 
                 dst
             }
             Expression::Binary(op, left, right) => {
-                trace!("Found <binop>: {:?}", op);
+                trace!("Converting <binop>: {:?}", op);
                 match op {
                     BinaryOperator::And => {
                         let result = TackyValue::Var(TackyIdentifier::new("and_result"));
@@ -130,7 +120,7 @@ impl TackyInstruction {
                         let false_label = TackyIdentifier::new("false_label");
                         let end_label = TackyIdentifier::new("end");
 
-                        trace!("converting left expression");
+                        trace!("Converting left expression");
                         // TODO: extract this to a function
                         let v1 = TackyInstruction::from_expr(*left, instructions);
 
@@ -138,7 +128,7 @@ impl TackyInstruction {
 
                         instructions.push(jump_if_v1.clone());
 
-                        trace!("converting right expression");
+                        trace!("Converting right expression");
                         let v2 = TackyInstruction::from_expr(*right, instructions);
                         let jump_if_v2 = TackyInstruction::JumpIfZero(v2, false_label.clone());
 
@@ -155,6 +145,8 @@ impl TackyInstruction {
                         instructions.push(copy_0);
                         instructions.push(TackyInstruction::Label(end_label));
 
+                        debug!("Generated result: {result:?}");
+
                         result
                     }
                     BinaryOperator::Or => {
@@ -162,13 +154,13 @@ impl TackyInstruction {
                         let false_label = TackyIdentifier::new("false_label");
                         let end_label = TackyIdentifier::new("end");
 
-                        trace!("converting left expression");
+                        trace!("Converting left expression");
                         // TODO: extract this to a function
                         let v1 = TackyInstruction::from_expr(*left, instructions);
 
                         instructions.push(TackyInstruction::JumpIfNotZero(v1, false_label.clone()));
 
-                        trace!("converting right expression");
+                        trace!("Converting right expression");
                         let v2 = TackyInstruction::from_expr(*right, instructions);
 
                         instructions.push(TackyInstruction::JumpIfNotZero(v2, false_label.clone()));
@@ -183,6 +175,8 @@ impl TackyInstruction {
                         instructions.push(TackyInstruction::Label(false_label));
                         instructions.push(copy_1);
                         instructions.push(TackyInstruction::Label(end_label));
+
+                        debug!("Generated result: {result:?}");
 
                         result
                     }
@@ -199,7 +193,6 @@ impl TackyInstruction {
                             dst.pretty_print()
                         );
                         instructions.push(TackyInstruction::Binary(binary_op, v1, v2, dst.clone()));
-                        trace!("<binop> conversion completed");
 
                         dst
                     }
@@ -212,20 +205,18 @@ impl TackyInstruction {
 impl From<UnaryOperator> for TackyUnaryOperator {
     fn from(op: UnaryOperator) -> Self {
         trace!("Converting <unop>: {:?} to Tacky", op);
-        let tacky_op = match op {
+        match op {
             UnaryOperator::Complement => TackyUnaryOperator::Complement,
             UnaryOperator::Negate => TackyUnaryOperator::Negate,
             UnaryOperator::Not => TackyUnaryOperator::Not,
-        };
-        trace!("<unop> conversion completed: {:?}", tacky_op);
-        tacky_op
+        }
     }
 }
 
 impl From<BinaryOperator> for TackyBinaryOperator {
     fn from(op: BinaryOperator) -> Self {
         trace!("Converting <binop>: {:?} to Tacky", op);
-        let tacky_op = match op {
+        match op {
             BinaryOperator::Add => TackyBinaryOperator::Add,
             BinaryOperator::Divide => TackyBinaryOperator::Divide,
             BinaryOperator::Multiply => TackyBinaryOperator::Multiply,
@@ -244,8 +235,6 @@ impl From<BinaryOperator> for TackyBinaryOperator {
             BinaryOperator::GreaterThanOrEqual => TackyBinaryOperator::GreaterThanOrEqual,
             BinaryOperator::LessThanOrEqual => TackyBinaryOperator::LessThanOrEqual,
             BinaryOperator::And | BinaryOperator::Or => panic!("this should never happen"),
-        };
-        trace!("<binop> conversion completed: {:?}", tacky_op);
-        tacky_op
+        }
     }
 }
