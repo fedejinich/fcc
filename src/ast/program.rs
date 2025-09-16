@@ -1,4 +1,3 @@
-
 pub struct Program {
     pub function_definition: FunctionDefinition,
 }
@@ -75,4 +74,3 @@ pub enum BinaryOperator {
     GreaterThanOrEqual,
     LessThanOrEqual,
 }
-

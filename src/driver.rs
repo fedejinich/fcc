@@ -4,6 +4,7 @@ use clap::Parser;
 use log::{debug, info, trace};
 
 use crate::ast::program::Program;
+use crate::ast::semantic::validate::validate_semantics;
 use crate::codegen::x64::pipes::pipe::AsmPipe;
 use crate::lexer::lex;
 use crate::tacky::program::TackyProgram;
@@ -19,6 +20,9 @@ pub struct CompilerDriver {
 
     #[arg(long)]
     parse: bool,
+
+    #[arg(long)]
+    validate: bool,
 
     #[arg(long)]
     tacky: bool,
@@ -117,23 +121,25 @@ impl CompilerDriver {
         let code =
             fs::read_to_string(preprocessed_file_path).expect("couldn't read preprocessed file");
 
-        // get tokens
         let tokens = lex(code.as_str())?;
 
-        // lex only
         if self.lex {
             std::process::exit(0);
         }
 
-        // parse tokens into ast
         trace!("Token stream: {:?}", tokens);
         let c_program = Program::try_from(tokens)?;
         if self.print_ast {
             println!("{c_program}");
         }
 
-        // parse only
         if self.parse {
+            std::process::exit(0);
+        }
+
+        validate_semantics(&c_program)?;
+
+        if !self.validate {
             std::process::exit(0);
         }
 
@@ -147,7 +153,6 @@ impl CompilerDriver {
             std::process::exit(0);
         }
 
-        // generate assembly
         let assembly_file_name = preprocessed_file.replace(".i", ".asm");
 
         let assembly_program = AsmPipe::from(tacky_program)
