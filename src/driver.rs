@@ -128,7 +128,7 @@ impl CompilerDriver {
         }
 
         trace!("Token stream: {:?}", tokens);
-        let c_program = Program::try_from(tokens)?;
+        let mut c_program = Program::try_from(tokens)?;
         if self.print_ast {
             println!("{c_program}");
         }
@@ -137,7 +137,7 @@ impl CompilerDriver {
             std::process::exit(0);
         }
 
-        validate_semantics(&c_program)?;
+        c_program = validate_semantics(&c_program)?;
 
         if !self.validate {
             std::process::exit(0);

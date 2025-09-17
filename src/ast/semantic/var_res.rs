@@ -1,4 +1,7 @@
-use std::{collections::HashMap, sync::atomic::{AtomicUsize, Ordering}};
+use std::{
+    collections::HashMap,
+    sync::atomic::{AtomicUsize, Ordering},
+};
 
 use log::debug;
 
@@ -23,6 +26,21 @@ pub fn resolve_declaration(
     };
 
     Ok(Declaration::new(Identifier::new(unique_name), init))
+}
+
+pub fn resolve_statement(
+    statement: &Statement,
+    variable_map: &HashMap<String, String>,
+) -> Result<Statement, String> {
+    use Statement::*;
+
+    let res = match statement {
+        Return(expr) => Statement::Return(resolve_expression(expr, variable_map)?),
+        Expression(expr) => Expression(resolve_expression(expr, variable_map)?),
+        Null => Statement::Null,
+    };
+
+    Ok(res)
 }
 
 fn resolve_expression(
@@ -58,21 +76,6 @@ fn resolve_expression(
             Box::new(resolve_expression(right, variable_map)?),
         ),
         Constant(c) => Constant(*c),
-    };
-
-    Ok(res)
-}
-
-fn resolve_statement(
-    statement: &Statement,
-    variable_map: &HashMap<String, String>,
-) -> Result<Statement, String> {
-    use Statement::*;
-
-    let res = match statement {
-        Return(expr) => Statement::Return(resolve_expression(expr, variable_map)?),
-        Expression(expr) => Expression(resolve_expression(expr, variable_map)?),
-        Null => Statement::Null,
     };
 
     Ok(res)
