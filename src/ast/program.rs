@@ -75,6 +75,20 @@ pub enum BinaryOperator {
     LessThanOrEqual,
 }
 
+impl Program {
+    pub fn new(function_definition: FunctionDefinition) -> Self {
+        Program {
+            function_definition,
+        }
+    }
+}
+
+impl FunctionDefinition {
+    pub fn new(name: Identifier, body: Vec<BlockItem>) -> Self {
+        FunctionDefinition { name, body }
+    }
+}
+
 impl Identifier {
     pub fn new(value: String) -> Self {
         Identifier {

@@ -23,9 +23,7 @@ impl TryFrom<Vec<Token>> for Program {
         let mut iter = tokens.iter().peekable();
         let function_definition = FunctionDefinition::parse_fd(&mut iter)?;
 
-        let program_ast = Program {
-            function_definition,
-        };
+        let program_ast = Program::new(function_definition);
 
         if iter.next().is_some() {
             return Err(format!(
@@ -69,10 +67,8 @@ impl FunctionDefinition {
         token_eq(Token::CloseBrace, tokens)?;
 
         trace!("<function> parsing completed successfully");
-        Ok(FunctionDefinition {
-            name: identifier,
-            body,
-        })
+
+        Ok(FunctionDefinition::new(identifier, body))
     }
 }
 
@@ -307,7 +303,7 @@ impl Identifier {
     fn parse_id(tokens: &mut Peekable<Iter<Token>>) -> ParseResult<Self> {
         if let Some(Token::Identifier(n)) = tokens.next() {
             trace!("Parsing <identifier>: {}", n);
-            Ok(Identifier { value: n.clone() })
+            Ok(Identifier::new(n.clone()))
         } else {
             debug!("Expected <identifier> but found none");
             Err("could not parse identifier".to_string())
