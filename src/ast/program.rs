@@ -74,3 +74,17 @@ pub enum BinaryOperator {
     GreaterThanOrEqual,
     LessThanOrEqual,
 }
+
+impl Identifier {
+    pub fn new(value: String) -> Self {
+        Identifier {
+            value: value.to_string(),
+        }
+    }
+}
+
+impl Declaration {
+    pub fn new(name: Identifier, initializer: Option<Expression>) -> Self {
+        Declaration { name, initializer }
+    }
+}
