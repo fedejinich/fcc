@@ -3,7 +3,7 @@ use std::{
     sync::atomic::{AtomicUsize, Ordering},
 };
 
-use log::debug;
+use log::{debug, trace};
 
 use crate::ast::program::{Declaration, Expression, Identifier, Statement};
 
@@ -19,11 +19,17 @@ pub fn resolve_declaration(
     let unique_name: String = temporary_name(&declaration.name.value);
     variable_map.insert(declaration.name.value.clone(), unique_name.clone());
 
-    let init = if let Some(init) = &declaration.initializer {
-        Some(resolve_expression(init, variable_map)?)
-    } else {
-        None
-    };
+    // let init = if let Some(init) = &declaration.initializer {
+    //     Some(resolve_expression(init, variable_map)?)
+    // } else {
+    //     None
+    // };
+
+    let init = declaration
+        .initializer
+        .as_ref()
+        .map(|e| resolve_expression(e, variable_map)) // option result expr
+        .transpose()?; // result expr
 
     Ok(Declaration::new(Identifier::new(unique_name), init))
 }
@@ -33,6 +39,8 @@ pub fn resolve_statement(
     variable_map: &HashMap<String, String>,
 ) -> Result<Statement, String> {
     use Statement::*;
+
+    trace!("resolving statement: {statement:?}");
 
     let res = match statement {
         Return(expr) => Statement::Return(resolve_expression(expr, variable_map)?),
@@ -48,6 +56,8 @@ fn resolve_expression(
     variable_map: &HashMap<String, String>,
 ) -> Result<Expression, String> {
     use Expression::*;
+
+    trace!("resolving expression: {expr:?}");
 
     let res = match expr {
         Assignment(left, right) => match **left {

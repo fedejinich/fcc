@@ -139,7 +139,7 @@ impl CompilerDriver {
 
         c_program = validate_semantics(&c_program)?;
 
-        if !self.validate {
+        if self.validate {
             std::process::exit(0);
         }
 
