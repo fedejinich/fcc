@@ -87,6 +87,14 @@ impl TackyInstruction {
 
     fn from_decl(declaration: Declaration) -> Vec<TackyInstruction> {
         trace!("Converting <declaration> to Tacky instructions");
+        let mut instructions = vec![];
+        if let Some(initializer) = declaration.initializer {
+            TackyInstruction::from_expr(initializer, &mut instructions);
+        } else {
+            trace!("No initializer");
+        }
+
+        instructions
     }
 
     // emits tacky instructions
