@@ -76,8 +76,21 @@ impl TackyInstruction {
 
                 instructions
             }
-            Statement::Expression(expr) => todo!(),
-            Statement::Null => todo!(),
+            Statement::Expression(expr) => {
+                trace!("Converting <statement>: expression");
+                let mut instructions = vec![];
+                let v = TackyInstruction::from_expr(expr, &mut instructions);
+                instructions.push(TackyInstruction::Copy(
+                    v,
+                    TackyValue::Var(TackyIdentifier::new("result")),
+                ));
+
+                instructions
+            }
+            Statement::Null => {
+                trace!("No need to convert <statement>: null");
+                vec![]
+            }
         };
 
         debug!("Generated Tacky instructions: {i:?}");
@@ -94,6 +107,7 @@ impl TackyInstruction {
             trace!("No initializer");
         }
 
+        // TODO: this might be wrong
         instructions
     }
 
