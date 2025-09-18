@@ -4,8 +4,8 @@ use log::{debug, trace};
 
 use crate::{
     ast::program::{
-        BinaryOperator, BlockItem, Expression, FunctionDefinition, Identifier, Program, Statement,
-        UnaryOperator,
+        BinaryOperator, BlockItem, Declaration, Expression, FunctionDefinition, Identifier,
+        Program, Statement, UnaryOperator,
     },
     tacky::program::{
         TackyBinaryOperator, TackyFunctionDefinition, TackyIdentifier, TackyInstruction,
@@ -57,7 +57,7 @@ impl TackyInstruction {
 
         let i = match block_item {
             BlockItem::S(statement) => TackyInstruction::from_st(statement),
-            BlockItem::D(declaration) => todo!(),
+            BlockItem::D(declaration) => TackyInstruction::from_decl(declaration),
         };
 
         debug!("Generated Tacky instructions: {i:?}");
@@ -85,11 +85,28 @@ impl TackyInstruction {
         i
     }
 
+    fn from_decl(declaration: Declaration) -> Vec<TackyInstruction> {
+        trace!("Converting <declaration> to Tacky instructions");
+    }
+
+    // emits tacky instructions
     fn from_expr(expr: Expression, instructions: &mut Vec<TackyInstruction>) -> TackyValue {
         trace!("Entering <exp> conversion to Tacky");
         match expr {
-            Expression::Assignment(left, right) => todo!(),
-            Expression::Var(id) => todo!(),
+            Expression::Assignment(left, right) => {
+                trace!("Converting <assignment> to Tacky instruction");
+                let res = TackyInstruction::from_expr(*right, instructions);
+                let left_var = match *left {
+                    Expression::Var(id) => TackyValue::Var(TackyIdentifier::from(id)),
+                    _ => panic!("this should never happen"),
+                };
+                instructions.push(TackyInstruction::Copy(res, left_var.clone()));
+                left_var
+            }
+            Expression::Var(id) => {
+                trace!("Converting <var> to Tacky instruction");
+                TackyValue::Var(TackyIdentifier::from(id))
+            }
             Expression::Constant(c) => {
                 trace!("Converting <constant>: {}", c);
                 TackyValue::Constant(c)
