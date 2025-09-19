@@ -43,9 +43,9 @@ impl From<FunctionDefinition> for TackyFunctionDefinition {
 }
 
 impl From<Identifier> for TackyIdentifier {
-    fn from(id: Identifier) -> Self {
-        trace!("Converting <identifier>: {}", id.value);
-        TackyIdentifier::new(id.value.as_str())
+    fn from(value: Identifier) -> Self {
+        trace!("Converting <identifier>: {}", value.value);
+        TackyIdentifier::new(value.value.as_str())
     }
 }
 
