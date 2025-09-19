@@ -17,9 +17,7 @@ impl From<Program> for TackyProgram {
     fn from(program: Program) -> Self {
         trace!("Converting C AST to Tacky IR");
 
-        let p = TackyProgram {
-            function_definition: TackyFunctionDefinition::from(program.function_definition),
-        };
+        let p = TackyProgram::new(TackyFunctionDefinition::from(program.function_definition));
 
         trace!("<program> conversion to Tacky IR completed successfully");
 
@@ -37,17 +35,17 @@ impl From<FunctionDefinition> for TackyFunctionDefinition {
             .flat_map(TackyInstruction::from_bi)
             .collect();
 
-        TackyFunctionDefinition {
-            name: TackyIdentifier::from(function_definition.name),
+        TackyFunctionDefinition::new(
+            TackyIdentifier::from(function_definition.name),
             instructions,
-        }
+        )
     }
 }
 
 impl From<Identifier> for TackyIdentifier {
-    fn from(value: Identifier) -> Self {
-        trace!("Converting <identifier>: {}", value.value);
-        TackyIdentifier { value: value.value }
+    fn from(id: Identifier) -> Self {
+        trace!("Converting <identifier>: {}", id.value);
+        TackyIdentifier::new(id.value.as_str())
     }
 }
 

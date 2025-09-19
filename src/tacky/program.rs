@@ -74,14 +74,6 @@ fn next_id() -> usize {
     COUNTER.fetch_add(1, Ordering::Relaxed)
 }
 
-impl TackyIdentifier {
-    pub fn new(desc: &str) -> TackyIdentifier {
-        TackyIdentifier {
-            value: format!("{}.{}", desc, next_id()),
-        }
-    }
-}
-
 impl TackyProgram {
     pub fn pretty_print(&self) -> String {
         format!(
@@ -188,5 +180,27 @@ impl TackyBinaryOperator {
             TackyBinaryOperator::LessThanOrEqual => "LessThanOrEqual",
         }
         .to_string()
+    }
+}
+
+impl TackyProgram {
+    pub fn new(function_definition: TackyFunctionDefinition) -> Self {
+        TackyProgram {
+            function_definition,
+        }
+    }
+}
+
+impl TackyFunctionDefinition {
+    pub fn new(name: TackyIdentifier, instructions: Vec<TackyInstruction>) -> Self {
+        TackyFunctionDefinition { name, instructions }
+    }
+}
+
+impl TackyIdentifier {
+    pub fn new(value: &str) -> TackyIdentifier {
+        TackyIdentifier {
+            value: format!("{}.{}", value, next_id()),
+        }
     }
 }
