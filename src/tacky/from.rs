@@ -117,6 +117,10 @@ impl TackyInstruction {
         instructions
     }
 
+    /// Lowers an Expression to TACKY.
+    /// Appends the emitted instructions to `instructions` and returns
+    /// a `TackyValue` that identifies where the expression's result
+    /// now lives (a constant or a temporary/pseudo variable).
     // emits tacky instructions
     fn from_expr(expr: Expression, instructions: &mut Vec<TackyInstruction>) -> TackyValue {
         trace!("Converting <exp> to Tacky instructions");
