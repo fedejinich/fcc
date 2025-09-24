@@ -29,11 +29,14 @@ impl From<FunctionDefinition> for TackyFunctionDefinition {
     fn from(function_definition: FunctionDefinition) -> Self {
         trace!("Converting <function> body block items to Tacky instructions");
         debug!("<function>: {}", function_definition.name.value);
-        let instructions = function_definition
+        let mut instructions: Vec<TackyInstruction> = function_definition
             .body
             .into_iter()
             .flat_map(TackyInstruction::from_bi)
             .collect();
+
+        // add return 0 as last instruction (it's gonna be fixed in Part III)
+        instructions.push(TackyInstruction::Return(TackyValue::Constant(0)));
 
         TackyFunctionDefinition::new(
             TackyIdentifier::from(function_definition.name),
@@ -45,7 +48,8 @@ impl From<FunctionDefinition> for TackyFunctionDefinition {
 impl From<Identifier> for TackyIdentifier {
     fn from(value: Identifier) -> Self {
         trace!("Converting <identifier>: {}", value.value);
-        TackyIdentifier::new(value.value.as_str())
+        TackyIdentifier { value: value.value }
+        // TackyIdentifier::new(value.value.as_str())
     }
 }
 
@@ -100,7 +104,11 @@ impl TackyInstruction {
         trace!("Converting <declaration> to Tacky instructions");
         let mut instructions = vec![];
         if let Some(initializer) = declaration.initializer {
-            TackyInstruction::from_expr(initializer, &mut instructions);
+            let v = TackyInstruction::from_expr(initializer, &mut instructions);
+            instructions.push(TackyInstruction::Copy(
+                v,
+                TackyValue::Var(TackyIdentifier::from(declaration.name)),
+            ));
         } else {
             trace!("No initializer");
         }
@@ -111,7 +119,7 @@ impl TackyInstruction {
 
     // emits tacky instructions
     fn from_expr(expr: Expression, instructions: &mut Vec<TackyInstruction>) -> TackyValue {
-        trace!("Entering <exp> conversion to Tacky");
+        trace!("Converting <exp> to Tacky instructions");
         match expr {
             Expression::Assignment(left, right) => {
                 trace!("Converting <assignment> to Tacky instruction");
