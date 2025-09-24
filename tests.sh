@@ -14,5 +14,10 @@ cargo clean
 echo "Building fcc"
 cargo build
 
-echo "Running tests"
-./test_compiler "$FCC_PATH" -v --chapter 5 --bitwise --stage validate
+CHAPTER=5
+
+echo "Running latests tests"
+./test_compiler "$FCC_PATH" -v --chapter $CHAPTER --bitwise --latest-only
+
+echo "Running all tests"
+./test_compiler "$FCC_PATH" -v --chapter $CHAPTER --bitwise

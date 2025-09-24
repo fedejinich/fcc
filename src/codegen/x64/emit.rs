@@ -68,8 +68,8 @@ impl AsmFunctionDefinition {
         em.line(&format!(".globl _{}", self.name.value))?;
         em.line(&format!("_{}:", self.name.value))?;
         em.indented(|em| {
-            em.line("pushq %rbp")?;
-            em.line("movq %rsp, %rbp")?;
+            em.line("pushq %rbp # initialize stack frame with base pointer")?;
+            em.line("movq %rsp, %rbp # move stack pointer to base pointer")?;
             for inst in &self.instructions {
                 inst.emit_to(em)?;
             }
@@ -85,7 +85,7 @@ impl AsmInstruction {
             Comment(s) => em.line(&format!("# {s}")),
             Mov(src, dst) => em.line(&format!("movl {}, {}", src.fmt(), dst.fmt())),
             Unary(op, x) => em.line(&format!("{} {}", op.fmt(), x.fmt())),
-            AllocateStack(n) => em.line(&format!("subq ${n}, %rsp")),
+            AllocateStack(n) => em.line(&format!("subq ${n}, %rsp # allocate stack space")),
             Ret => {
                 em.line("movq %rbp, %rsp")?;
                 em.line("popq %rbp")?;
