@@ -11,6 +11,8 @@ pub fn resolve_declaration(
     declaration: &Declaration,
     variable_map: &mut HashMap<String, String>,
 ) -> Result<Declaration, String> {
+    trace!("resolving declaration: {declaration:?}");
+
     if variable_map.contains_key(&declaration.name.value) {
         debug!("variable: {}", declaration);
         return Err("variable already declared".to_string());
@@ -25,6 +27,7 @@ pub fn resolve_declaration(
         .map(|e| resolve_expression(e, variable_map)) // option result expr
         .transpose()?; // result expr
 
+    // variable_map.insert(declaration.name.value.clone(), unique_name.clone());
     Ok(Declaration::new(Identifier::new(unique_name), init))
 }
 
@@ -37,9 +40,9 @@ pub fn resolve_statement(
     trace!("resolving statement: {statement:?}");
 
     let res = match statement {
-        Return(expr) => Statement::Return(resolve_expression(expr, variable_map)?),
+        Return(expr) => Return(resolve_expression(expr, variable_map)?),
         Expression(expr) => Expression(resolve_expression(expr, variable_map)?),
-        Null => Statement::Null,
+        Null => Null,
     };
 
     Ok(res)
@@ -64,9 +67,11 @@ fn resolve_expression(
             }
         },
         Var(id) => {
+            // debug!("variable_map: {:?}", variable_map);
             if let Some(v) = variable_map.get(&id.value) {
                 Var(Identifier::new(v.clone()))
             } else {
+                debug!("undeclared variable: {}", expr);
                 return Err("undeclared variable".to_string());
             }
         }
