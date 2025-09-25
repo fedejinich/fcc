@@ -5,7 +5,10 @@ use log::{debug, info, trace};
 
 use crate::ast::program::Program;
 use crate::ast::semantic::validate::validate_semantics;
-use crate::codegen::x64::pipes::pipe::AsmPipe;
+use crate::codegen::x64::asm::AsmProgram;
+use crate::codegen::x64::pipes::folder::FolderAsm;
+use crate::codegen::x64::pipes::instruction_fix::InstructionFixer;
+use crate::codegen::x64::pipes::reg_replace::PseudoRegisterReplacer;
 use crate::lexer::lex;
 use crate::tacky::program::TackyProgram;
 use crate::util::replace_c_with_i;
@@ -155,10 +158,15 @@ impl CompilerDriver {
 
         let assembly_file_name = preprocessed_file.replace(".i", ".asm");
 
-        let assembly_program = AsmPipe::from(tacky_program)
-            .replace_pseudoregisters()
-            .fix_instructions()
-            .out();
+        let mut assembly_program = AsmProgram::from(tacky_program);
+
+        let mut replacer = PseudoRegisterReplacer::create();
+        assembly_program = replacer.fold_program(&assembly_program);
+
+        let last_offset = replacer.last_offset.unwrap();
+        let mut fixer = InstructionFixer::create();
+        fixer.last_offset = Some(last_offset);
+        assembly_program = fixer.fold_program(&assembly_program);
 
         if self.codegen {
             std::process::exit(0);
