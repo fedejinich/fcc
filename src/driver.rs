@@ -6,9 +6,9 @@ use log::{debug, info, trace};
 use crate::ast::program::Program;
 use crate::ast::semantic::validate::validate_semantics;
 use crate::codegen::x64::asm::AsmProgram;
-use crate::codegen::x64::pipes::folder::FolderAsm;
-use crate::codegen::x64::pipes::instruction_fix::InstructionFixer;
-use crate::codegen::x64::pipes::reg_replace::PseudoRegisterReplacer;
+use crate::codegen::x64::pass::folder::FolderAsm;
+use crate::codegen::x64::pass::instruction_fix::InstructionFixer;
+use crate::codegen::x64::pass::reg_replace::PseudoRegisterReplacer;
 use crate::lexer::lex;
 use crate::tacky::program::TackyProgram;
 use crate::util::replace_c_with_i;
@@ -172,7 +172,7 @@ impl CompilerDriver {
             std::process::exit(0);
         }
 
-        let code = assembly_program.code_emit();
+        let code = assembly_program.to_string_asm().unwrap();
         fs::write(&assembly_file_name, &code).expect("couldn't write assembly file");
 
         debug!("\n{code}");

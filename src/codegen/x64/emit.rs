@@ -56,10 +56,10 @@ impl AsmProgram {
         self.function_definition.emit_to(em)
     }
 
-    pub fn to_string_asm(&self) -> String {
+    pub fn to_string_asm(&self) -> Result<String, fmt::Error> {
         let mut em = Emitter::new(String::new());
-        self.emit_to(&mut em).unwrap();
-        em.finish()
+        self.emit_to(&mut em);
+        Ok(em.finish())
     }
 }
 

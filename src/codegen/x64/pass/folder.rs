@@ -3,6 +3,7 @@ use crate::codegen::x64::asm::{
     AsmOperand, AsmProgram, AsmUnaryOperator, Reg,
 };
 
+/// A folder is a trait that can be used to fold an AST into another AST.
 pub trait FolderAsm {
     fn create() -> Self;
 

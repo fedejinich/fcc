@@ -1,8 +1,9 @@
 use crate::codegen::x64::{
     asm::{AsmBinaryOperator, AsmFunctionDefinition, AsmInstruction, AsmOperand, Reg},
-    pipes::folder::FolderAsm,
+    pass::folder::FolderAsm,
 };
 
+/// This pass fixes some instructions that are not supported by the x64 architecture.
 #[derive(Default)]
 pub struct InstructionFixer {
     pub last_offset: Option<i32>, // space reserved for stack

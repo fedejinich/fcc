@@ -87,10 +87,6 @@ impl AsmProgram {
             function_definition,
         }
     }
-
-    pub fn code_emit(&self) -> String {
-        self.to_string_asm()
-    }
 }
 
 impl AsmFunctionDefinition {

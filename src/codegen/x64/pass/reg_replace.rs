@@ -4,9 +4,10 @@ use log::{debug, trace};
 
 use crate::codegen::x64::{
     asm::{AsmFunctionDefinition, AsmInstruction, AsmOperand},
-    pipes::folder::FolderAsm,
+    pass::folder::FolderAsm,
 };
 
+/// This pass replaces pseudoregisters with stack offsets
 pub struct PseudoRegisterReplacer {
     pub offset_map: Option<HashMap<AsmOperand, i32>>,
     pub last_offset: Option<i32>,
