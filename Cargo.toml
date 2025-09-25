@@ -30,6 +30,10 @@ path = "test/driver_tests.rs"
 name = "tacky_tests"
 path = "test/tacky_tests.rs"
 
+[[test]]
+name = "folder_tests"
+path = "test/folder_tests.rs"
+
 [lints.clippy]
 unwrap_used = "warn"
 expect_used = "warn"

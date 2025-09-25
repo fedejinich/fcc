@@ -16,7 +16,7 @@ pub struct AsmIdetifier {
     pub value: String,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum AsmInstruction {
     Comment(String),
     Mov(AsmOperand, AsmOperand),
@@ -33,13 +33,13 @@ pub enum AsmInstruction {
     Ret,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum AsmUnaryOperator {
     Neg,
     Not,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum AsmBinaryOperator {
     Add,
     Sub,
