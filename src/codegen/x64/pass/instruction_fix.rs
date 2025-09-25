@@ -18,22 +18,22 @@ impl FolderAsm for InstructionFixer {
         &mut self,
         function_definition: &AsmFunctionDefinition,
     ) -> AsmFunctionDefinition {
-        if self.last_offset.is_none() {
+        if let Some(last_offset) = self.last_offset {
+            let mut instructions = vec![AsmInstruction::AllocateStack(last_offset)];
+
+            // TODO: this is duplicated code
+            let mut fixed_instructions = function_definition
+                .instructions
+                .iter()
+                .flat_map(|i| self.fold_instruction(i))
+                .collect();
+
+            instructions.append(&mut fixed_instructions);
+
+            AsmFunctionDefinition::new(function_definition.name.clone(), instructions)
+        } else {
             panic!("this should not happen");
         }
-
-        let mut instructions = vec![AsmInstruction::AllocateStack(self.last_offset.unwrap())];
-
-        // TODO: this is duplicated code
-        let mut fixed_instructions = function_definition
-            .instructions
-            .iter()
-            .flat_map(|i| self.fold_instruction(i))
-            .collect();
-
-        instructions.append(&mut fixed_instructions);
-
-        AsmFunctionDefinition::new(function_definition.name.clone(), instructions)
     }
 
     fn fold_instruction(&mut self, instruction: &AsmInstruction) -> Vec<AsmInstruction> {
