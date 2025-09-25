@@ -72,7 +72,7 @@ impl TackyInstruction {
 impl TackyValue {
     pub fn pretty_print(&self) -> String {
         match self {
-            TackyValue::Constant(c) => format!("Constant({})", c),
+            TackyValue::Constant(c) => format!("Constant({c})"),
             TackyValue::Var(id) => format!("Var(\"{}\")", id.value),
         }
     }

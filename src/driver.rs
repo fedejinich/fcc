@@ -130,7 +130,7 @@ impl CompilerDriver {
             std::process::exit(0);
         }
 
-        trace!("Token stream: {:?}", tokens);
+        trace!("Token stream: {tokens:?}");
         let mut c_program = Program::try_from(tokens)?;
         if self.print_ast {
             println!("{c_program}");

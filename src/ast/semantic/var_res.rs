@@ -14,7 +14,7 @@ pub fn resolve_declaration(
     trace!("resolving declaration: {declaration:?}");
 
     if variable_map.contains_key(&declaration.name.value) {
-        debug!("variable: {}", declaration);
+        debug!("variable: {declaration}");
         return Err("variable already declared".to_string());
     }
 
@@ -71,7 +71,7 @@ fn resolve_expression(
             if let Some(v) = variable_map.get(&id.value) {
                 Var(Identifier::new(v.clone()))
             } else {
-                debug!("undeclared variable: {}", expr);
+                debug!("undeclared variable: {expr}");
                 return Err("undeclared variable".to_string());
             }
         }

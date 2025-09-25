@@ -108,7 +108,7 @@ impl Declaration {
 
         let dec = Declaration { name, initializer };
 
-        trace!("Parsed <declaration> {:?}", dec);
+        trace!("Parsed <declaration> {dec:?}");
 
         Ok(dec)
     }
@@ -154,7 +154,7 @@ impl Statement {
 impl Expression {
     // TODO: this function is too long
     fn parse_exp(tokens: &mut Peekable<Iter<Token>>, min_prec: i32) -> ParseResult<Self> {
-        trace!("Parsing <exp> with min_prec: {}", min_prec);
+        trace!("Parsing <exp> with min_prec: {min_prec}");
         let mut left = Expression::parse_fact(tokens)?;
         let mut next_token = tokens.peek().copied();
 
@@ -215,7 +215,7 @@ impl Expression {
                 Expression::Var(id)
             }
             _ => {
-                trace!("Exiting <factor> (error) {:?}", next_token);
+                trace!("Exiting <factor> (error) {next_token:?}");
                 let _ = tokens.next();
                 return Err("could not parse expression".to_string());
             }
@@ -229,7 +229,7 @@ impl Expression {
 // operators are sorted according to the official spec
 // https://en.cppreference.com/w/c/language/operator_precedence.html
 fn precedence(token: &Token) -> i32 {
-    debug!("<precedence>: {:?}", token);
+    debug!("<precedence>: {token:?}");
     match token {
         Token::Multiply | Token::Divide | Token::Remainder => 50,
         Token::Plus | Token::Negate => 45,
@@ -278,7 +278,7 @@ impl BinaryOperator {
             _ => return Err("could not parse binary operator".to_string()),
         };
 
-        trace!("Parsed <binop>: {:?}", binop);
+        trace!("Parsed <binop>: {binop:?}");
 
         Ok(binop)
     }
@@ -293,7 +293,7 @@ impl UnaryOperator {
             _ => return Err("could not parse unary operator".to_string()),
         };
 
-        trace!("Parsed <unop>: {:?}", unop);
+        trace!("Parsed <unop>: {unop:?}");
 
         Ok(unop)
     }
@@ -302,7 +302,7 @@ impl UnaryOperator {
 impl Identifier {
     fn parse_id(tokens: &mut Peekable<Iter<Token>>) -> ParseResult<Self> {
         if let Some(Token::Identifier(n)) = tokens.next() {
-            trace!("Parsing <identifier>: {}", n);
+            trace!("Parsing <identifier>: {n}");
             Ok(Identifier::new(n.clone()))
         } else {
             debug!("Expected <identifier> but found none");
@@ -314,13 +314,13 @@ impl Identifier {
 fn token_eq(expected: Token, tokens: &mut Peekable<Iter<Token>>) -> Result<(), String> {
     if let Some(t) = tokens.next() {
         if *t != expected {
-            debug!("Token mismatch - expected: {:?}, got: {:?}", expected, t);
-            return Err(format!("expected {:?}, got {:?}", expected, t));
+            debug!("Token mismatch - expected: {expected:?}, got: {t:?}");
+            return Err(format!("expected {expected:?}, got {t:?}"));
         }
-        debug!("Successfully matched token: {:?}", expected);
+        debug!("Successfully matched token: {expected:?}");
         return Ok(());
     }
 
-    debug!("No more tokens available when expecting: {:?}", expected);
+    debug!("No more tokens available when expecting: {expected:?}");
     Err(String::from("empty tokens"))
 }

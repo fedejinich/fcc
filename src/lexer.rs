@@ -78,7 +78,7 @@ pub fn lex(mut code: &str) -> Result<Vec<Token>, String> {
         let (constructor, value) = longest_match.unwrap();
         let new_token = constructor(value.clone());
 
-        trace!("token: {:?}", new_token);
+        trace!("token: {new_token:?}");
 
         tokens.push(new_token);
 

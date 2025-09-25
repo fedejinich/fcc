@@ -86,12 +86,12 @@ impl fmt::Display for Statement {
 impl fmt::Display for Expression {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Expression::Constant(c) => write!(f, "Constant({})", c),
-            Expression::Unary(u, e) => write!(f, "Unary({}, {})", u, e),
+            Expression::Constant(c) => write!(f, "Constant({c})"),
+            Expression::Unary(u, e) => write!(f, "Unary({u}, {e})"),
             Expression::Binary(op, exp_1, exp_2) => {
-                write!(f, "Binary({}, {}, {})", op, exp_1, exp_2)
+                write!(f, "Binary({op}, {exp_1}, {exp_2})")
             }
-            Expression::Assignment(left, right) => write!(f, "Assignment({}, {})", left, right),
+            Expression::Assignment(left, right) => write!(f, "Assignment({left}, {right})"),
             Expression::Var(id) => write!(f, "Var({})", id.value),
         }
     }
