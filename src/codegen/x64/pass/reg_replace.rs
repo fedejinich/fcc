@@ -13,6 +13,15 @@ pub struct PseudoRegisterReplacer {
     pub last_offset: Option<i32>,
 }
 
+impl PseudoRegisterReplacer {
+    pub fn last_offset(&self) -> i32 {
+        let Some(last_offset) = self.last_offset else {
+            panic!("couldn't find last_offset");
+        };
+        last_offset
+    }
+}
+
 impl FolderAsm for PseudoRegisterReplacer {
     fn create() -> Self {
         Self {
@@ -25,10 +34,6 @@ impl FolderAsm for PseudoRegisterReplacer {
         &mut self,
         function: &AsmFunctionDefinition,
     ) -> AsmFunctionDefinition {
-        if self.offset_map.is_some() || self.last_offset.is_some() {
-            panic!("this should not happen");
-        }
-
         let (pseudo_reg_map, last_offset) = ids_offset_map(function);
 
         self.last_offset = Some(last_offset);
@@ -87,13 +92,13 @@ impl FolderAsm for PseudoRegisterReplacer {
     }
 
     fn fold_operand(&mut self, operand: &AsmOperand) -> AsmOperand {
-        if let Some(offset_map) = &self.offset_map {
-            return offset_map
-                .get(operand)
-                .map_or(operand.clone(), |i| AsmOperand::Stack(*i));
-        }
+        let Some(offset_map) = &self.offset_map else {
+            panic!("this should not happen");
+        };
 
-        panic!("this should not happen");
+        offset_map
+            .get(operand)
+            .map_or(operand.clone(), |i| AsmOperand::Stack(*i))
     }
 }
 

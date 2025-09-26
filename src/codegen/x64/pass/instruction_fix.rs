@@ -6,7 +6,15 @@ use crate::codegen::x64::{
 /// This pass fixes some instructions that are not supported by the x64 architecture.
 #[derive(Default)]
 pub struct InstructionFixer {
-    pub last_offset: Option<i32>, // space reserved for stack
+    last_offset: Option<i32>, // space reserved for stack
+}
+
+impl InstructionFixer {
+    pub fn with(&self, last_offset: i32) -> Self {
+        Self {
+            last_offset: Some(last_offset),
+        }
+    }
 }
 
 impl FolderAsm for InstructionFixer {
@@ -18,22 +26,22 @@ impl FolderAsm for InstructionFixer {
         &mut self,
         function_definition: &AsmFunctionDefinition,
     ) -> AsmFunctionDefinition {
-        if let Some(last_offset) = self.last_offset {
-            let mut instructions = vec![AsmInstruction::AllocateStack(last_offset)];
+        let Some(last_offset) = self.last_offset else {
+            panic!("last_offset should be set");
+        };
 
-            // TODO: this is duplicated code
-            let mut fixed_instructions = function_definition
-                .instructions
-                .iter()
-                .flat_map(|i| self.fold_instruction(i))
-                .collect();
+        let mut instructions = vec![AsmInstruction::AllocateStack(last_offset)];
 
-            instructions.append(&mut fixed_instructions);
+        // TODO: this is duplicated code
+        let mut fixed_instructions = function_definition
+            .instructions
+            .iter()
+            .flat_map(|i| self.fold_instruction(i))
+            .collect();
 
-            AsmFunctionDefinition::new(function_definition.name.clone(), instructions)
-        } else {
-            panic!("this should not happen");
-        }
+        instructions.append(&mut fixed_instructions);
+
+        AsmFunctionDefinition::new(function_definition.name.clone(), instructions)
     }
 
     fn fold_instruction(&mut self, instruction: &AsmInstruction) -> Vec<AsmInstruction> {
