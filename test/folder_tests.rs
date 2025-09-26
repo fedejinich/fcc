@@ -48,19 +48,13 @@ fn test_folder_preserves_all_instruction_types() {
     let instructions = vec![
         AsmInstruction::Comment("test comment".to_string()),
         AsmInstruction::Mov(AsmOperand::Imm(42), AsmOperand::Register(Reg::AX)),
-        AsmInstruction::Unary(
-            AsmUnaryOperator::Neg,
-            AsmOperand::Register(Reg::AX),
-        ),
+        AsmInstruction::Unary(AsmUnaryOperator::Neg, AsmOperand::Register(Reg::AX)),
         AsmInstruction::Binary(
             AsmBinaryOperator::Add,
             AsmOperand::Imm(1),
             AsmOperand::Register(Reg::AX),
         ),
-        AsmInstruction::Cmp(
-            AsmOperand::Register(Reg::AX),
-            AsmOperand::Imm(0),
-        ),
+        AsmInstruction::Cmp(AsmOperand::Register(Reg::AX), AsmOperand::Imm(0)),
         AsmInstruction::Idiv(AsmOperand::Register(Reg::DX)),
         AsmInstruction::Cdq,
         AsmInstruction::Jmp(AsmIdetifier {
@@ -109,10 +103,9 @@ fn test_folder_preserves_all_instruction_types() {
             (AsmInstruction::Unary(op1, o1), AsmInstruction::Unary(op2, o2)) => {
                 assert_eq!((op1, o1), (op2, o2))
             }
-            (
-                AsmInstruction::Binary(op1, o1, o2),
-                AsmInstruction::Binary(op2, f1, f2),
-            ) => assert_eq!((op1, o1, o2), (op2, f1, f2)),
+            (AsmInstruction::Binary(op1, o1, o2), AsmInstruction::Binary(op2, f1, f2)) => {
+                assert_eq!((op1, o1, o2), (op2, f1, f2))
+            }
             (AsmInstruction::Cmp(o1, o2), AsmInstruction::Cmp(f1, f2)) => {
                 assert_eq!((o1, o2), (f1, f2))
             }
@@ -284,8 +277,7 @@ fn test_instruction_fixer_basic_functionality() {
         instructions,
     );
 
-    let mut fixer = InstructionFixer::create();
-    fixer.last_offset = Some(-12);
+    let mut fixer = InstructionFixer::create().with(-12);
 
     let fixed_function = fixer.fold_function_definition(&function);
 
@@ -315,8 +307,7 @@ fn test_instruction_fixer_idiv_immediate() {
         instructions,
     );
 
-    let mut fixer = InstructionFixer::create();
-    fixer.last_offset = Some(-4);
+    let mut fixer = InstructionFixer::create().with(-4);
 
     let fixed_function = fixer.fold_function_definition(&function);
 
@@ -483,3 +474,4 @@ fn test_folder_preserves_registers() {
         }
     }
 }
+
