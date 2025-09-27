@@ -1,7 +1,4 @@
-use crate::codegen::x64::{
-    asm::{AsmBinaryOperator, AsmFunctionDefinition, AsmInstruction, AsmOperand, Reg},
-    pass::folder::FolderAsm,
-};
+use crate::{codegen::x64::asm::{AsmBinaryOperator, AsmFunctionDefinition, AsmInstruction, AsmOperand, Reg}, common::folder::FolderAsm};
 
 /// This pass fixes some instructions that are not supported by the x64 architecture.
 #[derive(Default)]

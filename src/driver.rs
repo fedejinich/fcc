@@ -6,12 +6,12 @@ use log::{debug, info, trace};
 use crate::ast::program::Program;
 use crate::ast::semantic::validate::validate_semantics;
 use crate::codegen::x64::asm::AsmProgram;
-use crate::codegen::x64::pass::folder::FolderAsm;
 use crate::codegen::x64::pass::instruction_fix::InstructionFixer;
 use crate::codegen::x64::pass::reg_replace::PseudoRegisterReplacer;
+use crate::common::folder::FolderAsm;
+use crate::common::util::replace_c_with_i;
 use crate::lexer::lex;
 use crate::tacky::program::TackyProgram;
-use crate::util::replace_c_with_i;
 
 #[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]

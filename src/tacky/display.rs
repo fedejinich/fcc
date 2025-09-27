@@ -1,9 +1,8 @@
 use crate::{
-    tacky::program::{
+    common::util::indent, tacky::program::{
         TackyBinaryOperator, TackyFunctionDefinition, TackyInstruction, TackyProgram,
         TackyUnaryOperator, TackyValue,
-    },
-    util::indent,
+    }
 };
 
 impl TackyProgram {

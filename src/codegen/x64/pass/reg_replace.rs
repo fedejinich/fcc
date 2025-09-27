@@ -2,10 +2,7 @@ use std::collections::HashMap;
 
 use log::{debug, trace};
 
-use crate::codegen::x64::{
-    asm::{AsmFunctionDefinition, AsmInstruction, AsmOperand},
-    pass::folder::FolderAsm,
-};
+use crate::{codegen::x64::asm::{AsmFunctionDefinition, AsmInstruction, AsmOperand}, common::folder::FolderAsm};
 
 /// This pass replaces pseudoregisters with stack offsets
 pub struct PseudoRegisterReplacer {

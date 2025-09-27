@@ -1,4 +1,5 @@
-use fcc::util::{replace_c_with_i, indent};
+use fcc::common::util::{indent, replace_c_with_i};
+
 
 #[test]
 fn test_replace_c_with_i_valid_c_file() {

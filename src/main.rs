@@ -10,7 +10,7 @@ mod codegen;
 mod driver;
 mod lexer;
 mod tacky;
-mod util;
+mod common;
 
 pub fn title() -> String {
     String::from(

@@ -4,8 +4,7 @@ use crate::{
     ast::program::{
         BinaryOperator, BlockItem, Declaration, Expression, FunctionDefinition, Program, Statement,
         UnaryOperator,
-    },
-    util::indent,
+    }, common::util::indent,
 };
 
 impl fmt::Display for Program {

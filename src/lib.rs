@@ -9,4 +9,4 @@ pub mod codegen;
 pub mod driver;
 pub mod lexer;
 pub mod tacky;
-pub mod util;
+pub mod common;
