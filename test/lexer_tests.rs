@@ -4,28 +4,28 @@ use fcc::lexer::{lex, Token};
 fn test_empty_input() {
     let result = lex("");
     assert!(result.is_ok());
-    assert_eq!(result.unwrap(), vec![]);
+    assert_eq!(result.expect("Lexing should succeed"), vec![]);
 }
 
 #[test]
 fn test_whitespace_only() {
     let result = lex("   \t\n  ");
     assert!(result.is_ok());
-    assert_eq!(result.unwrap(), vec![]);
+    assert_eq!(result.expect("Lexing should succeed"), vec![]);
 }
 
 #[test]
 fn test_single_identifier() {
     let result = lex("main");
     assert!(result.is_ok());
-    assert_eq!(result.unwrap(), vec![Token::Identifier("main".to_string())]);
+    assert_eq!(result.expect("Lexing should succeed"), vec![Token::Identifier("main".to_string())]);
 }
 
 #[test]
 fn test_keywords() {
     let result = lex("int void return");
     assert!(result.is_ok());
-    assert_eq!(result.unwrap(), vec![
+    assert_eq!(result.expect("Lexing should succeed"), vec![
         Token::Int,
         Token::Void,
         Token::Return
@@ -36,7 +36,7 @@ fn test_keywords() {
 fn test_constants() {
     let result = lex("42 0 123");
     assert!(result.is_ok());
-    assert_eq!(result.unwrap(), vec![
+    assert_eq!(result.expect("Lexing should succeed"), vec![
         Token::Constant("42".to_string()),
         Token::Constant("0".to_string()),
         Token::Constant("123".to_string())
@@ -47,7 +47,7 @@ fn test_constants() {
 fn test_symbols() {
     let result = lex("() {} ;");
     assert!(result.is_ok());
-    assert_eq!(result.unwrap(), vec![
+    assert_eq!(result.expect("Lexing should succeed"), vec![
         Token::OpenParen,
         Token::CloseParen,
         Token::OpenBrace,
@@ -60,7 +60,7 @@ fn test_symbols() {
 fn test_unary_operators() {
     let result = lex("~ - !");
     assert!(result.is_ok());
-    assert_eq!(result.unwrap(), vec![
+    assert_eq!(result.expect("Lexing should succeed"), vec![
         Token::Complement,
         Token::Negate,
         Token::Not
@@ -71,7 +71,7 @@ fn test_unary_operators() {
 fn test_binary_operators() {
     let result = lex("+ - * / %");
     assert!(result.is_ok());
-    assert_eq!(result.unwrap(), vec![
+    assert_eq!(result.expect("Lexing should succeed"), vec![
         Token::Plus,
         Token::Negate,
         Token::Multiply,
@@ -84,7 +84,7 @@ fn test_binary_operators() {
 fn test_bitwise_operators() {
     let result = lex("& | ^ << >>");
     assert!(result.is_ok());
-    assert_eq!(result.unwrap(), vec![
+    assert_eq!(result.expect("Lexing should succeed"), vec![
         Token::BitwiseAnd,
         Token::BitwiseOr,
         Token::BitwiseXor,
@@ -97,7 +97,7 @@ fn test_bitwise_operators() {
 fn test_logical_operators() {
     let result = lex("&& ||");
     assert!(result.is_ok());
-    assert_eq!(result.unwrap(), vec![
+    assert_eq!(result.expect("Lexing should succeed"), vec![
         Token::And,
         Token::Or
     ]);
@@ -107,7 +107,7 @@ fn test_logical_operators() {
 fn test_relational_operators() {
     let result = lex("== != < <= > >=");
     assert!(result.is_ok());
-    assert_eq!(result.unwrap(), vec![
+    assert_eq!(result.expect("Lexing should succeed"), vec![
         Token::Equal,
         Token::NotEqual,
         Token::LessThan,
@@ -121,7 +121,7 @@ fn test_relational_operators() {
 fn test_assignment_and_decrement() {
     let result = lex("= --");
     assert!(result.is_ok());
-    assert_eq!(result.unwrap(), vec![
+    assert_eq!(result.expect("Lexing should succeed"), vec![
         Token::Assignment,
         Token::Decrement
     ]);
@@ -131,7 +131,7 @@ fn test_assignment_and_decrement() {
 fn test_simple_function() {
     let result = lex("int main() { return 42; }");
     assert!(result.is_ok());
-    assert_eq!(result.unwrap(), vec![
+    assert_eq!(result.expect("Lexing should succeed"), vec![
         Token::Int,
         Token::Identifier("main".to_string()),
         Token::OpenParen,
@@ -148,7 +148,7 @@ fn test_simple_function() {
 fn test_complex_expression() {
     let result = lex("x = (a + b) * c - d");
     assert!(result.is_ok());
-    assert_eq!(result.unwrap(), vec![
+    assert_eq!(result.expect("Lexing should succeed"), vec![
         Token::Identifier("x".to_string()),
         Token::Assignment,
         Token::OpenParen,
@@ -167,7 +167,7 @@ fn test_complex_expression() {
 fn test_identifier_with_underscore() {
     let result = lex("_var var_name _123 var123");
     assert!(result.is_ok());
-    assert_eq!(result.unwrap(), vec![
+    assert_eq!(result.expect("Lexing should succeed"), vec![
         Token::Identifier("_var".to_string()),
         Token::Identifier("var_name".to_string()),
         Token::Identifier("_123".to_string()),
@@ -179,7 +179,7 @@ fn test_identifier_with_underscore() {
 fn test_operator_precedence_tokens() {
     let result = lex("a << b + c & d");
     assert!(result.is_ok());
-    assert_eq!(result.unwrap(), vec![
+    assert_eq!(result.expect("Lexing should succeed"), vec![
         Token::Identifier("a".to_string()),
         Token::LeftShift,
         Token::Identifier("b".to_string()),
@@ -194,7 +194,7 @@ fn test_operator_precedence_tokens() {
 fn test_invalid_character() {
     let result = lex("@");
     assert!(result.is_err());
-    assert_eq!(result.unwrap_err(), "couldn't find any match");
+    assert_eq!(result.expect_err("Expected lexing to fail"), "couldn't find any match");
 }
 
 #[test]
@@ -207,7 +207,7 @@ fn test_mixed_valid_invalid() {
 fn test_longest_match_priority() {
     let result = lex("-- - <= <");
     assert!(result.is_ok());
-    assert_eq!(result.unwrap(), vec![
+    assert_eq!(result.expect("Lexing should succeed"), vec![
         Token::Decrement,
         Token::Negate,
         Token::LessThanOrEqual,

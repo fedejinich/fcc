@@ -75,22 +75,21 @@ impl FunctionDefinition {
 impl BlockItem {
     fn parse_bi(tokens: &mut Peekable<Iter<Token>>) -> ParseResult<Self> {
         trace!("Parsing <block_item>");
-        if let Some(next_token) = tokens.peek() {
-            let block_item = match next_token {
-                // TODO: this will turn into is_keyword
-                Token::Int => {
-                    trace!("Parsing <block_item> ::= <declaration>");
-                    BlockItem::D(Declaration::parse_decl(tokens)?)
-                }
-                _ => {
-                    trace!("Parsing <block_item> ::= <statement>");
-                    BlockItem::S(Statement::parse_st(tokens)?)
-                }
-            };
-            return Ok(block_item);
+        let Some(next_token) = tokens.peek() else {
+            return Err("could not parse block item".to_string());
         };
-
-        Err("could not parse block item".to_string())
+        let block_item = match next_token {
+            // TODO: this will turn into is_keyword
+            Token::Int => {
+                trace!("Parsing <block_item> ::= <declaration>");
+                BlockItem::D(Declaration::parse_decl(tokens)?)
+            }
+            _ => {
+                trace!("Parsing <block_item> ::= <statement>");
+                BlockItem::S(Statement::parse_st(tokens)?)
+            }
+        };
+        Ok(block_item)
     }
 }
 
@@ -119,40 +118,40 @@ impl Declaration {
 
 impl Statement {
     fn parse_st(tokens: &mut Peekable<Iter<Token>>) -> ParseResult<Self> {
-        if let Some(next_token) = tokens.peek() {
-            let statement = match next_token {
-                Token::Semicolon => {
-                    trace!("Parsing <statement> ::= ;");
-                    let _ = tokens.next();
-                    Statement::Null
-                }
-                Token::Return => {
-                    // let _ = tokens.next();
-                    trace!("Parsing <statement> ::= return <exp> ;");
-                    token_eq(Token::Return, tokens)?;
+        let Some(next_token) = tokens.peek() else {
+            return Err("could not parse statement".to_string());
+        };
+        let statement = match next_token {
+            Token::Semicolon => {
+                trace!("Parsing <statement> ::= ;");
+                let _ = tokens.next();
+                Statement::Null
+            }
+            Token::Return => {
+                // let _ = tokens.next();
+                trace!("Parsing <statement> ::= return <exp> ;");
+                token_eq(Token::Return, tokens)?;
 
-                    // start with a minimum precedence of zero so
-                    // the result includes operators at every precedence level
-                    let expr = Expression::parse_exp(tokens, 0)?;
+                // start with a minimum precedence of zero so
+                // the result includes operators at every precedence level
+                let expr = Expression::parse_exp(tokens, 0)?;
 
-                    token_eq(Token::Semicolon, tokens)?;
+                token_eq(Token::Semicolon, tokens)?;
 
-                    Statement::Return(expr)
-                }
-                // TODO: this one is weird
-                _ => {
-                    trace!("Parsing <statement> ::= <exp> ;");
-                    let exp = Expression::parse_exp(tokens, 0)?;
-                    token_eq(Token::Semicolon, tokens)?;
-                    Statement::Expression(exp)
-                }
-            };
+                Statement::Return(expr)
+            }
+            // TODO: this one is weird
+            _ => {
+                trace!("Parsing <statement> ::= <exp> ;");
+                let exp = Expression::parse_exp(tokens, 0)?;
+                token_eq(Token::Semicolon, tokens)?;
+                Statement::Expression(exp)
+            }
+        };
 
-            trace!("Parsed <statement>");
+        trace!("Parsed <statement>");
 
-            return Ok(statement);
-        }
-        Err("could not parse statement".to_string())
+        Ok(statement)
     }
 }
 
@@ -195,45 +194,44 @@ impl Expression {
 
     fn parse_fact(tokens: &mut Peekable<Iter<Token>>) -> ParseResult<Self> {
         trace!("Parsing <factor>");
-        if let Some(next_token) = tokens.peek() {
-            let factor = match next_token {
-                Token::Constant(n) => {
-                    trace!("Parsing <factor> ::= <int>");
-                    let _ = tokens.next();
-                    if let Ok(num) = n.parse::<i32>() {
-                        Expression::Constant(num)
-                    } else {
-                        return Err("could not parse constant".to_string());
-                    }
+        let Some(next_token) = tokens.peek() else {
+            return Err("could not parse factor".to_string());
+        };
+        let factor = match next_token {
+            Token::Constant(n) => {
+                trace!("Parsing <factor> ::= <int>");
+                let _ = tokens.next();
+                if let Ok(num) = n.parse::<i32>() {
+                    Expression::Constant(num)
+                } else {
+                    return Err("could not parse constant".to_string());
                 }
-                Token::Complement | Token::Negate | Token::Not => {
-                    trace!("Parsing <unop> <factor>");
-                    let unary = UnaryOperator::parse_un(tokens)?;
-                    let exp = Expression::parse_fact(tokens)?;
-                    Expression::Unary(unary, Box::new(exp))
-                }
-                Token::OpenParen => {
-                    trace!("Parsing \"(\" <exp> \")\"");
-                    let _ = tokens.next();
-                    let exp = Expression::parse_exp(tokens, 0)?;
-                    token_eq(Token::CloseParen, tokens)?;
-                    exp
-                }
-                Token::Identifier(_) => {
-                    let id = Identifier::parse_id(tokens)?;
-                    Expression::Var(id)
-                }
-                _ => {
-                    trace!("Exiting <factor> (error) {next_token:?}");
-                    let _ = tokens.next();
-                    return Err("could not parse expression".to_string());
-                }
-            };
+            }
+            Token::Complement | Token::Negate | Token::Not => {
+                trace!("Parsing <unop> <factor>");
+                let unary = UnaryOperator::parse_un(tokens)?;
+                let exp = Expression::parse_fact(tokens)?;
+                Expression::Unary(unary, Box::new(exp))
+            }
+            Token::OpenParen => {
+                trace!("Parsing \"(\" <exp> \")\"");
+                let _ = tokens.next();
+                let exp = Expression::parse_exp(tokens, 0)?;
+                token_eq(Token::CloseParen, tokens)?;
+                exp
+            }
+            Token::Identifier(_) => {
+                let id = Identifier::parse_id(tokens)?;
+                Expression::Var(id)
+            }
+            _ => {
+                trace!("Exiting <factor> (error) {next_token:?}");
+                let _ = tokens.next();
+                return Err("could not parse expression".to_string());
+            }
+        };
 
-            Ok(factor)
-        } else {
-            Err("could not parse factor".to_string())
-        }
+        Ok(factor)
     }
 }
 
@@ -264,82 +262,80 @@ fn precedence(token: &Token) -> i32 {
 
 impl BinaryOperator {
     fn parse_bin(tokens: &mut Peekable<Iter<Token>>) -> ParseResult<Self> {
-        if let Some(token) = tokens.next() {
-            let binop = match token {
-                Token::Plus => BinaryOperator::Add,
-                Token::Multiply => BinaryOperator::Multiply,
-                Token::Divide => BinaryOperator::Divide,
-                Token::Remainder => BinaryOperator::Remainder,
-                Token::Negate => BinaryOperator::Subtract,
-                // binary operators
-                Token::BitwiseAnd => BinaryOperator::BitwiseAnd,
-                Token::BitwiseOr => BinaryOperator::BitwiseOr,
-                Token::BitwiseXor => BinaryOperator::BitwiseXor,
-                Token::LeftShift => BinaryOperator::LeftShift,
-                Token::RightShift => BinaryOperator::RightShift,
-                // logical operators
-                Token::And => BinaryOperator::And,
-                Token::Or => BinaryOperator::Or,
-                // relational operators
-                Token::Equal => BinaryOperator::Equal,
-                Token::NotEqual => BinaryOperator::NotEqual,
-                Token::GreaterThan => BinaryOperator::GreaterThan,
-                Token::LessThan => BinaryOperator::LessThan,
-                Token::GreaterThanOrEqual => BinaryOperator::GreaterThanOrEqual,
-                Token::LessThanOrEqual => BinaryOperator::LessThanOrEqual,
-                _ => return Err("could not parse binary operator".to_string()),
-            };
+        let Some(token) = tokens.next() else {
+            return Err("could not parse binary operator".to_string());
+        };
+        let binop = match token {
+            Token::Plus => BinaryOperator::Add,
+            Token::Multiply => BinaryOperator::Multiply,
+            Token::Divide => BinaryOperator::Divide,
+            Token::Remainder => BinaryOperator::Remainder,
+            Token::Negate => BinaryOperator::Subtract,
+            // binary operators
+            Token::BitwiseAnd => BinaryOperator::BitwiseAnd,
+            Token::BitwiseOr => BinaryOperator::BitwiseOr,
+            Token::BitwiseXor => BinaryOperator::BitwiseXor,
+            Token::LeftShift => BinaryOperator::LeftShift,
+            Token::RightShift => BinaryOperator::RightShift,
+            // logical operators
+            Token::And => BinaryOperator::And,
+            Token::Or => BinaryOperator::Or,
+            // relational operators
+            Token::Equal => BinaryOperator::Equal,
+            Token::NotEqual => BinaryOperator::NotEqual,
+            Token::GreaterThan => BinaryOperator::GreaterThan,
+            Token::LessThan => BinaryOperator::LessThan,
+            Token::GreaterThanOrEqual => BinaryOperator::GreaterThanOrEqual,
+            Token::LessThanOrEqual => BinaryOperator::LessThanOrEqual,
+            _ => return Err("could not parse binary operator".to_string()),
+        };
 
-            trace!("Parsed <binop>: {binop:?}");
+        trace!("Parsed <binop>: {binop:?}");
 
-            Ok(binop)
-        } else {
-            Err("could not parse binary operator".to_string())
-        }
+        Ok(binop)
     }
 }
 
 impl UnaryOperator {
     fn parse_un(tokens: &mut Peekable<Iter<Token>>) -> ParseResult<Self> {
-        if let Some(token) = tokens.next() {
-            let unop = match token {
-                Token::Complement => UnaryOperator::Complement,
-                Token::Negate => UnaryOperator::Negate,
-                Token::Not => UnaryOperator::Not,
-                _ => return Err("could not parse unary operator".to_string()),
-            };
+        let Some(token) = tokens.next() else {
+            return Err("could not parse unary operator".to_string());
+        };
 
-            trace!("Parsed <unop>: {unop:?}");
+        let unop = match token {
+            Token::Complement => UnaryOperator::Complement,
+            Token::Negate => UnaryOperator::Negate,
+            Token::Not => UnaryOperator::Not,
+            _ => return Err("could not parse unary operator".to_string()),
+        };
 
-            Ok(unop)
-        } else {
-            Err("could not parse unary operator".to_string())
-        }
+        trace!("Parsed <unop>: {unop:?}");
+
+        Ok(unop)
     }
 }
 
 impl Identifier {
     fn parse_id(tokens: &mut Peekable<Iter<Token>>) -> ParseResult<Self> {
-        if let Some(Token::Identifier(n)) = tokens.next() {
-            trace!("Parsing <identifier>: {n}");
-            Ok(Identifier::new(n.clone()))
-        } else {
+        let Some(Token::Identifier(n)) = tokens.next() else {
             debug!("Expected <identifier> but found none");
-            Err("could not parse identifier".to_string())
-        }
+            return Err("could not parse identifier".to_string());
+        };
+        trace!("Parsing <identifier>: {n}");
+        Ok(Identifier::new(n.clone()))
     }
 }
 
 fn token_eq(expected: Token, tokens: &mut Peekable<Iter<Token>>) -> Result<(), String> {
-    if let Some(t) = tokens.next() {
-        if *t != expected {
-            debug!("Token mismatch - expected: {expected:?}, got: {t:?}");
-            return Err(format!("expected {expected:?}, got {t:?}"));
-        }
-        debug!("Successfully matched token: {expected:?}");
-        return Ok(());
+    let Some(t) = tokens.next() else {
+        debug!("No more tokens available when expecting: {expected:?}");
+        return Err(String::from("empty tokens"));
+    };
+    if *t != expected {
+        debug!("Token mismatch - expected: {expected:?}, got: {t:?}");
+        return Err(format!("expected {expected:?}, got {t:?}"));
     }
+    debug!("Successfully matched token: {expected:?}");
 
-    debug!("No more tokens available when expecting: {expected:?}");
-    Err(String::from("empty tokens"))
+    Ok(())
 }

@@ -6,7 +6,7 @@ fn test_compiler_driver_creation() {
     let args = vec!["fcc", "test.c"];
     let driver = CompilerDriver::parse_from(args);
 
-    let debug_str = format!("{:?}", driver);
+    let debug_str = format!("{driver:?}");
     assert!(debug_str.contains("CompilerDriver"));
 }
 
@@ -45,7 +45,7 @@ fn test_compiler_driver_debug_flag() {
     let args = vec!["fcc", "--debug", "test.c"];
     let driver = CompilerDriver::parse_from(args);
 
-    let debug_str = format!("{:?}", driver);
+    let debug_str = format!("{driver:?}");
     assert!(debug_str.contains("debug: true"));
 }
 
@@ -54,7 +54,7 @@ fn test_compiler_driver_trace_flag() {
     let args = vec!["fcc", "--trace", "test.c"];
     let driver = CompilerDriver::parse_from(args);
 
-    let debug_str = format!("{:?}", driver);
+    let debug_str = format!("{driver:?}");
     assert!(debug_str.contains("trace: true"));
 }
 
@@ -63,7 +63,7 @@ fn test_compiler_driver_print_ast_flag() {
     let args = vec!["fcc", "--print-ast", "test.c"];
     let driver = CompilerDriver::parse_from(args);
 
-    let debug_str = format!("{:?}", driver);
+    let debug_str = format!("{driver:?}");
     assert!(debug_str.contains("print_ast: true"));
 }
 
@@ -72,7 +72,7 @@ fn test_compiler_driver_print_tacky_flag() {
     let args = vec!["fcc", "--print-tacky", "test.c"];
     let driver = CompilerDriver::parse_from(args);
 
-    let debug_str = format!("{:?}", driver);
+    let debug_str = format!("{driver:?}");
     assert!(debug_str.contains("print_tacky: true"));
 }
 
@@ -81,7 +81,7 @@ fn test_compiler_driver_multiple_flags() {
     let args = vec!["fcc", "--debug", "--parse", "--print-ast", "test.c"];
     let driver = CompilerDriver::parse_from(args);
 
-    let debug_str = format!("{:?}", driver);
+    let debug_str = format!("{driver:?}");
     assert!(debug_str.contains("debug: true"));
     assert!(debug_str.contains("parse: true"));
     assert!(debug_str.contains("print_ast: true"));
@@ -94,7 +94,7 @@ fn test_preprocess_invalid_extension() {
     let result = driver.preprocess("test.txt");
 
     assert!(result.is_err());
-    assert_eq!(result.unwrap_err(), "SOURCE_FILE should have a .c file extension");
+    assert_eq!(result.expect_err("Expected error for invalid extension"), "SOURCE_FILE should have a .c file extension");
 }
 
 #[test]
@@ -103,7 +103,7 @@ fn test_preprocess_nonexistent_file() {
     let result = driver.preprocess("nonexistent.c");
 
     assert!(result.is_err());
-    assert_eq!(result.unwrap_err(), "source file does not exist");
+    assert_eq!(result.expect_err("Expected error for nonexistent file"), "source file does not exist");
 }
 
 #[test]
@@ -113,7 +113,7 @@ fn test_preprocess_valid_extension_generates_correct_output() {
     let result = driver.preprocess("nonexistent.c");
 
     assert!(result.is_err());
-    assert_eq!(result.unwrap_err(), "source file does not exist");
+    assert_eq!(result.expect_err("Expected error for nonexistent file"), "source file does not exist");
 }
 
 #[test]
@@ -128,8 +128,8 @@ fn test_different_program_paths_in_debug_output() {
     for (input, expected_path) in test_cases {
         let args = vec!["fcc", input];
         let driver = CompilerDriver::parse_from(args);
-        let debug_str = format!("{:?}", driver);
-        assert!(debug_str.contains(&format!("program_path: \"{}\"", expected_path)));
+        let debug_str = format!("{driver:?}");
+        assert!(debug_str.contains(&format!("program_path: \"{expected_path}\"")));
     }
 }
 
@@ -138,7 +138,7 @@ fn test_compiler_driver_debug_formatting() {
     let args = vec!["fcc", "--debug", "test.c"];
     let driver = CompilerDriver::parse_from(args);
 
-    let debug_str = format!("{:?}", driver);
+    let debug_str = format!("{driver:?}");
     assert!(debug_str.contains("CompilerDriver"));
     assert!(debug_str.contains("debug: true"));
     assert!(debug_str.contains("program_path: \"test.c\""));
