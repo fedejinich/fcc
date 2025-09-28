@@ -217,6 +217,8 @@ pub fn binary_operators() -> Vec<Token> {
         Token::LessThanOrEqual,
         // Assignment
         Token::Assignment,
+        // conditional operators
+        Token::QuestionMark,
     ]
 }
 

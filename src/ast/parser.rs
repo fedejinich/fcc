@@ -140,7 +140,7 @@ impl Statement {
 
                 Statement::Return(expr)
             }
-            Token::If => {
+            Token::Identifier(s) if s == "if" => {
                 trace!(
                     "Parsing <statement> ::= if ( <exp> ) then <statement> [else <statement>] ;"
                 );
@@ -151,22 +151,20 @@ impl Statement {
                 token_eq(Token::CloseParen, tokens)?;
                 let then = Statement::parse_st(tokens)?;
                 let mut el = None;
-                if let Some(Token::Else) = tokens.peek() {
-                    let _ = tokens.next(); // consume 'else'
-                    el = Some(Box::new(Statement::parse_st(tokens)?));
+                if let Some(Token::Identifier(s)) = tokens.peek() {
+                    if s == "else" {
+                        let _ = tokens.next(); // consume 'else'
+                        el = Some(Box::new(Statement::parse_st(tokens)?));
+                    }
                 }
-                token_eq(Token::Semicolon, tokens)?;
 
                 Statement::If(Box::new(expr), Box::new(then), el)
-            }
-            Token::QuestionMark => {
-                trace!("Parsing <statement> ::= ? <exp> : <exp> ;");
-                todo!("not implemented yet");
             }
             _ => {
                 trace!("Parsing <statement> ::= <exp> ;");
 
                 let exp = Expression::parse_exp(tokens, 0)?;
+                trace!("aca");
                 token_eq(Token::Semicolon, tokens)?;
 
                 Statement::Expression(exp)
@@ -190,23 +188,33 @@ impl Expression {
         let is_binary_op = |t: &Token| lexer::binary_operators().contains(t);
         while let Some(token) = next_token {
             if !is_binary_op(token) || precedence(token) < min_prec {
-                trace!("No bin op");
+                trace!("No bin op ({token:?})");
                 break;
             }
             trace!("Parsing <exp> ::= <exp> <binop> <exp>");
-            if *token == Token::Assignment {
-                trace!("Parsing assignment");
-                let _ = tokens.next(); // consume '='
-                let right = Expression::parse_exp(tokens, precedence(token))?;
-                left = Expression::Assignment(Box::new(left), Box::new(right));
-            } else {
-                let op = BinaryOperator::parse_bin(tokens)?;
-                trace!(
-                    "Parsing binary operator <exp> with precedence {}",
-                    precedence(token) + 1
-                );
-                let right = Expression::parse_exp(tokens, precedence(token) + 1)?;
-                left = Expression::Binary(op, Box::new(left), Box::new(right));
+            match *token {
+                Token::Assignment => {
+                    trace!("Parsing assignment");
+                    let _ = tokens.next(); // consume '='
+                    let right = Expression::parse_exp(tokens, precedence(token))?;
+                    left = Expression::Assignment(Box::new(left), Box::new(right));
+                }
+                Token::QuestionMark => {
+                    trace!("Parsing <exp> ::= <exp> ? <exp> : <exp>");
+                    let middle = Expression::parse_conditional_middle(tokens)?;
+                    let right = Expression::parse_exp(tokens, precedence(token))?;
+                    left =
+                        Expression::Conditional(Box::new(left), Box::new(middle), Box::new(right));
+                }
+                _ => {
+                    let op = BinaryOperator::parse_bin(tokens)?;
+                    trace!(
+                        "Parsing binary operator <exp> with precedence {}",
+                        precedence(token) + 1
+                    );
+                    let right = Expression::parse_exp(tokens, precedence(token) + 1)?;
+                    left = Expression::Binary(op, Box::new(left), Box::new(right));
+                }
             }
             next_token = tokens.peek().copied();
         }
@@ -214,6 +222,15 @@ impl Expression {
         trace!("Parsed <exp> {:?}", left.clone());
 
         Ok(left)
+    }
+
+    fn parse_conditional_middle(tokens: &mut Peekable<Iter<Token>>) -> ParseResult<Self> {
+        trace!("Parsing <conditional_middle>");
+        token_eq(Token::QuestionMark, tokens)?; // consume '?'
+        let middle = Expression::parse_exp(tokens, 0)?;
+        token_eq(Token::DoubleDot, tokens)?;
+
+        Ok(middle)
     }
 
     fn parse_fact(tokens: &mut Peekable<Iter<Token>>) -> ParseResult<Self> {
