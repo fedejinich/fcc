@@ -93,7 +93,34 @@ impl TackyInstruction {
                 trace!("No need to convert <statement>: null");
                 vec![]
             }
-            Statement::If(_, _, _) => todo!("not implemented yet"),
+            Statement::If(cond, then, el) => {
+                trace!("Converting <statement>: if");
+                let mut instructions = vec![];
+                let src = TackyInstruction::from_expr(*cond, &mut instructions);
+                let c = TackyValue::Var(TackyIdentifier::new("c"));
+                instructions.push(TackyInstruction::Copy(src, c.clone()));
+
+                // evaluate condition
+                instructions.push(TackyInstruction::JumpIfZero(
+                    c,
+                    TackyIdentifier::new("else"),
+                ));
+
+                // resolve then
+                let statement_1 = TackyInstruction::from_st(*then);
+                instructions.extend(statement_1);
+
+                // resolve else
+                if let Some(e) = el {
+                    instructions.push(TackyInstruction::Jump(TackyIdentifier::new("end")));
+                    instructions.push(TackyInstruction::Label(TackyIdentifier::new("else")));
+                    let statement_2 = TackyInstruction::from_st(*e);
+                    instructions.extend(statement_2);
+                    instructions.push(TackyInstruction::Label(TackyIdentifier::new("end")));
+                }
+
+                instructions
+            }
         };
 
         debug!("Generated Tacky instructions: {i:?}");
