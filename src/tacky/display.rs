@@ -1,9 +1,8 @@
 use crate::{
-    tacky::program::{
+    common::util::indent, tacky::program::{
         TackyBinaryOperator, TackyFunctionDefinition, TackyInstruction, TackyProgram,
         TackyUnaryOperator, TackyValue,
-    },
-    util::indent,
+    }
 };
 
 impl TackyProgram {
@@ -72,7 +71,7 @@ impl TackyInstruction {
 impl TackyValue {
     pub fn pretty_print(&self) -> String {
         match self {
-            TackyValue::Constant(c) => format!("Constant({})", c),
+            TackyValue::Constant(c) => format!("Constant({c})"),
             TackyValue::Var(id) => format!("Var(\"{}\")", id.value),
         }
     }

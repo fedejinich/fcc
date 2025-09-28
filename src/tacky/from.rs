@@ -140,11 +140,11 @@ impl TackyInstruction {
                 TackyValue::Var(TackyIdentifier::from(id))
             }
             Expression::Constant(c) => {
-                trace!("Converting <constant>: {}", c);
+                trace!("Converting <constant>: {c}");
                 TackyValue::Constant(c)
             }
             Expression::Unary(op, inner_exp) => {
-                trace!("Converting <unop>: {:?}", op);
+                trace!("Converting <unop>: {op:?}");
                 let src = TackyInstruction::from_expr(*inner_exp, instructions);
                 // TODO: provide a more descriptive name
                 let dst = TackyValue::Var(TackyIdentifier::new("unary_op"));
@@ -161,7 +161,7 @@ impl TackyInstruction {
                 dst
             }
             Expression::Binary(op, left, right) => {
-                trace!("Converting <binop>: {:?}", op);
+                trace!("Converting <binop>: {op:?}");
                 match op {
                     BinaryOperator::And => {
                         let result = TackyValue::Var(TackyIdentifier::new("and_result"));
@@ -253,7 +253,7 @@ impl TackyInstruction {
 
 impl From<UnaryOperator> for TackyUnaryOperator {
     fn from(op: UnaryOperator) -> Self {
-        trace!("Converting <unop>: {:?} to Tacky", op);
+        trace!("Converting <unop>: {op:?} to Tacky");
         match op {
             UnaryOperator::Complement => TackyUnaryOperator::Complement,
             UnaryOperator::Negate => TackyUnaryOperator::Negate,
@@ -264,7 +264,7 @@ impl From<UnaryOperator> for TackyUnaryOperator {
 
 impl From<BinaryOperator> for TackyBinaryOperator {
     fn from(op: BinaryOperator) -> Self {
-        trace!("Converting <binop>: {:?} to Tacky", op);
+        trace!("Converting <binop>: {op:?} to Tacky");
         match op {
             BinaryOperator::Add => TackyBinaryOperator::Add,
             BinaryOperator::Divide => TackyBinaryOperator::Divide,

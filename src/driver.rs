@@ -5,10 +5,13 @@ use log::{debug, info, trace};
 
 use crate::ast::program::Program;
 use crate::ast::semantic::validate::validate_semantics;
-use crate::codegen::x64::pipes::pipe::AsmPipe;
+use crate::codegen::x64::asm::AsmProgram;
+use crate::codegen::x64::fixer::reg_replace::PseudoRegisterReplacer;
+use crate::codegen::x64::fixer::instruction_fix::InstructionFixer;
+use crate::common::folder::FolderAsm;
+use crate::common::util::replace_c_with_i;
 use crate::lexer::lex;
 use crate::tacky::program::TackyProgram;
-use crate::util::replace_c_with_i;
 
 #[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]
@@ -96,30 +99,33 @@ impl CompilerDriver {
             return Err(String::from("source file does not exist"));
         }
 
-        Command::new("gcc")
+        let Ok(_) = Command::new("gcc")
             .arg("-E")
             .arg("-P")
             .arg(source_file)
             .arg("-o")
             .arg(&preprocessed_file)
             .output()
-            .expect("failed to execute preprocessor");
+        else {
+            return Err(String::from("failed to execute preprocessor"));
+        };
 
         Ok(preprocessed_file.to_string())
     }
 
-    fn compile(&self, preprocessed_file: &str) -> Result<String, String> {
-        info!("compiling {preprocessed_file}");
+    fn compile(&self, preprocessed_file_name: &str) -> Result<String, String> {
+        info!("compiling {preprocessed_file_name}");
 
-        let preprocessed_file_path = Path::new(preprocessed_file);
+        let preprocessed_file_path = Path::new(preprocessed_file_name);
         if !preprocessed_file_path.exists() {
             return Err(String::from(
                 "couldn't compile, preprocessed file does not exist",
             ));
         }
 
-        let code =
-            fs::read_to_string(preprocessed_file_path).expect("couldn't read preprocessed file");
+        let Ok(code) = fs::read_to_string(preprocessed_file_path) else {
+            return Err(String::from("couldn't read preprocessed file"));
+        };
 
         let tokens = lex(code.as_str())?;
 
@@ -127,7 +133,7 @@ impl CompilerDriver {
             std::process::exit(0);
         }
 
-        trace!("Token stream: {:?}", tokens);
+        trace!("Token stream: {tokens:?}");
         let mut c_program = Program::try_from(tokens)?;
         if self.print_ast {
             println!("{c_program}");
@@ -153,26 +159,40 @@ impl CompilerDriver {
             std::process::exit(0);
         }
 
-        let assembly_file_name = preprocessed_file.replace(".i", ".asm");
+        let mut assembly_program = AsmProgram::from(tacky_program);
 
-        let assembly_program = AsmPipe::from(tacky_program)
-            .replace_pseudoregisters()
-            .fix_instructions()
-            .out();
+        assembly_program = self.do_asm_passes(&assembly_program)?;
 
         if self.codegen {
             std::process::exit(0);
         }
 
-        let code = assembly_program.code_emit();
-        fs::write(&assembly_file_name, &code).expect("couldn't write assembly file");
+        let Ok(code) = assembly_program.to_string_asm() else {
+            return Err(String::from("couldn't convert to assembly string"));
+        };
+        let assembly_file_name = preprocessed_file_name.replace(".i", ".asm");
+        let Ok(_) = fs::write(&assembly_file_name, &code) else {
+            return Err(String::from("couldn't write assembly file"));
+        };
 
         debug!("\n{code}");
 
-        fs::remove_file(preprocessed_file).expect("couldn't remove preprocessed file");
+        let Ok(_) = fs::remove_file(preprocessed_file_name) else {
+            return Err(String::from("couldn't remove preprocessed file"));
+        };
+
         debug!("file removed");
 
         Ok(assembly_file_name)
+    }
+
+    fn do_asm_passes(&self, program: &AsmProgram) -> Result<AsmProgram, String> {
+        let mut replacer = PseudoRegisterReplacer::create();
+        let assembly_program = replacer.fold_program(program)?;
+
+        let last_offset = replacer.last_offset();
+        let mut fixer = InstructionFixer::create().with(last_offset);
+        fixer.fold_program(&assembly_program)
     }
 
     fn assemble_and_link(&self, assembly_file: String) -> Result<i32, String> {
@@ -183,12 +203,14 @@ impl CompilerDriver {
         }
 
         let output_file = assembly_file.replace(".asm", "");
-        let result = Command::new("gcc")
+        let Ok(result) = Command::new("gcc")
             .arg(assembly_file)
             .arg("-o")
             .arg(output_file)
             .output()
-            .expect("failed to assemble and link");
+        else {
+            return Err(String::from("failed to assemble and link"));
+        };
 
         result
             .status

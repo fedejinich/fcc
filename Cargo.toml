@@ -9,6 +9,31 @@ regex = "1.11.1"
 log = "0.4"
 env_logger = "0.10"
 
+# Integration tests configuration
+[[test]]
+name = "lexer_tests"
+path = "test/lexer_tests.rs"
+
+[[test]]
+name = "util_tests"
+path = "test/util_tests.rs"
+
+[[test]]
+name = "ast_tests"
+path = "test/ast_tests.rs"
+
+[[test]]
+name = "driver_tests"
+path = "test/driver_tests.rs"
+
+[[test]]
+name = "tacky_tests"
+path = "test/tacky_tests.rs"
+
+[[test]]
+name = "folder_tests"
+path = "test/folder_tests.rs"
+
 [lints.clippy]
 unwrap_used = "warn"
 expect_used = "warn"

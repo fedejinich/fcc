@@ -1,6 +1,11 @@
 use std::fmt;
 
-use crate::{ast::program::{BinaryOperator, BlockItem, Declaration, Expression, FunctionDefinition, Program, Statement, UnaryOperator}, util::indent};
+use crate::{
+    ast::program::{
+        BinaryOperator, BlockItem, Declaration, Expression, FunctionDefinition, Program, Statement,
+        UnaryOperator,
+    }, common::util::indent,
+};
 
 impl fmt::Display for Program {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -40,8 +45,8 @@ impl fmt::Display for FunctionDefinition {
 impl fmt::Display for BlockItem {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            BlockItem::S(s) => write!(f, "S({})", s),
-            BlockItem::D(d) => write!(f, "D({})", d),
+            BlockItem::S(s) => write!(f, "S({s})"),
+            BlockItem::D(d) => write!(f, "D({d})"),
         }
     }
 }
@@ -80,12 +85,12 @@ impl fmt::Display for Statement {
 impl fmt::Display for Expression {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Expression::Constant(c) => write!(f, "Constant({})", c),
-            Expression::Unary(u, e) => write!(f, "Unary({}, {})", u, e),
+            Expression::Constant(c) => write!(f, "Constant({c})"),
+            Expression::Unary(u, e) => write!(f, "Unary({u}, {e})"),
             Expression::Binary(op, exp_1, exp_2) => {
-                write!(f, "Binary({}, {}, {})", op, exp_1, exp_2)
+                write!(f, "Binary({op}, {exp_1}, {exp_2})")
             }
-            Expression::Assignment(left, right) => write!(f, "Assignment({}, {})", left, right),
+            Expression::Assignment(left, right) => write!(f, "Assignment({left}, {right})"),
             Expression::Var(id) => write!(f, "Var({})", id.value),
         }
     }
