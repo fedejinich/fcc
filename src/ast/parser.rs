@@ -279,6 +279,7 @@ fn precedence(token: &Token) -> i32 {
         Token::BitwiseOr => 20,
         Token::And => 10,
         Token::Or => 5,
+        Token::QuestionMark => 3,
         Token::Assignment => 1,
         _ => 0,
     }
