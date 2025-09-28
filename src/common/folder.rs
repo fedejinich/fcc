@@ -65,7 +65,15 @@ pub trait Folder {
         match statement {
             Return(expr) => Ok(Return(self.fold_expression(expr)?)),
             Expression(expr) => Ok(Expression(self.fold_expression(expr)?)),
-            If(_, _, _) => todo!("not implemented yet"),
+            If(expr, then, el) => Ok(If(
+                Box::new(self.fold_expression(expr)?),
+                Box::new(self.fold_statement(then)?),
+                if let Some(el) = el {
+                    Some(Box::new(self.fold_statement(el)?))
+                } else {
+                    None
+                },
+            )),
             Null => Ok(Null),
         }
     }
