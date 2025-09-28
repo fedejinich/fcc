@@ -96,6 +96,11 @@ pub trait Folder {
                 Box::new(self.fold_expression(left)?),
                 Box::new(self.fold_expression(right)?),
             )),
+            Conditional(cond, then, el) => Ok(Conditional(
+                Box::new(self.fold_expression(cond)?),
+                Box::new(self.fold_expression(then)?),
+                Box::new(self.fold_expression(el)?),
+            )),
         }
     }
 

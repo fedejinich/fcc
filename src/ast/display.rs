@@ -106,6 +106,9 @@ impl fmt::Display for Expression {
             }
             Expression::Assignment(left, right) => write!(f, "Assignment({left}, {right})"),
             Expression::Var(id) => write!(f, "Var({})", id.value),
+            Expression::Conditional(cond, then, el) => {
+                write!(f, "Conditional({cond}, {then}, {el})")
+            }
         }
     }
 }

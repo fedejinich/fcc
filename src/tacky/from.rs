@@ -126,6 +126,7 @@ impl TackyInstruction {
     fn from_expr(expr: Expression, instructions: &mut Vec<TackyInstruction>) -> TackyValue {
         trace!("Converting <exp> to Tacky instructions");
         match expr {
+            Expression::Conditional(_, _, _) => todo!("not implemented yet"),
             Expression::Assignment(left, right) => {
                 trace!("Converting <assignment> to Tacky instruction");
                 let res = TackyInstruction::from_expr(*right, instructions);

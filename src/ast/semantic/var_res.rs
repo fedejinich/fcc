@@ -102,6 +102,7 @@ impl Folder for VariableResolver {
                 Box::new(self.fold_expression(right)?),
             ),
             Constant(c) => Constant(*c),
+            Conditional(_, _, _) => todo!("not implemented yet"),
         };
 
         Ok(res)
