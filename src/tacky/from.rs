@@ -153,7 +153,30 @@ impl TackyInstruction {
     fn from_expr(expr: Expression, instructions: &mut Vec<TackyInstruction>) -> TackyValue {
         trace!("Converting <exp> to Tacky instructions");
         match expr {
-            Expression::Conditional(_, _, _) => todo!("not implemented yet"),
+            Expression::Conditional(cond, then, el) => {
+                trace!("Converting Conditional to Tacky instruction");
+                let cond = TackyInstruction::from_expr(*cond, instructions);
+                let c = TackyValue::Var(TackyIdentifier::new("c"));
+                instructions.push(TackyInstruction::Copy(cond, c.clone()));
+                instructions.push(TackyInstruction::JumpIfZero(
+                    c,
+                    TackyIdentifier::new("e2_label"),
+                ));
+                let result = TackyValue::Var(TackyIdentifier::new("result"));
+                let e1 = TackyInstruction::from_expr(*then, instructions);
+                let v1 = TackyValue::Var(TackyIdentifier::new("v1"));
+                instructions.push(TackyInstruction::Copy(e1, v1.clone()));
+                instructions.push(TackyInstruction::Copy(v1, result.clone()));
+                instructions.push(TackyInstruction::Jump(TackyIdentifier::new("end")));
+                instructions.push(TackyInstruction::Label(TackyIdentifier::new("e2_label")));
+                let e2 = TackyInstruction::from_expr(*el, instructions);
+                let v2 = TackyValue::Var(TackyIdentifier::new("v2"));
+                instructions.push(TackyInstruction::Copy(e2, v2.clone()));
+                instructions.push(TackyInstruction::Copy(v2, result.clone()));
+                instructions.push(TackyInstruction::Label(TackyIdentifier::new("end")));
+
+                result
+            }
             Expression::Assignment(left, right) => {
                 trace!("Converting <assignment> to Tacky instruction");
                 let res = TackyInstruction::from_expr(*right, instructions);
