@@ -61,6 +61,7 @@ impl Folder for VariableResolver {
         let res = match statement {
             Return(expr) => Return(self.fold_expression(expr)?),
             Expression(expr) => Expression(self.fold_expression(expr)?),
+            If(_, _, _) => todo!("not implemented yet"),
             Null => Null,
         };
 

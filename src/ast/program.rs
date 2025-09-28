@@ -28,6 +28,7 @@ pub struct Declaration {
 pub enum Statement {
     Return(Expression),
     Expression(Expression),
+    If(Box<Expression>, Box<Statement>, Option<Box<Statement>>),
     Null,
 }
 

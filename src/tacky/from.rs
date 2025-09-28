@@ -93,6 +93,7 @@ impl TackyInstruction {
                 trace!("No need to convert <statement>: null");
                 vec![]
             }
+            Statement::If(_, _, _) => todo!("not implemented yet"),
         };
 
         debug!("Generated Tacky instructions: {i:?}");
