@@ -2,8 +2,8 @@ use fcc::codegen::x64::asm::{
     AsmBinaryOperator, AsmCondCode, AsmFunctionDefinition, AsmIdetifier, AsmInstruction,
     AsmOperand, AsmProgram, AsmUnaryOperator, Reg,
 };
-use fcc::codegen::x64::pass::instruction_fix::InstructionFixer;
-use fcc::codegen::x64::pass::reg_replace::PseudoRegisterReplacer;
+use fcc::codegen::x64::fixer::instruction_fix::InstructionFixer;
+use fcc::codegen::x64::fixer::reg_replace::PseudoRegisterReplacer;
 use fcc::common::folder::FolderAsm;
 
 #[test]

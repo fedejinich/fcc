@@ -11,6 +11,7 @@ use crate::tacky::program::{
     TackyUnaryOperator, TackyValue,
 };
 
+/// A folder is a trait that can be used to fold an AST into another AST.
 pub trait Folder {
     fn create() -> Self
     where
@@ -97,6 +98,7 @@ pub trait Folder {
     }
 }
 
+/// Another folder trait that can be used to fold Tacky AST into another Tacky AST.
 pub trait FolderTacky {
     fn create() -> Self
     where
@@ -175,7 +177,7 @@ pub trait FolderTacky {
     }
 }
 
-/// A folder is a trait that can be used to fold an AST into another AST.
+/// Another folder trait that can be used to fold Asm AST into another Asm AST.
 pub trait FolderAsm {
     fn create() -> Self
     where

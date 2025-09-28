@@ -46,7 +46,6 @@ impl Folder for VariableResolver {
             .map(|e| self.fold_expression(e)) // option result expr
             .transpose()?; // result expr
 
-        // variable_map.insert(declaration.name.value.clone(), unique_name.clone());
         Ok(Declaration::new(Identifier::new(unique_name), init))
     }
 
