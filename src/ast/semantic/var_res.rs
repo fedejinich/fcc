@@ -6,7 +6,7 @@ use std::{
 use log::{debug, trace};
 
 use crate::{
-    ast::program::{Declaration, Expression, Identifier, Statement},
+    ast::program::{Declaration, Expression, Identifier},
     common::folder::Folder,
 };
 
@@ -48,36 +48,6 @@ impl Folder for VariableResolver {
 
         Ok(Declaration::new(Identifier::new(unique_name), init))
     }
-
-    // fn fold_statement(&mut self, statement: &Statement) -> Result<Statement, String> {
-    //     use Statement::*;
-    //
-    //     trace!("resolving statement: {statement:?}");
-    //
-    //     let res = match statement {
-    //         Return(expr) => Return(self.fold_expression(expr)?),
-    //         Expression(expr) => Expression(self.fold_expression(expr)?),
-    //         If(cond, then, el) => {
-    //             // TODO: this is ugly, should be refactored
-    //             if let Some(e) = el {
-    //                 If(
-    //                     Box::new(self.fold_expression(cond)?),
-    //                     Box::new(self.fold_statement(then)?),
-    //                     Some(Box::new(self.fold_statement(e)?)),
-    //                 )
-    //             } else {
-    //                 If(
-    //                     Box::new(self.fold_expression(cond)?),
-    //                     Box::new(self.fold_statement(then)?),
-    //                     None,
-    //                 )
-    //             }
-    //         }
-    //         Null => Null,
-    //     };
-    //
-    //     Ok(res)
-    // }
 
     fn fold_expression(&mut self, expr: &Expression) -> Result<Expression, String> {
         use Expression::*;

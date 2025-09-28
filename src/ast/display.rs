@@ -85,9 +85,9 @@ impl fmt::Display for Statement {
                         f,
                         "{}\n)",
                         indent(&format!("cond={cond}, then={then}, else={e}"), 4)
-                    );
+                    )?;
                 } else {
-                    write!(f, "{}\n)", indent(&format!("cond={cond}, then={then}"), 4));
+                    write!(f, "{}\n)", indent(&format!("cond={cond}, then={then}"), 4))?;
                 }
                 writeln!(f, ")")
             }

@@ -156,6 +156,7 @@ impl TackyInstruction {
             Expression::Conditional(cond, then, el) => {
                 trace!("Converting Conditional to Tacky instruction");
                 let cond = TackyInstruction::from_expr(*cond, instructions);
+                // TODO: handle variable names properly
                 let c = TackyValue::Var(TackyIdentifier::new("c"));
                 instructions.push(TackyInstruction::Copy(cond, c.clone()));
                 instructions.push(TackyInstruction::JumpIfZero(

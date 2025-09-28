@@ -17,7 +17,7 @@ cargo build
 CHAPTER=6
 
 echo "Running latests tests"
-./test_compiler "$FCC_PATH" -v --chapter $CHAPTER --bitwise --latest-only --stage parse
+./test_compiler "$FCC_PATH" -v --chapter $CHAPTER --bitwise --latest-only
 
 echo "Running all tests"
-./test_compiler "$FCC_PATH" -v --chapter $CHAPTER --bitwise --stage parse
+./test_compiler "$FCC_PATH" -v --chapter $CHAPTER --bitwise
