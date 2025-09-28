@@ -188,11 +188,11 @@ impl CompilerDriver {
 
     fn do_asm_passes(&self, program: &AsmProgram) -> Result<AsmProgram, String> {
         let mut replacer = PseudoRegisterReplacer::create();
-        let assembly_program = replacer.fold_program(program);
+        let assembly_program = replacer.fold_program(program)?;
 
         let last_offset = replacer.last_offset();
         let mut fixer = InstructionFixer::create().with(last_offset);
-        Ok(fixer.fold_program(&assembly_program))
+        fixer.fold_program(&assembly_program)
     }
 
     fn assemble_and_link(&self, assembly_file: String) -> Result<i32, String> {

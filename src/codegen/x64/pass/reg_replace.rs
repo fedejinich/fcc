@@ -2,9 +2,13 @@ use std::collections::HashMap;
 
 use log::{debug, trace};
 
-use crate::{codegen::x64::asm::{AsmFunctionDefinition, AsmInstruction, AsmOperand}, common::folder::FolderAsm};
+use crate::{
+    codegen::x64::asm::{AsmFunctionDefinition, AsmInstruction, AsmOperand},
+    common::folder::FolderAsm,
+};
 
 /// This pass replaces pseudoregisters with stack offsets
+#[derive(Default)]
 pub struct PseudoRegisterReplacer {
     pub offset_map: Option<HashMap<AsmOperand, i32>>,
     pub last_offset: Option<i32>,
@@ -30,7 +34,7 @@ impl FolderAsm for PseudoRegisterReplacer {
     fn fold_function_definition(
         &mut self,
         function: &AsmFunctionDefinition,
-    ) -> AsmFunctionDefinition {
+    ) -> Result<AsmFunctionDefinition, String> {
         let (pseudo_reg_map, last_offset) = ids_offset_map(function);
 
         self.last_offset = Some(last_offset);
@@ -39,63 +43,66 @@ impl FolderAsm for PseudoRegisterReplacer {
         debug!("Pseudo registers map: {pseudo_reg_map:?}");
 
         // TODO: this is duplicated code
-        AsmFunctionDefinition::new(
+        let instructions: Result<Vec<_>, String> = function
+            .instructions
+            .iter()
+            .map(|i| self.fold_instruction(i))
+            .collect::<Result<Vec<_>, String>>()
+            .map(|v| v.into_iter().flatten().collect());
+
+        Ok(AsmFunctionDefinition::new(
             function.name.clone(),
-            function
-                .instructions
-                .iter()
-                .flat_map(|i| self.fold_instruction(i))
-                .collect(),
-        )
+            instructions?,
+        ))
     }
 
-    fn fold_instruction(&mut self, instruction: &AsmInstruction) -> Vec<AsmInstruction> {
+    fn fold_instruction(&mut self, instruction: &AsmInstruction) -> Result<Vec<AsmInstruction>, String> {
         use AsmInstruction::*;
         let res = match instruction {
             Mov(src, dst) => {
                 trace!("Replace pseudoregisters for Mov({src:?}, {dst:?})");
-                Mov(self.fold_operand(src), self.fold_operand(dst))
+                Mov(self.fold_operand(src)?, self.fold_operand(dst)?)
             }
             Unary(unary_op, op) => {
                 trace!("Replace pseudoregisters for Unary({unary_op:?}, {op:?})");
-                Unary(unary_op.clone(), self.fold_operand(op))
+                Unary(unary_op.clone(), self.fold_operand(op)?)
             }
             Binary(bin_op, src, dst) => {
                 trace!("Replace pseudoregisters for Binary({bin_op:?}, {src:?}, {dst:?})");
                 Binary(
                     bin_op.clone(),
-                    self.fold_operand(src),
-                    self.fold_operand(dst),
+                    self.fold_operand(src)?,
+                    self.fold_operand(dst)?,
                 )
             }
             Idiv(op) => {
                 trace!("Replace pseudoregisters for Idiv({op:?})");
-                Idiv(self.fold_operand(op))
+                Idiv(self.fold_operand(op)?)
             }
             SetCC(cond_code, op) => {
                 trace!("Replace pseudoregisters for SetCC({cond_code:?}, {op:?})");
-                SetCC(cond_code.clone(), self.fold_operand(op))
+                SetCC(cond_code.clone(), self.fold_operand(op)?)
             }
             Cmp(op_1, op_2) => {
                 trace!("Replace pseudoregisters for Cmp({op_1:?}, {op_2:?})");
-                Cmp(self.fold_operand(op_1), self.fold_operand(op_2))
+                Cmp(self.fold_operand(op_1)?, self.fold_operand(op_2)?)
             }
             JmpCC(_, _) | Label(_) | AllocateStack(_) | Comment(_) | Jmp(_) | Ret | Cdq => {
                 debug!("Not replacing registers {:?}", &instruction);
                 instruction.clone()
             }
         };
-        vec![res]
+        Ok(vec![res])
     }
 
-    fn fold_operand(&mut self, operand: &AsmOperand) -> AsmOperand {
+    fn fold_operand(&mut self, operand: &AsmOperand) -> Result<AsmOperand, String> {
         let Some(offset_map) = &self.offset_map else {
-            panic!("this should not happen");
+            return Err("offset_map not initialized".to_string());
         };
 
-        offset_map
+        Ok(offset_map
             .get(operand)
-            .map_or(operand.clone(), |i| AsmOperand::Stack(*i))
+            .map_or(operand.clone(), |i| AsmOperand::Stack(*i)))
     }
 }
 

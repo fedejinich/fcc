@@ -8,6 +8,7 @@ use fcc::common::folder::FolderAsm;
 
 #[test]
 fn test_basic_folder_trait() {
+    #[derive(Default)]
     struct BasicFolder;
     impl FolderAsm for BasicFolder {
         fn create() -> Self {
@@ -24,7 +25,7 @@ fn test_basic_folder_trait() {
     let program = AsmProgram::new(function);
 
     let mut basic_folder = folder;
-    let folded_program = basic_folder.fold_program(&program);
+    let folded_program = basic_folder.fold_program(&program).unwrap();
 
     assert_eq!(folded_program.function_definition.name.value, "test");
     assert_eq!(folded_program.function_definition.instructions.len(), 1);
@@ -36,6 +37,7 @@ fn test_basic_folder_trait() {
 
 #[test]
 fn test_folder_preserves_all_instruction_types() {
+    #[derive(Default)]
     struct IdentityFolder;
     impl FolderAsm for IdentityFolder {
         fn create() -> Self {
@@ -82,7 +84,7 @@ fn test_folder_preserves_all_instruction_types() {
     );
     let program = AsmProgram::new(function);
 
-    let folded_program = folder.fold_program(&program);
+    let folded_program = folder.fold_program(&program).unwrap();
 
     assert_eq!(
         folded_program.function_definition.instructions.len(),
@@ -132,6 +134,7 @@ fn test_folder_preserves_all_instruction_types() {
 
 #[test]
 fn test_folder_with_all_operand_types() {
+    #[derive(Default)]
     struct IdentityFolder;
     impl FolderAsm for IdentityFolder {
         fn create() -> Self {
@@ -157,7 +160,7 @@ fn test_folder_with_all_operand_types() {
     ];
 
     for operand in operands {
-        let folded = folder.fold_operand(&operand);
+        let folded = folder.fold_operand(&operand).unwrap();
         match (&operand, &folded) {
             (AsmOperand::Imm(o), AsmOperand::Imm(f)) => assert_eq!(o, f),
             (AsmOperand::Register(o), AsmOperand::Register(f)) => assert_eq!(o, f),
@@ -170,6 +173,7 @@ fn test_folder_with_all_operand_types() {
 
 #[test]
 fn test_folder_with_all_binary_operators() {
+    #[derive(Default)]
     struct IdentityFolder;
     impl FolderAsm for IdentityFolder {
         fn create() -> Self {
@@ -191,7 +195,7 @@ fn test_folder_with_all_binary_operators() {
     ];
 
     for operator in operators {
-        let folded = folder.fold_binary_operator(&operator);
+        let folded = folder.fold_binary_operator(&operator).unwrap();
         match (&operator, &folded) {
             (AsmBinaryOperator::Add, AsmBinaryOperator::Add) => {}
             (AsmBinaryOperator::Sub, AsmBinaryOperator::Sub) => {}
@@ -208,6 +212,7 @@ fn test_folder_with_all_binary_operators() {
 
 #[test]
 fn test_folder_with_all_unary_operators() {
+    #[derive(Default)]
     struct IdentityFolder;
     impl FolderAsm for IdentityFolder {
         fn create() -> Self {
@@ -220,7 +225,7 @@ fn test_folder_with_all_unary_operators() {
     let operators = vec![AsmUnaryOperator::Neg, AsmUnaryOperator::Not];
 
     for operator in operators {
-        let folded = folder.fold_unary_operator(&operator);
+        let folded = folder.fold_unary_operator(&operator).unwrap();
         match (&operator, &folded) {
             (AsmUnaryOperator::Neg, AsmUnaryOperator::Neg) => {}
             (AsmUnaryOperator::Not, AsmUnaryOperator::Not) => {}
@@ -231,6 +236,7 @@ fn test_folder_with_all_unary_operators() {
 
 #[test]
 fn test_folder_with_all_condition_codes() {
+    #[derive(Default)]
     struct IdentityFolder;
     impl FolderAsm for IdentityFolder {
         fn create() -> Self {
@@ -250,7 +256,7 @@ fn test_folder_with_all_condition_codes() {
     ];
 
     for code in codes {
-        let folded = folder.fold_cond_code(&code);
+        let folded = folder.fold_cond_code(&code).unwrap();
         match (&code, &folded) {
             (AsmCondCode::E, AsmCondCode::E) => {}
             (AsmCondCode::NE, AsmCondCode::NE) => {}
@@ -279,7 +285,7 @@ fn test_instruction_fixer_basic_functionality() {
 
     let mut fixer = InstructionFixer::create().with(-12);
 
-    let fixed_function = fixer.fold_function_definition(&function);
+    let fixed_function = fixer.fold_function_definition(&function).unwrap();
 
     assert_eq!(fixed_function.instructions.len(), 5);
 
@@ -309,7 +315,7 @@ fn test_instruction_fixer_idiv_immediate() {
 
     let mut fixer = InstructionFixer::create().with(-4);
 
-    let fixed_function = fixer.fold_function_definition(&function);
+    let fixed_function = fixer.fold_function_definition(&function).unwrap();
 
     assert!(fixed_function.instructions.len() >= 3);
 
@@ -357,7 +363,7 @@ fn test_pseudo_register_replacer_basic_functionality() {
     );
 
     let mut replacer = PseudoRegisterReplacer::create();
-    let replaced_function = replacer.fold_function_definition(&function);
+    let replaced_function = replacer.fold_function_definition(&function).unwrap();
 
     assert_eq!(replaced_function.instructions.len(), 3);
 
@@ -407,7 +413,7 @@ fn test_pseudo_register_replacer_multiple_variables() {
     );
 
     let mut replacer = PseudoRegisterReplacer::create();
-    let replaced_function = replacer.fold_function_definition(&function);
+    let replaced_function = replacer.fold_function_definition(&function).unwrap();
 
     assert_eq!(replaced_function.instructions.len(), 4);
 
@@ -433,6 +439,7 @@ fn test_pseudo_register_replacer_multiple_variables() {
 
 #[test]
 fn test_folder_preserves_identifiers() {
+    #[derive(Default)]
     struct IdentityFolder;
     impl FolderAsm for IdentityFolder {
         fn create() -> Self {
@@ -445,12 +452,13 @@ fn test_folder_preserves_identifiers() {
         value: "test_identifier_123".to_string(),
     };
 
-    let folded_id = folder.fold_identifier(&original_id);
+    let folded_id = folder.fold_identifier(&original_id).unwrap();
     assert_eq!(original_id.value, folded_id.value);
 }
 
 #[test]
 fn test_folder_preserves_registers() {
+    #[derive(Default)]
     struct IdentityFolder;
     impl FolderAsm for IdentityFolder {
         fn create() -> Self {
@@ -462,7 +470,7 @@ fn test_folder_preserves_registers() {
     let registers = vec![Reg::AX, Reg::DX, Reg::CX, Reg::CL, Reg::R10, Reg::R11];
 
     for reg in registers {
-        let folded_reg = folder.fold_reg(&reg);
+        let folded_reg = folder.fold_reg(&reg).unwrap();
         match (&reg, &folded_reg) {
             (Reg::AX, Reg::AX) => {}
             (Reg::DX, Reg::DX) => {}

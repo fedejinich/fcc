@@ -22,31 +22,33 @@ impl FolderAsm for InstructionFixer {
     fn fold_function_definition(
         &mut self,
         function_definition: &AsmFunctionDefinition,
-    ) -> AsmFunctionDefinition {
+    ) -> Result<AsmFunctionDefinition, String> {
         let Some(last_offset) = self.last_offset else {
-            panic!("last_offset should be set");
+            return Err("last_offset should be set".to_string());
         };
 
         let mut instructions = vec![AsmInstruction::AllocateStack(last_offset)];
 
         // TODO: this is duplicated code
-        let mut fixed_instructions = function_definition
+        let fixed_instructions: Result<Vec<_>, String> = function_definition
             .instructions
             .iter()
-            .flat_map(|i| self.fold_instruction(i))
-            .collect();
+            .map(|i| self.fold_instruction(i))
+            .collect::<Result<Vec<_>, String>>()
+            .map(|v| v.into_iter().flatten().collect());
 
+        let mut fixed_instructions = fixed_instructions?;
         instructions.append(&mut fixed_instructions);
 
-        AsmFunctionDefinition::new(function_definition.name.clone(), instructions)
+        Ok(AsmFunctionDefinition::new(function_definition.name.clone(), instructions))
     }
 
-    fn fold_instruction(&mut self, instruction: &AsmInstruction) -> Vec<AsmInstruction> {
+    fn fold_instruction(&mut self, instruction: &AsmInstruction) -> Result<Vec<AsmInstruction>, String> {
         use AsmBinaryOperator::*;
         use AsmInstruction::*;
         use AsmOperand::*;
 
-        match instruction {
+        let result = match instruction {
             Mov(Stack(src), Stack(dst)) => {
                 vec![
                     Comment("splited mov into two mov instructions".to_string()),
@@ -106,6 +108,7 @@ impl FolderAsm for InstructionFixer {
                 ]
             }
             _ => vec![instruction.clone()], // TODO: this clone is weird
-        }
+        };
+        Ok(result)
     }
 }
