@@ -124,27 +124,47 @@ impl Statement {
         let statement = match next_token {
             Token::Semicolon => {
                 trace!("Parsing <statement> ::= ;");
+
                 let _ = tokens.next();
+
                 Statement::Null
             }
             Token::Return => {
-                // let _ = tokens.next();
                 trace!("Parsing <statement> ::= return <exp> ;");
-                token_eq(Token::Return, tokens)?;
 
+                token_eq(Token::Return, tokens)?;
                 // start with a minimum precedence of zero so
                 // the result includes operators at every precedence level
                 let expr = Expression::parse_exp(tokens, 0)?;
-
                 token_eq(Token::Semicolon, tokens)?;
 
                 Statement::Return(expr)
             }
-            // TODO: this one is weird
+            Token::If => {
+                trace!(
+                    "Parsing <statement> ::= if ( <exp> ) then <statement> [else <statement>] ;"
+                );
+
+                let _ = tokens.next(); // consume 'if'
+                token_eq(Token::OpenParen, tokens)?;
+                let expr = Expression::parse_exp(tokens, 0)?;
+                token_eq(Token::CloseParen, tokens)?;
+                let then = Statement::parse_st(tokens)?;
+                let mut el = None;
+                if let Some(Token::Else) = tokens.peek() {
+                    let _ = tokens.next(); // consume 'else'
+                    el = Some(Box::new(Statement::parse_st(tokens)?));
+                }
+                token_eq(Token::Semicolon, tokens)?;
+
+                Statement::If(Box::new(expr), Box::new(then), el)
+            }
             _ => {
                 trace!("Parsing <statement> ::= <exp> ;");
+
                 let exp = Expression::parse_exp(tokens, 0)?;
                 token_eq(Token::Semicolon, tokens)?;
+
                 Statement::Expression(exp)
             }
         };
