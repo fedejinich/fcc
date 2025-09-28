@@ -49,30 +49,37 @@ impl Folder for VariableResolver {
         Ok(Declaration::new(Identifier::new(unique_name), init))
     }
 
-    fn fold_statement(
-        &mut self,
-        statement: &Statement,
-        // variable_map: &HashMap<String, String>,
-    ) -> Result<Statement, String> {
-        use Statement::*;
+    // fn fold_statement(&mut self, statement: &Statement) -> Result<Statement, String> {
+    //     use Statement::*;
+    //
+    //     trace!("resolving statement: {statement:?}");
+    //
+    //     let res = match statement {
+    //         Return(expr) => Return(self.fold_expression(expr)?),
+    //         Expression(expr) => Expression(self.fold_expression(expr)?),
+    //         If(cond, then, el) => {
+    //             // TODO: this is ugly, should be refactored
+    //             if let Some(e) = el {
+    //                 If(
+    //                     Box::new(self.fold_expression(cond)?),
+    //                     Box::new(self.fold_statement(then)?),
+    //                     Some(Box::new(self.fold_statement(e)?)),
+    //                 )
+    //             } else {
+    //                 If(
+    //                     Box::new(self.fold_expression(cond)?),
+    //                     Box::new(self.fold_statement(then)?),
+    //                     None,
+    //                 )
+    //             }
+    //         }
+    //         Null => Null,
+    //     };
+    //
+    //     Ok(res)
+    // }
 
-        trace!("resolving statement: {statement:?}");
-
-        let res = match statement {
-            Return(expr) => Return(self.fold_expression(expr)?),
-            Expression(expr) => Expression(self.fold_expression(expr)?),
-            If(_, _, _) => todo!("not implemented yet"),
-            Null => Null,
-        };
-
-        Ok(res)
-    }
-
-    fn fold_expression(
-        &mut self,
-        expr: &Expression,
-        // variable_map: &HashMap<String, String>,
-    ) -> Result<Expression, String> {
+    fn fold_expression(&mut self, expr: &Expression) -> Result<Expression, String> {
         use Expression::*;
 
         trace!("resolving expression: {expr:?}");
@@ -95,6 +102,7 @@ impl Folder for VariableResolver {
                     return Err("undeclared variable".to_string());
                 }
             }
+            // TODO: this should be refactored by a call to the super method
             Unary(op, expr) => Unary(op.clone(), Box::new(self.fold_expression(expr)?)),
             Binary(op, left, right) => Binary(
                 op.clone(),
@@ -102,7 +110,11 @@ impl Folder for VariableResolver {
                 Box::new(self.fold_expression(right)?),
             ),
             Constant(c) => Constant(*c),
-            Conditional(_, _, _) => todo!("not implemented yet"),
+            Conditional(cond, then, el) => Conditional(
+                Box::new(self.fold_expression(cond)?),
+                Box::new(self.fold_expression(then)?),
+                Box::new(self.fold_expression(el)?),
+            ),
         };
 
         Ok(res)
