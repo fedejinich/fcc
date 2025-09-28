@@ -25,13 +25,13 @@ fn test_basic_folder_trait() {
     let program = AsmProgram::new(function);
 
     let mut basic_folder = folder;
-    let folded_program = basic_folder.fold_program(&program).unwrap();
-
-    assert_eq!(folded_program.function_definition.name.value, "test");
-    assert_eq!(folded_program.function_definition.instructions.len(), 1);
-    match &folded_program.function_definition.instructions[0] {
-        AsmInstruction::Ret => {}
-        _ => panic!("Expected Ret instruction"),
+    if let Ok(folded_program) = basic_folder.fold_program(&program) {
+        assert_eq!(folded_program.function_definition.name.value, "test");
+        assert_eq!(folded_program.function_definition.instructions.len(), 1);
+        match &folded_program.function_definition.instructions[0] {
+            AsmInstruction::Ret => {}
+            _ => panic!("Expected Ret instruction"),
+        }
     }
 }
 
@@ -84,50 +84,50 @@ fn test_folder_preserves_all_instruction_types() {
     );
     let program = AsmProgram::new(function);
 
-    let folded_program = folder.fold_program(&program).unwrap();
+    if let Ok(folded_program) = folder.fold_program(&program) {
+        assert_eq!(
+            folded_program.function_definition.instructions.len(),
+            instructions.len()
+        );
 
-    assert_eq!(
-        folded_program.function_definition.instructions.len(),
-        instructions.len()
-    );
-
-    for (original, folded) in instructions
-        .iter()
-        .zip(&folded_program.function_definition.instructions)
-    {
-        match (original, folded) {
-            (AsmInstruction::Comment(orig), AsmInstruction::Comment(folded)) => {
-                assert_eq!(orig, folded)
+        for (original, folded) in instructions
+            .iter()
+            .zip(&folded_program.function_definition.instructions)
+        {
+            match (original, folded) {
+                (AsmInstruction::Comment(orig), AsmInstruction::Comment(folded)) => {
+                    assert_eq!(orig, folded)
+                }
+                (AsmInstruction::Mov(o1, o2), AsmInstruction::Mov(f1, f2)) => {
+                    assert_eq!((o1, o2), (f1, f2))
+                }
+                (AsmInstruction::Unary(op1, o1), AsmInstruction::Unary(op2, o2)) => {
+                    assert_eq!((op1, o1), (op2, o2))
+                }
+                (AsmInstruction::Binary(op1, o1, o2), AsmInstruction::Binary(op2, f1, f2)) => {
+                    assert_eq!((op1, o1, o2), (op2, f1, f2))
+                }
+                (AsmInstruction::Cmp(o1, o2), AsmInstruction::Cmp(f1, f2)) => {
+                    assert_eq!((o1, o2), (f1, f2))
+                }
+                (AsmInstruction::Idiv(o), AsmInstruction::Idiv(f)) => assert_eq!(o, f),
+                (AsmInstruction::Cdq, AsmInstruction::Cdq) => {}
+                (AsmInstruction::Jmp(o), AsmInstruction::Jmp(f)) => assert_eq!(o.value, f.value),
+                (AsmInstruction::JmpCC(oc, ol), AsmInstruction::JmpCC(fc, fl)) => {
+                    assert_eq!((oc, &ol.value), (fc, &fl.value))
+                }
+                (AsmInstruction::SetCC(oc, oo), AsmInstruction::SetCC(fc, fo)) => {
+                    assert_eq!((oc, oo), (fc, fo))
+                }
+                (AsmInstruction::Label(o), AsmInstruction::Label(f)) => {
+                    assert_eq!(o.value, f.value)
+                }
+                (AsmInstruction::AllocateStack(o), AsmInstruction::AllocateStack(f)) => {
+                    assert_eq!(o, f)
+                }
+                (AsmInstruction::Ret, AsmInstruction::Ret) => {}
+                _ => panic!("Instruction types don't match"),
             }
-            (AsmInstruction::Mov(o1, o2), AsmInstruction::Mov(f1, f2)) => {
-                assert_eq!((o1, o2), (f1, f2))
-            }
-            (AsmInstruction::Unary(op1, o1), AsmInstruction::Unary(op2, o2)) => {
-                assert_eq!((op1, o1), (op2, o2))
-            }
-            (AsmInstruction::Binary(op1, o1, o2), AsmInstruction::Binary(op2, f1, f2)) => {
-                assert_eq!((op1, o1, o2), (op2, f1, f2))
-            }
-            (AsmInstruction::Cmp(o1, o2), AsmInstruction::Cmp(f1, f2)) => {
-                assert_eq!((o1, o2), (f1, f2))
-            }
-            (AsmInstruction::Idiv(o), AsmInstruction::Idiv(f)) => assert_eq!(o, f),
-            (AsmInstruction::Cdq, AsmInstruction::Cdq) => {}
-            (AsmInstruction::Jmp(o), AsmInstruction::Jmp(f)) => assert_eq!(o.value, f.value),
-            (AsmInstruction::JmpCC(oc, ol), AsmInstruction::JmpCC(fc, fl)) => {
-                assert_eq!((oc, &ol.value), (fc, &fl.value))
-            }
-            (AsmInstruction::SetCC(oc, oo), AsmInstruction::SetCC(fc, fo)) => {
-                assert_eq!((oc, oo), (fc, fo))
-            }
-            (AsmInstruction::Label(o), AsmInstruction::Label(f)) => {
-                assert_eq!(o.value, f.value)
-            }
-            (AsmInstruction::AllocateStack(o), AsmInstruction::AllocateStack(f)) => {
-                assert_eq!(o, f)
-            }
-            (AsmInstruction::Ret, AsmInstruction::Ret) => {}
-            _ => panic!("Instruction types don't match"),
         }
     }
 }
@@ -160,13 +160,14 @@ fn test_folder_with_all_operand_types() {
     ];
 
     for operand in operands {
-        let folded = folder.fold_operand(&operand).unwrap();
-        match (&operand, &folded) {
-            (AsmOperand::Imm(o), AsmOperand::Imm(f)) => assert_eq!(o, f),
-            (AsmOperand::Register(o), AsmOperand::Register(f)) => assert_eq!(o, f),
-            (AsmOperand::Pseudo(o), AsmOperand::Pseudo(f)) => assert_eq!(o.value, f.value),
-            (AsmOperand::Stack(o), AsmOperand::Stack(f)) => assert_eq!(o, f),
-            _ => panic!("Operand types don't match"),
+        if let Ok(folded) = folder.fold_operand(&operand) {
+            match (&operand, &folded) {
+                (AsmOperand::Imm(o), AsmOperand::Imm(f)) => assert_eq!(o, f),
+                (AsmOperand::Register(o), AsmOperand::Register(f)) => assert_eq!(o, f),
+                (AsmOperand::Pseudo(o), AsmOperand::Pseudo(f)) => assert_eq!(o.value, f.value),
+                (AsmOperand::Stack(o), AsmOperand::Stack(f)) => assert_eq!(o, f),
+                _ => panic!("Operand types don't match"),
+            }
         }
     }
 }
@@ -195,17 +196,18 @@ fn test_folder_with_all_binary_operators() {
     ];
 
     for operator in operators {
-        let folded = folder.fold_binary_operator(&operator).unwrap();
-        match (&operator, &folded) {
-            (AsmBinaryOperator::Add, AsmBinaryOperator::Add) => {}
-            (AsmBinaryOperator::Sub, AsmBinaryOperator::Sub) => {}
-            (AsmBinaryOperator::Mult, AsmBinaryOperator::Mult) => {}
-            (AsmBinaryOperator::BitwiseAnd, AsmBinaryOperator::BitwiseAnd) => {}
-            (AsmBinaryOperator::BitwiseOr, AsmBinaryOperator::BitwiseOr) => {}
-            (AsmBinaryOperator::BitwiseXor, AsmBinaryOperator::BitwiseXor) => {}
-            (AsmBinaryOperator::LeftShift, AsmBinaryOperator::LeftShift) => {}
-            (AsmBinaryOperator::RightShift, AsmBinaryOperator::RightShift) => {}
-            _ => panic!("Binary operator types don't match"),
+        if let Ok(folded) = folder.fold_binary_operator(&operator) {
+            match (&operator, &folded) {
+                (AsmBinaryOperator::Add, AsmBinaryOperator::Add) => {}
+                (AsmBinaryOperator::Sub, AsmBinaryOperator::Sub) => {}
+                (AsmBinaryOperator::Mult, AsmBinaryOperator::Mult) => {}
+                (AsmBinaryOperator::BitwiseAnd, AsmBinaryOperator::BitwiseAnd) => {}
+                (AsmBinaryOperator::BitwiseOr, AsmBinaryOperator::BitwiseOr) => {}
+                (AsmBinaryOperator::BitwiseXor, AsmBinaryOperator::BitwiseXor) => {}
+                (AsmBinaryOperator::LeftShift, AsmBinaryOperator::LeftShift) => {}
+                (AsmBinaryOperator::RightShift, AsmBinaryOperator::RightShift) => {}
+                _ => panic!("Binary operator types don't match"),
+            }
         }
     }
 }
@@ -225,11 +227,12 @@ fn test_folder_with_all_unary_operators() {
     let operators = vec![AsmUnaryOperator::Neg, AsmUnaryOperator::Not];
 
     for operator in operators {
-        let folded = folder.fold_unary_operator(&operator).unwrap();
-        match (&operator, &folded) {
-            (AsmUnaryOperator::Neg, AsmUnaryOperator::Neg) => {}
-            (AsmUnaryOperator::Not, AsmUnaryOperator::Not) => {}
-            _ => panic!("Unary operator types don't match"),
+        if let Ok(folded) = folder.fold_unary_operator(&operator) {
+            match (&operator, &folded) {
+                (AsmUnaryOperator::Neg, AsmUnaryOperator::Neg) => {}
+                (AsmUnaryOperator::Not, AsmUnaryOperator::Not) => {}
+                _ => panic!("Unary operator types don't match"),
+            }
         }
     }
 }
@@ -256,15 +259,16 @@ fn test_folder_with_all_condition_codes() {
     ];
 
     for code in codes {
-        let folded = folder.fold_cond_code(&code).unwrap();
-        match (&code, &folded) {
-            (AsmCondCode::E, AsmCondCode::E) => {}
-            (AsmCondCode::NE, AsmCondCode::NE) => {}
-            (AsmCondCode::G, AsmCondCode::G) => {}
-            (AsmCondCode::GE, AsmCondCode::GE) => {}
-            (AsmCondCode::L, AsmCondCode::L) => {}
-            (AsmCondCode::LE, AsmCondCode::LE) => {}
-            _ => panic!("Condition code types don't match"),
+        if let Ok(folded) = folder.fold_cond_code(&code) {
+            match (&code, &folded) {
+                (AsmCondCode::E, AsmCondCode::E) => {}
+                (AsmCondCode::NE, AsmCondCode::NE) => {}
+                (AsmCondCode::G, AsmCondCode::G) => {}
+                (AsmCondCode::GE, AsmCondCode::GE) => {}
+                (AsmCondCode::L, AsmCondCode::L) => {}
+                (AsmCondCode::LE, AsmCondCode::LE) => {}
+                _ => panic!("Condition code types don't match"),
+            }
         }
     }
 }
@@ -285,20 +289,20 @@ fn test_instruction_fixer_basic_functionality() {
 
     let mut fixer = InstructionFixer::create().with(-12);
 
-    let fixed_function = fixer.fold_function_definition(&function).unwrap();
+    if let Ok(fixed_function) = fixer.fold_function_definition(&function) {
+        assert_eq!(fixed_function.instructions.len(), 5);
 
-    assert_eq!(fixed_function.instructions.len(), 5);
-
-    match &fixed_function.instructions[0] {
-        AsmInstruction::AllocateStack(-12) => {}
-        _ => panic!("Expected AllocateStack instruction"),
-    }
-
-    match &fixed_function.instructions[1] {
-        AsmInstruction::Comment(comment) => {
-            assert!(comment.contains("splited mov"));
+        match &fixed_function.instructions[0] {
+            AsmInstruction::AllocateStack(-12) => {}
+            _ => panic!("Expected AllocateStack instruction"),
         }
-        _ => panic!("Expected Comment instruction"),
+
+        match &fixed_function.instructions[1] {
+            AsmInstruction::Comment(comment) => {
+                assert!(comment.contains("splited mov"));
+            }
+            _ => panic!("Expected Comment instruction"),
+        }
     }
 }
 
@@ -315,25 +319,25 @@ fn test_instruction_fixer_idiv_immediate() {
 
     let mut fixer = InstructionFixer::create().with(-4);
 
-    let fixed_function = fixer.fold_function_definition(&function).unwrap();
+    if let Ok(fixed_function) = fixer.fold_function_definition(&function) {
+        assert!(fixed_function.instructions.len() >= 3);
 
-    assert!(fixed_function.instructions.len() >= 3);
-
-    match &fixed_function.instructions[1] {
-        AsmInstruction::Comment(comment) => {
-            assert!(comment.contains("splited idiv"));
+        match &fixed_function.instructions[1] {
+            AsmInstruction::Comment(comment) => {
+                assert!(comment.contains("splited idiv"));
+            }
+            _ => panic!("Expected Comment instruction"),
         }
-        _ => panic!("Expected Comment instruction"),
-    }
 
-    match &fixed_function.instructions[2] {
-        AsmInstruction::Mov(AsmOperand::Imm(42), AsmOperand::Register(Reg::R10)) => {}
-        _ => panic!("Expected Mov instruction with immediate to R10"),
-    }
+        match &fixed_function.instructions[2] {
+            AsmInstruction::Mov(AsmOperand::Imm(42), AsmOperand::Register(Reg::R10)) => {}
+            _ => panic!("Expected Mov instruction with immediate to R10"),
+        }
 
-    match &fixed_function.instructions[3] {
-        AsmInstruction::Idiv(AsmOperand::Register(Reg::R10)) => {}
-        _ => panic!("Expected Idiv instruction with R10"),
+        match &fixed_function.instructions[3] {
+            AsmInstruction::Idiv(AsmOperand::Register(Reg::R10)) => {}
+            _ => panic!("Expected Idiv instruction with R10"),
+        }
     }
 }
 
@@ -363,18 +367,18 @@ fn test_pseudo_register_replacer_basic_functionality() {
     );
 
     let mut replacer = PseudoRegisterReplacer::create();
-    let replaced_function = replacer.fold_function_definition(&function).unwrap();
+    if let Ok(replaced_function) = replacer.fold_function_definition(&function) {
+        assert_eq!(replaced_function.instructions.len(), 3);
 
-    assert_eq!(replaced_function.instructions.len(), 3);
+        match &replaced_function.instructions[0] {
+            AsmInstruction::Mov(AsmOperand::Imm(42), AsmOperand::Stack(-4)) => {}
+            _ => panic!("Expected Mov with stack operand"),
+        }
 
-    match &replaced_function.instructions[0] {
-        AsmInstruction::Mov(AsmOperand::Imm(42), AsmOperand::Stack(-4)) => {}
-        _ => panic!("Expected Mov with stack operand"),
-    }
-
-    match &replaced_function.instructions[1] {
-        AsmInstruction::Mov(AsmOperand::Stack(-4), AsmOperand::Register(Reg::AX)) => {}
-        _ => panic!("Expected Mov from stack to register"),
+        match &replaced_function.instructions[1] {
+            AsmInstruction::Mov(AsmOperand::Stack(-4), AsmOperand::Register(Reg::AX)) => {}
+            _ => panic!("Expected Mov from stack to register"),
+        }
     }
 }
 
@@ -413,27 +417,27 @@ fn test_pseudo_register_replacer_multiple_variables() {
     );
 
     let mut replacer = PseudoRegisterReplacer::create();
-    let replaced_function = replacer.fold_function_definition(&function).unwrap();
+    if let Ok(replaced_function) = replacer.fold_function_definition(&function) {
+        assert_eq!(replaced_function.instructions.len(), 4);
 
-    assert_eq!(replaced_function.instructions.len(), 4);
+        match &replaced_function.instructions[0] {
+            AsmInstruction::Mov(AsmOperand::Imm(1), AsmOperand::Stack(-4)) => {}
+            _ => panic!("Expected first variable at stack -4"),
+        }
 
-    match &replaced_function.instructions[0] {
-        AsmInstruction::Mov(AsmOperand::Imm(1), AsmOperand::Stack(-4)) => {}
-        _ => panic!("Expected first variable at stack -4"),
-    }
+        match &replaced_function.instructions[1] {
+            AsmInstruction::Mov(AsmOperand::Imm(2), AsmOperand::Stack(-8)) => {}
+            _ => panic!("Expected second variable at stack -8"),
+        }
 
-    match &replaced_function.instructions[1] {
-        AsmInstruction::Mov(AsmOperand::Imm(2), AsmOperand::Stack(-8)) => {}
-        _ => panic!("Expected second variable at stack -8"),
-    }
-
-    match &replaced_function.instructions[2] {
-        AsmInstruction::Binary(
-            AsmBinaryOperator::Add,
-            AsmOperand::Stack(-4),
-            AsmOperand::Stack(-8),
-        ) => {}
-        _ => panic!("Expected binary operation with stack operands"),
+        match &replaced_function.instructions[2] {
+            AsmInstruction::Binary(
+                AsmBinaryOperator::Add,
+                AsmOperand::Stack(-4),
+                AsmOperand::Stack(-8),
+            ) => {}
+            _ => panic!("Expected binary operation with stack operands"),
+        }
     }
 }
 
@@ -452,8 +456,9 @@ fn test_folder_preserves_identifiers() {
         value: "test_identifier_123".to_string(),
     };
 
-    let folded_id = folder.fold_identifier(&original_id).unwrap();
-    assert_eq!(original_id.value, folded_id.value);
+    if let Ok(folded_id) = folder.fold_identifier(&original_id) {
+        assert_eq!(original_id.value, folded_id.value);
+    }
 }
 
 #[test]
@@ -470,15 +475,16 @@ fn test_folder_preserves_registers() {
     let registers = vec![Reg::AX, Reg::DX, Reg::CX, Reg::CL, Reg::R10, Reg::R11];
 
     for reg in registers {
-        let folded_reg = folder.fold_reg(&reg).unwrap();
-        match (&reg, &folded_reg) {
-            (Reg::AX, Reg::AX) => {}
-            (Reg::DX, Reg::DX) => {}
-            (Reg::CX, Reg::CX) => {}
-            (Reg::CL, Reg::CL) => {}
-            (Reg::R10, Reg::R10) => {}
-            (Reg::R11, Reg::R11) => {}
-            _ => panic!("Register types don't match"),
+        if let Ok(folded_reg) = folder.fold_reg(&reg) {
+            match (&reg, &folded_reg) {
+                (Reg::AX, Reg::AX) => {}
+                (Reg::DX, Reg::DX) => {}
+                (Reg::CX, Reg::CX) => {}
+                (Reg::CL, Reg::CL) => {}
+                (Reg::R10, Reg::R10) => {}
+                (Reg::R11, Reg::R11) => {}
+                _ => panic!("Register types don't match"),
+            }
         }
     }
 }

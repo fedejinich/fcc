@@ -1,5 +1,5 @@
-use fcc::driver::CompilerDriver;
 use clap::Parser;
+use fcc::driver::CompilerDriver;
 
 #[test]
 fn test_compiler_driver_creation() {
@@ -94,7 +94,9 @@ fn test_preprocess_invalid_extension() {
     let result = driver.preprocess("test.txt");
 
     assert!(result.is_err());
-    assert_eq!(result.expect_err("Expected error for invalid extension"), "SOURCE_FILE should have a .c file extension");
+    if let Err(error) = result {
+        assert_eq!(error, "SOURCE_FILE should have a .c file extension");
+    }
 }
 
 #[test]
@@ -103,7 +105,9 @@ fn test_preprocess_nonexistent_file() {
     let result = driver.preprocess("nonexistent.c");
 
     assert!(result.is_err());
-    assert_eq!(result.expect_err("Expected error for nonexistent file"), "source file does not exist");
+    if let Err(error) = result {
+        assert_eq!(error, "source file does not exist");
+    }
 }
 
 #[test]
@@ -113,7 +117,9 @@ fn test_preprocess_valid_extension_generates_correct_output() {
     let result = driver.preprocess("nonexistent.c");
 
     assert!(result.is_err());
-    assert_eq!(result.expect_err("Expected error for nonexistent file"), "source file does not exist");
+    if let Err(error) = result {
+        assert_eq!(error, "source file does not exist");
+    }
 }
 
 #[test]
