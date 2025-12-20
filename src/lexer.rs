@@ -234,7 +234,7 @@ mod tests {
     #[test]
     fn binary_operator_count_test() {
         let bin_op = binary_operators();
-        assert_eq!(bin_op.len(), 19);
+        assert_eq!(bin_op.len(), 20);
     }
 
     #[test]
