@@ -34,7 +34,5 @@ fn main() {
 
     debug!("{:?}", driver);
 
-    let Ok(_) = driver.build_program() else {
-        panic!("fcc failed to build program");
-    };
+    driver.build_program().expect("fcc")
 }
