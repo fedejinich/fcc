@@ -4,7 +4,7 @@
 // and other external crates. It makes all the main modules available
 // for unit testing and integration.
 
-pub mod ast;
+pub mod c_ast;
 pub mod codegen;
 pub mod driver;
 pub mod lexer;

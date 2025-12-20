@@ -5,7 +5,7 @@ use log::debug;
 
 use crate::driver::CompilerDriver;
 
-mod ast;
+mod c_ast;
 mod codegen;
 mod driver;
 mod lexer;

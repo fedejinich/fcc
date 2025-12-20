@@ -1,5 +1,5 @@
 use crate::{
-    common::util::indent, tacky::program::{
+    common::util::indent, tacky::ast::{
         TackyBinaryOperator, TackyFunctionDefinition, TackyInstruction, TackyProgram,
         TackyUnaryOperator, TackyValue,
     }

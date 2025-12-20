@@ -3,7 +3,7 @@ use std::{iter::Peekable, slice::Iter};
 use log::{debug, trace};
 
 use crate::{
-    ast::program::{
+    c_ast::ast::{
         BinaryOperator, BlockItem, Declaration, Expression, FunctionDefinition, Identifier,
         Program, Statement, UnaryOperator,
     },

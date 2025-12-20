@@ -1,4 +1,4 @@
 pub mod display;
 pub mod parser;
-pub mod program;
+pub mod ast;
 pub mod semantic;

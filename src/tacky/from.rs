@@ -3,11 +3,11 @@
 use log::{debug, trace};
 
 use crate::{
-    ast::program::{
+    c_ast::ast::{
         BinaryOperator, BlockItem, Declaration, Expression, FunctionDefinition, Identifier,
         Program, Statement, UnaryOperator,
     },
-    tacky::program::{
+    tacky::ast::{
         TackyBinaryOperator, TackyFunctionDefinition, TackyIdentifier, TackyInstruction,
         TackyProgram, TackyUnaryOperator, TackyValue,
     },

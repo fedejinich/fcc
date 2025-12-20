@@ -1,4 +1,4 @@
-use fcc::ast::program::{
+use fcc::c_ast::ast::{
     BinaryOperator, BlockItem, Declaration, Expression, FunctionDefinition,
     Identifier, Program, Statement, UnaryOperator
 };

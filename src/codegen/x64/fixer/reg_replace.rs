@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use log::{debug, trace};
 
 use crate::{
-    codegen::x64::asm::{AsmFunctionDefinition, AsmInstruction, AsmOperand},
+    codegen::x64::ast::{AsmFunctionDefinition, AsmInstruction, AsmOperand},
     common::folder::FolderAsm,
 };
 

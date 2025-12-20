@@ -1,12 +1,12 @@
-use crate::ast::program::{
+use crate::c_ast::ast::{
     BinaryOperator, BlockItem, Declaration, Expression, FunctionDefinition, Identifier, Program,
     Statement, UnaryOperator,
 };
-use crate::codegen::x64::asm::{
+use crate::codegen::x64::ast::{
     AsmBinaryOperator, AsmCondCode, AsmFunctionDefinition, AsmIdetifier, AsmInstruction,
     AsmOperand, AsmProgram, AsmUnaryOperator, Reg,
 };
-use crate::tacky::program::{
+use crate::tacky::ast::{
     TackyBinaryOperator, TackyFunctionDefinition, TackyIdentifier, TackyInstruction, TackyProgram,
     TackyUnaryOperator, TackyValue,
 };
@@ -42,10 +42,9 @@ pub trait Folder {
     }
 
     fn fold_block_item(&mut self, item: &BlockItem) -> Result<BlockItem, String> {
-        use BlockItem::*;
         match item {
-            S(statement) => Ok(S(self.fold_statement(statement)?)),
-            D(declaration) => Ok(D(self.fold_declaration(declaration)?)),
+            BlockItem::D(declaration) => Ok(BlockItem::D(self.fold_declaration(declaration)?)),
+            BlockItem::S(statement) => Ok(BlockItem::S(self.fold_statement(statement)?)),
         }
     }
 
@@ -61,11 +60,10 @@ pub trait Folder {
     }
 
     fn fold_statement(&mut self, statement: &Statement) -> Result<Statement, String> {
-        use Statement::*;
         match statement {
-            Return(expr) => Ok(Return(self.fold_expression(expr)?)),
-            Expression(expr) => Ok(Expression(self.fold_expression(expr)?)),
-            If(expr, then, el) => Ok(If(
+            Statement::Return(expr) => Ok(Statement::Return(self.fold_expression(expr)?)),
+            Statement::Expression(expr) => Ok(Statement::Expression(self.fold_expression(expr)?)),
+            Statement::If(expr, then, el) => Ok(Statement::If(
                 Box::new(self.fold_expression(expr)?),
                 Box::new(self.fold_statement(then)?),
                 if let Some(el) = el {
@@ -74,29 +72,28 @@ pub trait Folder {
                     None
                 },
             )),
-            Null => Ok(Null),
+            Statement::Null => Ok(Statement::Null),
         }
     }
 
     fn fold_expression(&mut self, expression: &Expression) -> Result<Expression, String> {
-        use Expression::*;
         match expression {
-            Constant(value) => Ok(Constant(*value)),
-            Var(identifier) => Ok(Var(self.fold_identifier(identifier)?)),
-            Unary(op, expr) => Ok(Unary(
+            Expression::Constant(value) => Ok(Expression::Constant(*value)),
+            Expression::Var(identifier) => Ok(Expression::Var(self.fold_identifier(identifier)?)),
+            Expression::Unary(op, expr) => Ok(Expression::Unary(
                 self.fold_unary_operator(op)?,
                 Box::new(self.fold_expression(expr)?),
             )),
-            Binary(op, left, right) => Ok(Binary(
+            Expression::Binary(op, left, right) => Ok(Expression::Binary(
                 self.fold_binary_operator(op)?,
                 Box::new(self.fold_expression(left)?),
                 Box::new(self.fold_expression(right)?),
             )),
-            Assignment(left, right) => Ok(Assignment(
+            Expression::Assignment(left, right) => Ok(Expression::Assignment(
                 Box::new(self.fold_expression(left)?),
                 Box::new(self.fold_expression(right)?),
             )),
-            Conditional(cond, then, el) => Ok(Conditional(
+            Expression::Conditional(cond, then, el) => Ok(Expression::Conditional(
                 Box::new(self.fold_expression(cond)?),
                 Box::new(self.fold_expression(then)?),
                 Box::new(self.fold_expression(el)?),

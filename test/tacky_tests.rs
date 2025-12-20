@@ -1,4 +1,4 @@
-use fcc::tacky::program::{
+use fcc::tacky::ast::{
     TackyBinaryOperator, TackyFunctionDefinition, TackyIdentifier,
     TackyInstruction, TackyProgram, TackyUnaryOperator, TackyValue
 };

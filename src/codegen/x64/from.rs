@@ -1,6 +1,6 @@
 use log::debug;
 
-use crate::{codegen::x64::asm::{AsmBinaryOperator, AsmCondCode, AsmFunctionDefinition, AsmIdetifier, AsmInstruction, AsmOperand, AsmProgram, AsmUnaryOperator, Reg}, tacky::program::{TackyBinaryOperator, TackyFunctionDefinition, TackyIdentifier, TackyInstruction, TackyProgram, TackyUnaryOperator, TackyValue}};
+use crate::{codegen::x64::ast::{AsmBinaryOperator, AsmCondCode, AsmFunctionDefinition, AsmIdetifier, AsmInstruction, AsmOperand, AsmProgram, AsmUnaryOperator, Reg}, tacky::ast::{TackyBinaryOperator, TackyFunctionDefinition, TackyIdentifier, TackyInstruction, TackyProgram, TackyUnaryOperator, TackyValue}};
 
 impl From<TackyProgram> for AsmProgram {
     fn from(tacky_program: TackyProgram) -> Self {

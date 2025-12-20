@@ -6,7 +6,7 @@ use std::{
 use log::{debug, trace};
 
 use crate::{
-    ast::program::{Declaration, Expression, Identifier},
+    c_ast::ast::{Declaration, Expression, Identifier},
     common::folder::Folder,
 };
 

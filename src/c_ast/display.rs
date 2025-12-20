@@ -1,7 +1,7 @@
 use std::fmt;
 
 use crate::{
-    ast::program::{
+    c_ast::ast::{
         BinaryOperator, BlockItem, Declaration, Expression, FunctionDefinition, Program, Statement,
         UnaryOperator,
     },
