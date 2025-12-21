@@ -44,13 +44,11 @@ impl FolderC for VariableResolver {
     }
 
     fn fold_expression(&mut self, expr: &Expression) -> Result<Expression, String> {
-        use Expression::*;
-
         trace!("resolving expression: {expr:?}");
 
         let res = match expr {
-            Assignment(left, right) => match **left {
-                Var(_) => Assignment(
+            Expression::Assignment(left, right) => match **left {
+                Expression::Var(_) => Expression::Assignment(
                     Box::new(self.fold_expression(left)?),
                     Box::new(self.fold_expression(right)?),
                 ),
@@ -58,23 +56,26 @@ impl FolderC for VariableResolver {
                     return Err("invalid lvalue".to_string());
                 }
             },
-            Var(id) => {
+            Expression::Var(id) => {
                 if let Some(v) = self.variable_map.get(&id.value) {
-                    Var(Identifier::new(v.clone()))
+                    Expression::Var(Identifier::new(v.clone()))
                 } else {
                     debug!("undeclared variable: {expr}");
+
                     return Err("undeclared variable".to_string());
                 }
             }
             // TODO: this should be refactored by a call to the super method
-            Unary(op, expr) => Unary(op.clone(), Box::new(self.fold_expression(expr)?)),
-            Binary(op, left, right) => Binary(
+            Expression::Unary(op, expr) => {
+                Expression::Unary(op.clone(), Box::new(self.fold_expression(expr)?))
+            }
+            Expression::Binary(op, left, right) => Expression::Binary(
                 op.clone(),
                 Box::new(self.fold_expression(left)?),
                 Box::new(self.fold_expression(right)?),
             ),
-            Constant(c) => Constant(*c),
-            Conditional(cond, then, el) => Conditional(
+            Expression::Constant(c) => Expression::Constant(*c),
+            Expression::Conditional(cond, then, el) => Expression::Conditional(
                 Box::new(self.fold_expression(cond)?),
                 Box::new(self.fold_expression(then)?),
                 Box::new(self.fold_expression(el)?),
