@@ -140,7 +140,7 @@ impl Statement {
 
                 Statement::Return(expr)
             }
-            Token::Identifier(s) if s == "if" => {
+            Token::If => {
                 trace!(
                     "Parsing <statement> ::= if ( <exp> ) then <statement> [else <statement>] ;"
                 );
@@ -164,7 +164,7 @@ impl Statement {
                 trace!("Parsing <statement> ::= <exp> ;");
 
                 let exp = Expression::parse_exp(tokens, 0)?;
-                trace!("aca");
+
                 token_eq(Token::Semicolon, tokens)?;
 
                 Statement::Expression(exp)
@@ -206,7 +206,6 @@ impl Expression {
                     left =
                         Expression::Conditional(Box::new(left), Box::new(middle), Box::new(right));
                 }
-                // TODO: still need to implement IF statement
                 _ => {
                     let op = BinaryOperator::parse_bin(tokens)?;
                     trace!(

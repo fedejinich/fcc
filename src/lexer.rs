@@ -141,6 +141,7 @@ fn build_identifier_or_keyword(s: String) -> Token {
         "int" => Token::Int,
         "void" => Token::Void,
         "return" => Token::Return,
+        "if" => Token::If,
         _ => Token::Identifier(s),
     }
 }
