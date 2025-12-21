@@ -5,12 +5,12 @@ use log::debug;
 
 use crate::driver::CompilerDriver;
 
-mod ast;
+mod c_ast;
 mod codegen;
+mod common;
 mod driver;
 mod lexer;
 mod tacky;
-mod common;
 
 pub fn title() -> String {
     String::from(
@@ -27,14 +27,12 @@ pub fn title() -> String {
 }
 
 fn main() {
-    let driver = CompilerDriver::parse();
-    driver.init_logging();
+    let comp_driver = CompilerDriver::parse();
+    comp_driver.init_logging();
 
     println!("{}\n", title());
 
-    debug!("{:?}", driver);
+    debug!("{:?}", comp_driver);
 
-    let Ok(_) = driver.build_program() else {
-        panic!("fcc failed to build program");
-    };
+    comp_driver.build_program().expect("fcc")
 }

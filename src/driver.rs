@@ -3,15 +3,15 @@ use std::{fs, path::Path, process::Command};
 use clap::Parser;
 use log::{debug, info, trace};
 
-use crate::ast::program::Program;
-use crate::ast::semantic::validate::validate_semantics;
-use crate::codegen::x64::asm::AsmProgram;
+use crate::c_ast::ast::Program;
+use crate::c_ast::semantic::validate::validate_semantics;
+use crate::codegen::x64::ast::AsmProgram;
 use crate::codegen::x64::fixer::reg_replace::PseudoRegisterReplacer;
 use crate::codegen::x64::fixer::instruction_fix::InstructionFixer;
 use crate::common::folder::FolderAsm;
 use crate::common::util::replace_c_with_i;
 use crate::lexer::lex;
-use crate::tacky::program::TackyProgram;
+use crate::tacky::ast::TackyProgram;
 
 #[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]

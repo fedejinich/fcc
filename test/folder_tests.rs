@@ -1,4 +1,4 @@
-use fcc::codegen::x64::asm::{
+use fcc::codegen::x64::ast::{
     AsmBinaryOperator, AsmCondCode, AsmFunctionDefinition, AsmIdetifier, AsmInstruction,
     AsmOperand, AsmProgram, AsmUnaryOperator, Reg,
 };

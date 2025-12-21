@@ -2,7 +2,7 @@ use std::fmt::{self};
 
 use log::debug;
 
-use crate::codegen::x64::asm::{
+use crate::codegen::x64::ast::{
     AsmBinaryOperator, AsmCondCode, AsmFunctionDefinition, AsmInstruction, AsmOperand, AsmProgram,
     AsmUnaryOperator, Reg,
 };

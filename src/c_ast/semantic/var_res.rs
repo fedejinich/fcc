@@ -6,8 +6,8 @@ use std::{
 use log::{debug, trace};
 
 use crate::{
-    ast::program::{Declaration, Expression, Identifier, Statement},
-    common::folder::Folder,
+    c_ast::ast::{Declaration, Expression, Identifier},
+    common::folder::FolderC,
 };
 
 #[derive(Default)]
@@ -16,18 +16,12 @@ pub struct VariableResolver {
 }
 
 impl VariableResolver {
-    pub fn with(&mut self, variable_map: &HashMap<String, String>) -> Self {
-        Self {
-            variable_map: variable_map.clone(),
-        }
+    pub fn new() -> Self {
+        Self::default()
     }
 }
 
-impl Folder for VariableResolver {
-    fn create() -> Self {
-        Self::default()
-    }
-
+impl FolderC for VariableResolver {
     fn fold_declaration(&mut self, declaration: &Declaration) -> Result<Declaration, String> {
         trace!("resolving declaration: {declaration:?}");
 
@@ -49,36 +43,12 @@ impl Folder for VariableResolver {
         Ok(Declaration::new(Identifier::new(unique_name), init))
     }
 
-    fn fold_statement(
-        &mut self,
-        statement: &Statement,
-        // variable_map: &HashMap<String, String>,
-    ) -> Result<Statement, String> {
-        use Statement::*;
-
-        trace!("resolving statement: {statement:?}");
-
-        let res = match statement {
-            Return(expr) => Return(self.fold_expression(expr)?),
-            Expression(expr) => Expression(self.fold_expression(expr)?),
-            Null => Null,
-        };
-
-        Ok(res)
-    }
-
-    fn fold_expression(
-        &mut self,
-        expr: &Expression,
-        // variable_map: &HashMap<String, String>,
-    ) -> Result<Expression, String> {
-        use Expression::*;
-
+    fn fold_expression(&mut self, expr: &Expression) -> Result<Expression, String> {
         trace!("resolving expression: {expr:?}");
 
         let res = match expr {
-            Assignment(left, right) => match **left {
-                Var(_) => Assignment(
+            Expression::Assignment(left, right) => match **left {
+                Expression::Var(_) => Expression::Assignment(
                     Box::new(self.fold_expression(left)?),
                     Box::new(self.fold_expression(right)?),
                 ),
@@ -86,21 +56,30 @@ impl Folder for VariableResolver {
                     return Err("invalid lvalue".to_string());
                 }
             },
-            Var(id) => {
+            Expression::Var(id) => {
                 if let Some(v) = self.variable_map.get(&id.value) {
-                    Var(Identifier::new(v.clone()))
+                    Expression::Var(Identifier::new(v.clone()))
                 } else {
                     debug!("undeclared variable: {expr}");
+
                     return Err("undeclared variable".to_string());
                 }
             }
-            Unary(op, expr) => Unary(op.clone(), Box::new(self.fold_expression(expr)?)),
-            Binary(op, left, right) => Binary(
+            // TODO: this should be refactored by a call to the super method
+            Expression::Unary(op, expr) => {
+                Expression::Unary(op.clone(), Box::new(self.fold_expression(expr)?))
+            }
+            Expression::Binary(op, left, right) => Expression::Binary(
                 op.clone(),
                 Box::new(self.fold_expression(left)?),
                 Box::new(self.fold_expression(right)?),
             ),
-            Constant(c) => Constant(*c),
+            Expression::Constant(c) => Expression::Constant(*c),
+            Expression::Conditional(cond, then, el) => Expression::Conditional(
+                Box::new(self.fold_expression(cond)?),
+                Box::new(self.fold_expression(then)?),
+                Box::new(self.fold_expression(el)?),
+            ),
         };
 
         Ok(res)

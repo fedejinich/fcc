@@ -1,30 +1,38 @@
-use crate::ast::program::{
+use crate::c_ast::ast::{
     BinaryOperator, BlockItem, Declaration, Expression, FunctionDefinition, Identifier, Program,
     Statement, UnaryOperator,
 };
-use crate::codegen::x64::asm::{
+use crate::codegen::x64::ast::{
     AsmBinaryOperator, AsmCondCode, AsmFunctionDefinition, AsmIdetifier, AsmInstruction,
     AsmOperand, AsmProgram, AsmUnaryOperator, Reg,
 };
-use crate::tacky::program::{
+use crate::tacky::ast::{
     TackyBinaryOperator, TackyFunctionDefinition, TackyIdentifier, TackyInstruction, TackyProgram,
     TackyUnaryOperator, TackyValue,
 };
 
-/// A folder is a trait that can be used to fold an AST into another AST.
-pub trait Folder {
-    fn create() -> Self
-    where
-        Self: Default,
-    {
-        Self::default()
-    }
+/// A 'folder' is a trait that can be used to fold a C AST into another C AST.
+/// In this trait we provide the default implementation to traverse the entire AST and return
+/// another AST. This is useful when we want to traverse the AST and perform some operation on a
+/// specific node type.
+pub trait FolderC {
+    // fn create() -> Self
+    // where
+    //     Self: Default,
+    // {
+    //     Self::default()
+    // }
 
     fn fold_program(&mut self, program: &Program) -> Result<Program, String> {
-        Ok(Program::new(self.fold_function_definition(&program.function_definition)?))
+        Ok(Program::new(
+            self.fold_function_definition(&program.function_definition)?,
+        ))
     }
 
-    fn fold_function_definition(&mut self, function: &FunctionDefinition) -> Result<FunctionDefinition, String> {
+    fn fold_function_definition(
+        &mut self,
+        function: &FunctionDefinition,
+    ) -> Result<FunctionDefinition, String> {
         let body: Result<Vec<_>, String> = function
             .body
             .iter()
@@ -37,10 +45,9 @@ pub trait Folder {
     }
 
     fn fold_block_item(&mut self, item: &BlockItem) -> Result<BlockItem, String> {
-        use BlockItem::*;
         match item {
-            S(statement) => Ok(S(self.fold_statement(statement)?)),
-            D(declaration) => Ok(D(self.fold_declaration(declaration)?)),
+            BlockItem::D(declaration) => Ok(BlockItem::D(self.fold_declaration(declaration)?)),
+            BlockItem::S(statement) => Ok(BlockItem::S(self.fold_statement(statement)?)),
         }
     }
 
@@ -56,31 +63,43 @@ pub trait Folder {
     }
 
     fn fold_statement(&mut self, statement: &Statement) -> Result<Statement, String> {
-        use Statement::*;
         match statement {
-            Return(expr) => Ok(Return(self.fold_expression(expr)?)),
-            Expression(expr) => Ok(Expression(self.fold_expression(expr)?)),
-            Null => Ok(Null),
+            Statement::Return(expr) => Ok(Statement::Return(self.fold_expression(expr)?)),
+            Statement::Expression(expr) => Ok(Statement::Expression(self.fold_expression(expr)?)),
+            Statement::If(expr, then, el) => Ok(Statement::If(
+                Box::new(self.fold_expression(expr)?),
+                Box::new(self.fold_statement(then)?),
+                if let Some(el) = el {
+                    Some(Box::new(self.fold_statement(el)?))
+                } else {
+                    None
+                },
+            )),
+            Statement::Null => Ok(Statement::Null),
         }
     }
 
     fn fold_expression(&mut self, expression: &Expression) -> Result<Expression, String> {
-        use Expression::*;
         match expression {
-            Constant(value) => Ok(Constant(*value)),
-            Var(identifier) => Ok(Var(self.fold_identifier(identifier)?)),
-            Unary(op, expr) => Ok(Unary(
+            Expression::Constant(value) => Ok(Expression::Constant(*value)),
+            Expression::Var(identifier) => Ok(Expression::Var(self.fold_identifier(identifier)?)),
+            Expression::Unary(op, expr) => Ok(Expression::Unary(
                 self.fold_unary_operator(op)?,
                 Box::new(self.fold_expression(expr)?),
             )),
-            Binary(op, left, right) => Ok(Binary(
+            Expression::Binary(op, left, right) => Ok(Expression::Binary(
                 self.fold_binary_operator(op)?,
                 Box::new(self.fold_expression(left)?),
                 Box::new(self.fold_expression(right)?),
             )),
-            Assignment(left, right) => Ok(Assignment(
+            Expression::Assignment(left, right) => Ok(Expression::Assignment(
                 Box::new(self.fold_expression(left)?),
                 Box::new(self.fold_expression(right)?),
+            )),
+            Expression::Conditional(cond, then, el) => Ok(Expression::Conditional(
+                Box::new(self.fold_expression(cond)?),
+                Box::new(self.fold_expression(then)?),
+                Box::new(self.fold_expression(el)?),
             )),
         }
     }
@@ -93,7 +112,10 @@ pub trait Folder {
         Ok(operator.clone())
     }
 
-    fn fold_binary_operator(&mut self, operator: &BinaryOperator) -> Result<BinaryOperator, String> {
+    fn fold_binary_operator(
+        &mut self,
+        operator: &BinaryOperator,
+    ) -> Result<BinaryOperator, String> {
         Ok(operator.clone())
     }
 }
@@ -108,7 +130,9 @@ pub trait FolderTacky {
     }
 
     fn fold_program(&mut self, program: &TackyProgram) -> Result<TackyProgram, String> {
-        Ok(TackyProgram::new(self.fold_function_definition(&program.function_definition)?))
+        Ok(TackyProgram::new(
+            self.fold_function_definition(&program.function_definition)?,
+        ))
     }
 
     fn fold_function_definition(
@@ -127,9 +151,13 @@ pub trait FolderTacky {
         ))
     }
 
-    fn fold_instruction(&mut self, instruction: &TackyInstruction) -> Result<Vec<TackyInstruction>, String> {
+    fn fold_instruction(
+        &mut self,
+        instruction: &TackyInstruction,
+    ) -> Result<Vec<TackyInstruction>, String> {
         use TackyInstruction::*;
         let res = match instruction {
+            Comment(comment) => Comment(comment.clone()),
             Return(value) => Return(self.fold_value(value)?),
             Unary(op, src, dst) => Unary(
                 self.fold_unary_operator(op)?,
@@ -157,10 +185,9 @@ pub trait FolderTacky {
     }
 
     fn fold_value(&mut self, value: &TackyValue) -> Result<TackyValue, String> {
-        use TackyValue::*;
         match value {
-            Constant(val) => Ok(Constant(*val)),
-            Var(identifier) => Ok(Var(self.fold_identifier(identifier)?)),
+            TackyValue::Constant(val) => Ok(TackyValue::Constant(*val)),
+            TackyValue::Var(identifier) => Ok(TackyValue::Var(self.fold_identifier(identifier)?)),
         }
     }
 
@@ -168,11 +195,17 @@ pub trait FolderTacky {
         Ok(identifier.clone())
     }
 
-    fn fold_unary_operator(&mut self, operator: &TackyUnaryOperator) -> Result<TackyUnaryOperator, String> {
+    fn fold_unary_operator(
+        &mut self,
+        operator: &TackyUnaryOperator,
+    ) -> Result<TackyUnaryOperator, String> {
         Ok(operator.clone())
     }
 
-    fn fold_binary_operator(&mut self, operator: &TackyBinaryOperator) -> Result<TackyBinaryOperator, String> {
+    fn fold_binary_operator(
+        &mut self,
+        operator: &TackyBinaryOperator,
+    ) -> Result<TackyBinaryOperator, String> {
         Ok(operator.clone())
     }
 }
@@ -187,7 +220,9 @@ pub trait FolderAsm {
     }
 
     fn fold_program(&mut self, program: &AsmProgram) -> Result<AsmProgram, String> {
-        Ok(AsmProgram::new(self.fold_function_definition(&program.function_definition)?))
+        Ok(AsmProgram::new(
+            self.fold_function_definition(&program.function_definition)?,
+        ))
     }
 
     fn fold_function_definition(
@@ -206,7 +241,10 @@ pub trait FolderAsm {
         ))
     }
 
-    fn fold_instruction(&mut self, instruction: &AsmInstruction) -> Result<Vec<AsmInstruction>, String> {
+    fn fold_instruction(
+        &mut self,
+        instruction: &AsmInstruction,
+    ) -> Result<Vec<AsmInstruction>, String> {
         use AsmInstruction::*;
         let res = match instruction {
             Comment(comment) => Comment(comment.clone()),
@@ -221,9 +259,10 @@ pub trait FolderAsm {
             Idiv(operand) => Idiv(self.fold_operand(operand)?),
             Cdq => Cdq,
             Jmp(identifier) => Jmp(self.fold_identifier(identifier)?),
-            JmpCC(code, identifier) => {
-                JmpCC(self.fold_cond_code(code)?, self.fold_identifier(identifier)?)
-            }
+            JmpCC(code, identifier) => JmpCC(
+                self.fold_cond_code(code)?,
+                self.fold_identifier(identifier)?,
+            ),
             SetCC(code, operand) => SetCC(self.fold_cond_code(code)?, self.fold_operand(operand)?),
             Label(identifier) => Label(self.fold_identifier(identifier)?),
             AllocateStack(size) => AllocateStack(*size),
@@ -247,11 +286,17 @@ pub trait FolderAsm {
         Ok(identifier.clone())
     }
 
-    fn fold_unary_operator(&mut self, operator: &AsmUnaryOperator) -> Result<AsmUnaryOperator, String> {
+    fn fold_unary_operator(
+        &mut self,
+        operator: &AsmUnaryOperator,
+    ) -> Result<AsmUnaryOperator, String> {
         Ok(operator.clone())
     }
 
-    fn fold_binary_operator(&mut self, operator: &AsmBinaryOperator) -> Result<AsmBinaryOperator, String> {
+    fn fold_binary_operator(
+        &mut self,
+        operator: &AsmBinaryOperator,
+    ) -> Result<AsmBinaryOperator, String> {
         Ok(operator.clone())
     }
 

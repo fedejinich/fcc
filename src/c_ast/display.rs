@@ -1,10 +1,11 @@
 use std::fmt;
 
 use crate::{
-    ast::program::{
+    c_ast::ast::{
         BinaryOperator, BlockItem, Declaration, Expression, FunctionDefinition, Program, Statement,
         UnaryOperator,
-    }, common::util::indent,
+    },
+    common::util::indent,
 };
 
 impl fmt::Display for Program {
@@ -77,6 +78,19 @@ impl fmt::Display for Statement {
                 writeln!(f, "Expression(")?;
                 write!(f, "{}\n)", indent(&expr.to_string(), 4))
             }
+            Statement::If(cond, then, else_) => {
+                writeln!(f, "If(")?;
+                if let Some(e) = else_ {
+                    write!(
+                        f,
+                        "{}\n)",
+                        indent(&format!("cond={cond}, then={then}, else={e}"), 4)
+                    )?;
+                } else {
+                    write!(f, "{}\n)", indent(&format!("cond={cond}, then={then}"), 4))?;
+                }
+                writeln!(f, ")")
+            }
             Statement::Null => writeln!(f, "Null"),
         }
     }
@@ -92,6 +106,9 @@ impl fmt::Display for Expression {
             }
             Expression::Assignment(left, right) => write!(f, "Assignment({left}, {right})"),
             Expression::Var(id) => write!(f, "Var({})", id.value),
+            Expression::Conditional(cond, then, el) => {
+                write!(f, "Conditional({cond}, {then}, {el})")
+            }
         }
     }
 }

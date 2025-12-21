@@ -1,8 +1,9 @@
 use crate::{
-    common::util::indent, tacky::program::{
+    common::util::indent,
+    tacky::ast::{
         TackyBinaryOperator, TackyFunctionDefinition, TackyInstruction, TackyProgram,
         TackyUnaryOperator, TackyValue,
-    }
+    },
 };
 
 impl TackyProgram {
@@ -37,6 +38,7 @@ impl TackyFunctionDefinition {
 impl TackyInstruction {
     pub fn pretty_print(&self) -> String {
         match self {
+            TackyInstruction::Comment(comment) => format!("# {}", comment),
             TackyInstruction::Return(value) => {
                 format!("Return(\n{}\n)", indent(&value.pretty_print(), 4))
             }

@@ -15,6 +15,7 @@ pub struct TackyFunctionDefinition {
 
 #[derive(Clone, Debug)]
 pub enum TackyInstruction {
+    Comment(String),
     Return(TackyValue),
     Unary(TackyUnaryOperator, TackyValue, TackyValue),
     Binary(TackyBinaryOperator, TackyValue, TackyValue, TackyValue),
