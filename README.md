@@ -1,6 +1,13 @@
 # FCC - C Compiler
 
-A C compiler implementation written in Rust.
+A Rust implementation of a C compiler for a small language subset, inspired by Nora Sandler's [C Compiler book](https://norasandler.com/book/).
+
+## Requirements
+
+- Rust (1.70+)
+- GCC
+
+> **Note**: On Mac with Apple Silicon, the compiler generates x86_64 code. Run `arch -x86_64 zsh` before running tests or compiled binaries.
 
 ## Usage
 
@@ -8,31 +15,42 @@ A C compiler implementation written in Rust.
 # Compile a C file
 ./fcc program.c
 
-# Available flags
+# Help
 ./fcc --help
 ```
 
-## Building
+### Available flags
+
+```bash
+# Stop at specific compilation stages
+./fcc program.c --lex        # Stop after lexing
+./fcc program.c --parse      # Stop after parsing
+./fcc program.c --validate   # Stop after semantic analysis
+./fcc program.c --tacky      # Stop after generating TACKY IR
+./fcc program.c --codegen    # Stop after generating assembly
+
+# Debug output
+./fcc program.c --debug       # Enable debug logging
+./fcc program.c --trace       # Enable verbose logging
+./fcc program.c --print-ast   # Print the AST
+./fcc program.c --print-tacky # Print the TACKY IR
+```
+
+## Build
 
 ```bash
 cargo build --release
 ```
 
-## Testing
+## Test
 
 The project includes comprehensive unit tests:
 
 ```bash
-# Note: Some integration tests may fail without test files
-cargo test --lib  # Run only library tests
+bash tests.sh # runs tests for all chapters
 ```
 
-## Project Structure
+## Progress
 
-- `src/lexer.rs` - Tokenization
-- `src/ast/` - Abstract syntax tree and parsing
-- `src/tacky/` - Intermediate representation
-- `src/codegen/` - Assembly code generation
-- `src/driver.rs` - CLI and compilation pipeline
-- `test/` - Unit tests (84 tests total)
-
+- [x] Chapter 1-4: Expressions and operators
+- [ ] Chapter 5: Local variables
