@@ -27,6 +27,7 @@ impl From<TackyFunctionDefinition> for AsmFunctionDefinition {
 impl AsmInstruction {
     fn from(tacky_instruction: TackyInstruction) -> Vec<AsmInstruction> {
         match tacky_instruction {
+            TackyInstruction::Comment(_) => vec![],
             TackyInstruction::Return(val) => vec![
                 AsmInstruction::Mov(AsmOperand::from(val), AsmOperand::Register(Reg::AX)),
                 AsmInstruction::Ret,

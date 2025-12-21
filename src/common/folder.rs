@@ -157,6 +157,7 @@ pub trait FolderTacky {
     ) -> Result<Vec<TackyInstruction>, String> {
         use TackyInstruction::*;
         let res = match instruction {
+            Comment(comment) => Comment(comment.clone()),
             Return(value) => Return(self.fold_value(value)?),
             Unary(op, src, dst) => Unary(
                 self.fold_unary_operator(op)?,

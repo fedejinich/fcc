@@ -95,26 +95,38 @@ impl TackyInstruction {
             }
             Statement::If(cond, then, el) => {
                 trace!("Converting <statement>: if");
-                let src = TackyInstruction::from_expr(*cond, &mut instructions);
+
+                let cond_result = TackyInstruction::from_expr(*cond, &mut instructions);
                 let c = TackyValue::Var(TackyIdentifier::new("c"));
-                instructions.push(TackyInstruction::Copy(src, c.clone()));
+                instructions.push(TackyInstruction::Copy(cond_result, c.clone()));
 
                 // evaluate condition
                 instructions.push(TackyInstruction::JumpIfZero(
                     c,
-                    TackyIdentifier::new("else"),
+                    TackyIdentifier::new("else_label"),
                 ));
 
-                // resolve then
-                let statement_1 = TackyInstruction::from_st(*then);
-                instructions.extend(statement_1);
+                // instructions for statement_1
+                instructions.push(TackyInstruction::Comment(
+                    "instruction for statement_1".to_string(),
+                ));
+                for ins_statement_1 in TackyInstruction::from_st(*then) {
+                    instructions.push(ins_statement_1);
+                }
 
-                // resolve else
+                instructions.push(TackyInstruction::Jump(TackyIdentifier::new("end")));
+
                 if let Some(e) = el {
-                    instructions.push(TackyInstruction::Jump(TackyIdentifier::new("end")));
-                    instructions.push(TackyInstruction::Label(TackyIdentifier::new("else")));
-                    let statement_2 = TackyInstruction::from_st(*e);
-                    instructions.extend(statement_2);
+                    instructions.push(TackyInstruction::Label(TackyIdentifier::new("else_label")));
+
+                    // instructions for statement_2
+                    instructions.push(TackyInstruction::Comment(
+                        "instruction for statement_2".to_string(),
+                    ));
+                    for ins_statement_2 in TackyInstruction::from_st(*e) {
+                        instructions.push(ins_statement_2);
+                    }
+
                     instructions.push(TackyInstruction::Label(TackyIdentifier::new("end")));
                 }
 
@@ -156,6 +168,9 @@ impl TackyInstruction {
             Expression::Conditional(cond, then, el) => {
                 trace!("Converting Conditional to Tacky instruction");
 
+                instructions.push(TackyInstruction::Comment(
+                    "instruction for condition".to_string(),
+                ));
                 // instructions for condition
                 let cond = TackyInstruction::from_expr(*cond, instructions);
 
