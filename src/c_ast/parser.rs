@@ -220,7 +220,7 @@ impl Expression {
             next_token = tokens.peek().copied();
         }
 
-        trace!("Parsed <exp> {:?}", left.clone());
+        trace!("Parsed <exp> {:?}", &left);
 
         Ok(left)
     }
