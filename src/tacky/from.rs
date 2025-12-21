@@ -90,7 +90,7 @@ impl TackyInstruction {
             }
             Statement::Null => {
                 trace!("No need to convert <statement>: null");
-                
+
                 vec![]
             }
             Statement::If(cond, then, el) => {
@@ -152,27 +152,42 @@ impl TackyInstruction {
     fn from_expr(expr: Expression, instructions: &mut Vec<TackyInstruction>) -> TackyValue {
         trace!("Converting <exp> to Tacky instructions");
         match expr {
+            // TODO: handle IF statement
             Expression::Conditional(cond, then, el) => {
                 trace!("Converting Conditional to Tacky instruction");
+
+                // instructions for condition
                 let cond = TackyInstruction::from_expr(*cond, instructions);
-                // TODO: handle variable names properly
-                let c = TackyValue::Var(TackyIdentifier::new("c"));
-                instructions.push(TackyInstruction::Copy(cond, c.clone()));
+
+                let cond_result = TackyValue::Var(TackyIdentifier::new("c_result"));
+
+                instructions.push(TackyInstruction::Copy(cond, cond_result.clone()));
                 instructions.push(TackyInstruction::JumpIfZero(
-                    c,
+                    cond_result,
                     TackyIdentifier::new("e2_label"),
                 ));
+
                 let result = TackyValue::Var(TackyIdentifier::new("result"));
-                let e1 = TackyInstruction::from_expr(*then, instructions);
+
+                // instructions to calculate e1
+                let e1_result = TackyInstruction::from_expr(*then, instructions);
+
                 let v1 = TackyValue::Var(TackyIdentifier::new("v1"));
-                instructions.push(TackyInstruction::Copy(e1, v1.clone()));
+
+                instructions.push(TackyInstruction::Copy(e1_result, v1.clone()));
                 instructions.push(TackyInstruction::Copy(v1, result.clone()));
                 instructions.push(TackyInstruction::Jump(TackyIdentifier::new("end")));
+
                 instructions.push(TackyInstruction::Label(TackyIdentifier::new("e2_label")));
-                let e2 = TackyInstruction::from_expr(*el, instructions);
+
+                // instructions to calculate e2
+                let e2_result = TackyInstruction::from_expr(*el, instructions);
+
                 let v2 = TackyValue::Var(TackyIdentifier::new("v2"));
-                instructions.push(TackyInstruction::Copy(e2, v2.clone()));
+
+                instructions.push(TackyInstruction::Copy(e2_result, v2.clone()));
                 instructions.push(TackyInstruction::Copy(v2, result.clone()));
+
                 instructions.push(TackyInstruction::Label(TackyIdentifier::new("end")));
 
                 result

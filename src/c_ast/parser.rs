@@ -217,7 +217,7 @@ impl Expression {
                     left = Expression::Binary(op, Box::new(left), Box::new(right));
                 }
             }
-            next_token = tokens.peek().copied();
+            next_token = tokens.peek().copied(); // TODO: reconsider copied()
         }
 
         trace!("Parsed <exp> {:?}", &left);
