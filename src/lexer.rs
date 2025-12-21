@@ -217,28 +217,18 @@ pub fn binary_operators() -> Vec<Token> {
         // Assignment
         Token::Assignment,
         // conditional operators
+        // this is not a binary oeprator but is useful for parsing
         Token::QuestionMark,
     ]
 }
 
-#[allow(dead_code)]
-pub fn unary_operators() -> Vec<Token> {
-    vec![Token::Complement, Token::Negate, Token::Not]
-}
-
 mod tests {
     #[allow(unused_imports)]
-    use crate::lexer::{binary_operators, unary_operators};
+    use crate::lexer::binary_operators;
 
     #[test]
     fn binary_operator_count_test() {
         let bin_op = binary_operators();
         assert_eq!(bin_op.len(), 20);
-    }
-
-    #[test]
-    fn unary_operator_count_test() {
-        let un_op = unary_operators();
-        assert_eq!(un_op.len(), 3);
     }
 }
