@@ -1,16 +1,12 @@
-use std::collections::HashMap;
-
 use log::trace;
 
 use crate::c_ast::{ast::Program, semantic::var_res::VariableResolver};
-use crate::common::folder::Folder;
+use crate::common::folder::FolderC;
 
 pub fn validate_semantics(program: &Program) -> Result<Program, String> {
     trace!("validating program semantics");
 
-    let valid_program = VariableResolver::create()
-        .with(&HashMap::new())
-        .fold_program(program)?;
+    let valid_program = VariableResolver::new().fold_program(program)?;
 
     Ok(valid_program)
 }

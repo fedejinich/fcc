@@ -11,14 +11,17 @@ use crate::tacky::ast::{
     TackyUnaryOperator, TackyValue,
 };
 
-/// A folder is a trait that can be used to fold an AST into another AST.
-pub trait Folder {
-    fn create() -> Self
-    where
-        Self: Default,
-    {
-        Self::default()
-    }
+/// A 'folder' is a trait that can be used to fold a C AST into another C AST.
+/// In this trait we provide the default implementation to traverse the entire AST and return
+/// another AST. This is useful when we want to traverse the AST and perform some operation on a
+/// specific node type.
+pub trait FolderC {
+    // fn create() -> Self
+    // where
+    //     Self: Default,
+    // {
+    //     Self::default()
+    // }
 
     fn fold_program(&mut self, program: &Program) -> Result<Program, String> {
         Ok(Program::new(
@@ -181,10 +184,9 @@ pub trait FolderTacky {
     }
 
     fn fold_value(&mut self, value: &TackyValue) -> Result<TackyValue, String> {
-        use TackyValue::*;
         match value {
-            Constant(val) => Ok(Constant(*val)),
-            Var(identifier) => Ok(Var(self.fold_identifier(identifier)?)),
+            TackyValue::Constant(val) => Ok(TackyValue::Constant(*val)),
+            TackyValue::Var(identifier) => Ok(TackyValue::Var(self.fold_identifier(identifier)?)),
         }
     }
 

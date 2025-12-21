@@ -69,10 +69,10 @@ impl TackyInstruction {
 
     fn from_st(statement: Statement) -> Vec<TackyInstruction> {
         trace!("Converting <statement> to Tacky instructions");
+        let mut instructions = vec![];
         let i = match statement {
             Statement::Return(expr) => {
                 trace!("Converting <statement>: return");
-                let mut instructions = vec![];
                 let v = TackyInstruction::from_expr(expr, &mut instructions);
                 instructions.push(TackyInstruction::Return(v));
 
@@ -80,7 +80,6 @@ impl TackyInstruction {
             }
             Statement::Expression(expr) => {
                 trace!("Converting <statement>: expression");
-                let mut instructions = vec![];
                 let v = TackyInstruction::from_expr(expr, &mut instructions);
                 instructions.push(TackyInstruction::Copy(
                     v,
@@ -91,11 +90,11 @@ impl TackyInstruction {
             }
             Statement::Null => {
                 trace!("No need to convert <statement>: null");
+                
                 vec![]
             }
             Statement::If(cond, then, el) => {
                 trace!("Converting <statement>: if");
-                let mut instructions = vec![];
                 let src = TackyInstruction::from_expr(*cond, &mut instructions);
                 let c = TackyValue::Var(TackyIdentifier::new("c"));
                 instructions.push(TackyInstruction::Copy(src, c.clone()));

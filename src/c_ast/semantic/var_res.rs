@@ -7,7 +7,7 @@ use log::{debug, trace};
 
 use crate::{
     c_ast::ast::{Declaration, Expression, Identifier},
-    common::folder::Folder,
+    common::folder::FolderC,
 };
 
 #[derive(Default)]
@@ -16,18 +16,12 @@ pub struct VariableResolver {
 }
 
 impl VariableResolver {
-    pub fn with(&mut self, variable_map: &HashMap<String, String>) -> Self {
-        Self {
-            variable_map: variable_map.clone(),
-        }
+    pub fn new() -> Self {
+        Self::default()
     }
 }
 
-impl Folder for VariableResolver {
-    fn create() -> Self {
-        Self::default()
-    }
-
+impl FolderC for VariableResolver {
     fn fold_declaration(&mut self, declaration: &Declaration) -> Result<Declaration, String> {
         trace!("resolving declaration: {declaration:?}");
 
