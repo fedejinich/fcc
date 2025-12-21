@@ -7,10 +7,10 @@ use crate::driver::CompilerDriver;
 
 mod c_ast;
 mod codegen;
+mod common;
 mod driver;
 mod lexer;
 mod tacky;
-mod common;
 
 pub fn title() -> String {
     String::from(
@@ -27,12 +27,12 @@ pub fn title() -> String {
 }
 
 fn main() {
-    let driver = CompilerDriver::parse();
-    driver.init_logging();
+    let comp_driver = CompilerDriver::parse();
+    comp_driver.init_logging();
 
     println!("{}\n", title());
 
-    debug!("{:?}", driver);
+    debug!("{:?}", comp_driver);
 
-    driver.build_program().expect("fcc")
+    comp_driver.build_program().expect("fcc")
 }
