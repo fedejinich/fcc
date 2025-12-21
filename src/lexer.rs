@@ -175,14 +175,14 @@ impl TokenMatcher {
 
         debug!("match: {m:?}");
 
-        if longest_match.is_none() {
-            return Ok(Some(m));
-        }
+        // if longest_match.is_none() {
+        //     return Ok(Some(m));
+        // }
 
-        let Some(longest_match_value) = longest_match.clone() else {
-            return Err(String::from("couldn't find longest_match_value"));
+        let Some(longest_match_value) = longest_match else {
+            return Ok(Some(m));
         };
-        let longest_match_value = longest_match_value.1;
+        let longest_match_value = &longest_match_value.1;
 
         debug!("match_value: {longest_match_value:?}");
 
