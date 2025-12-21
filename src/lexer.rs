@@ -72,7 +72,7 @@ pub fn lex(mut code: &str) -> Result<Vec<Token>, String> {
     while !code.is_empty() {
         let mut longest_match: TokenMatch = None;
         for matcher in token_matchers().iter() {
-            if let Some(new_match) = matcher.match_longest(code, &longest_match) {
+            if let Some(new_match) = matcher.match_longest(code, &longest_match)? {
                 longest_match = Some((matcher.token_builder, String::from(new_match.as_str())));
             }
         }
@@ -164,20 +164,24 @@ impl TokenMatcher {
         &self,
         code: &'a str,
         longest_match: &TokenMatch,
-    ) -> Option<regex::Match<'a>> {
+    ) -> Result<Option<regex::Match<'a>>, String> {
         let Ok(regex) = Regex::new(self.regex) else {
-            panic!("couldn't create regex");
+            return Err(String::from("couldn't create regex"));
         };
-        let m = regex.find(code)?;
+        let m = regex.find(code);
+
+        let Some(m) = m else {
+            return Ok(None);
+        };
 
         debug!("match: {m:?}");
 
         if longest_match.is_none() {
-            return Some(m);
+            return Ok(Some(m));
         }
 
         let Some(longest_match_value) = longest_match.clone() else {
-            panic!("couldn't find longest_match_value");
+            return Err(String::from("couldn't find longest_match_value"));
         };
         let longest_match_value = longest_match_value.1;
 
@@ -185,10 +189,10 @@ impl TokenMatcher {
 
         // match if longer than longest match
         if m.len() > longest_match_value.len() {
-            return Some(m);
+            return Ok(Some(m));
         }
 
-        None
+        Ok(None)
     }
 }
 
