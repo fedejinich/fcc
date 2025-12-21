@@ -175,10 +175,6 @@ impl TokenMatcher {
 
         debug!("match: {m:?}");
 
-        // if longest_match.is_none() {
-        //     return Ok(Some(m));
-        // }
-
         let Some(longest_match_value) = longest_match else {
             return Ok(Some(m));
         };
