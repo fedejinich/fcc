@@ -93,17 +93,19 @@ impl TackyInstruction {
 
                 vec![]
             }
+            // TODO: this can be optimized by having a special function to handle ifs with else
+            // clauses (in that case we won't use the else_label)
             Statement::If(cond, then, el) => {
                 trace!("Converting <statement>: if");
 
                 let else_label = TackyIdentifier::new("else_label");
                 let end_label = TackyIdentifier::new("end");
 
+                // instructions for condition
                 let cond_result = TackyInstruction::from_expr(*cond, &mut instructions);
+
                 let c = TackyValue::Var(TackyIdentifier::new("c"));
                 instructions.push(TackyInstruction::Copy(cond_result, c.clone()));
-
-                // evaluate condition
                 instructions.push(TackyInstruction::JumpIfZero(c, else_label.clone()));
 
                 // instructions for statement_1
@@ -116,9 +118,8 @@ impl TackyInstruction {
 
                 instructions.push(TackyInstruction::Jump(end_label.clone()));
 
+                instructions.push(TackyInstruction::Label(else_label));
                 if let Some(e) = el {
-                    instructions.push(TackyInstruction::Label(else_label));
-
                     // instructions for statement_2
                     instructions.push(TackyInstruction::Comment(
                         "instruction for statement_2".to_string(),
@@ -126,9 +127,8 @@ impl TackyInstruction {
                     for ins_statement_2 in TackyInstruction::from_st(*e) {
                         instructions.push(ins_statement_2);
                     }
-
-                    instructions.push(TackyInstruction::Label(end_label));
                 }
+                instructions.push(TackyInstruction::Label(end_label));
 
                 instructions
             }
