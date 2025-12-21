@@ -206,6 +206,7 @@ impl Expression {
                     left =
                         Expression::Conditional(Box::new(left), Box::new(middle), Box::new(right));
                 }
+                // TODO: still need to implement IF statement
                 _ => {
                     let op = BinaryOperator::parse_bin(tokens)?;
                     trace!(
