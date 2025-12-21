@@ -151,11 +151,10 @@ impl Statement {
                 token_eq(Token::CloseParen, tokens)?;
                 let then = Statement::parse_st(tokens)?;
                 let mut el = None;
-                if let Some(Token::Identifier(s)) = tokens.peek() {
-                    if s == "else" {
-                        let _ = tokens.next(); // consume 'else'
-                        el = Some(Box::new(Statement::parse_st(tokens)?));
-                    }
+
+                if let Some(Token::Else) = tokens.peek() {
+                    let _ = tokens.next(); // consume 'else'
+                    el = Some(Box::new(Statement::parse_st(tokens)?));
                 }
 
                 Statement::If(Box::new(expr), Box::new(then), el)
