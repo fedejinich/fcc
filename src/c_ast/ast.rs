@@ -12,11 +12,8 @@ pub struct Identifier {
     pub value: String,
 }
 
-#[allow(unused)]
 #[derive(Clone, Debug)]
-pub struct Block {
-    pub block_items: Vec<BlockItem>,
-}
+pub struct Block(Vec<BlockItem>);
 
 #[derive(Clone, Debug)]
 pub enum BlockItem {
@@ -95,13 +92,13 @@ impl Program {
 
 impl Block {
     pub fn new(block_items: Vec<BlockItem>) -> Self {
-        Self { block_items }
+        Self(block_items)
     }
 
     // only used in tests
     #[allow(dead_code)]
     pub fn iter(&self) -> std::slice::Iter<'_, BlockItem> {
-        self.block_items.iter()
+        self.0.iter()
     }
 }
 
@@ -110,7 +107,7 @@ impl IntoIterator for Block {
     type IntoIter = std::vec::IntoIter<Self::Item>;
 
     fn into_iter(self) -> Self::IntoIter {
-        self.block_items.into_iter()
+        self.0.into_iter()
     }
 }
 

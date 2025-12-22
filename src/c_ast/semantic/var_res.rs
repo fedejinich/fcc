@@ -10,14 +10,34 @@ use crate::{
     common::folder::FolderC,
 };
 
+pub type VarValue = String;
+pub type VarName = String;
+
 #[derive(Default)]
 pub struct VariableResolver {
-    variable_map: HashMap<String, String>,
+    variable_map: HashMap<VarName, VarValue>,
 }
 
 impl VariableResolver {
     pub fn new() -> Self {
         Self::default()
+    }
+
+    /// Wether a variable is named with the given name
+    fn is_var_named(&self, value: &str) -> bool {
+        let Some(_) = self.get_var(value) else {
+            return false;
+        };
+        return true;
+    }
+
+    /// Wether a variable is declared with the given name
+    fn is_var_declared(&self, _value: &str) -> bool {
+        todo!()
+    }
+
+    pub fn get_var(&self, value: &str) -> Option<VarValue> {
+        self.variable_map.get(value).cloned()
     }
 }
 
@@ -25,7 +45,8 @@ impl FolderC for VariableResolver {
     fn fold_declaration(&mut self, declaration: Declaration) -> Result<Declaration, String> {
         trace!("resolving declaration: {declaration:?}");
 
-        if self.variable_map.contains_key(&declaration.name.value) {
+        if self.is_var_named(&declaration.name.value) &&
+            self.is_var_declared(&declaration.name.value) {
             debug!("variable: {declaration}");
             return Err("variable already declared".to_string());
         }
@@ -56,8 +77,8 @@ impl FolderC for VariableResolver {
                 }
             },
             Expression::Var(ref id) => {
-                if let Some(v) = self.variable_map.get(&id.value) {
-                    Expression::Var(Identifier::new(v.clone()))
+                if let Some(v) = self.get_var(&id.value) {
+                    Expression::Var(Identifier::new(v))
                 } else {
                     debug!("undeclared variable: {expr}");
 
