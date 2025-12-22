@@ -1,4 +1,4 @@
-# fcc - C Compiler
+# fcc
 
 A Rust implementation of a C compiler for a small language subset, inspired by Nora Sandler's [C Compiler book](https://norasandler.com/book/).
 
