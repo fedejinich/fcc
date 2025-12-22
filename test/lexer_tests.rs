@@ -267,3 +267,298 @@ fn test_longest_match_priority() {
     }
 }
 
+// =============================================================================
+// IF/ELSE KEYWORDS
+// =============================================================================
+
+#[test]
+fn test_if_keyword() {
+    let result = lex("if");
+    assert!(result.is_ok());
+    if let Ok(tokens) = result {
+        assert_eq!(tokens, vec![Token::If]);
+    }
+}
+
+#[test]
+fn test_else_keyword() {
+    let result = lex("else");
+    assert!(result.is_ok());
+    if let Ok(tokens) = result {
+        assert_eq!(tokens, vec![Token::Else]);
+    }
+}
+
+#[test]
+fn test_if_else_statement() {
+    let result = lex("if (1) return 0; else return 1;");
+    assert!(result.is_ok());
+    if let Ok(tokens) = result {
+        assert_eq!(
+            tokens,
+            vec![
+                Token::If,
+                Token::OpenParen,
+                Token::Constant("1".to_string()),
+                Token::CloseParen,
+                Token::Return,
+                Token::Constant("0".to_string()),
+                Token::Semicolon,
+                Token::Else,
+                Token::Return,
+                Token::Constant("1".to_string()),
+                Token::Semicolon
+            ]
+        );
+    }
+}
+
+#[test]
+fn test_if_identifier_not_keyword() {
+    // 'ifdef' should be identifier, not 'if' + 'def'
+    let result = lex("ifdef");
+    assert!(result.is_ok());
+    if let Ok(tokens) = result {
+        assert_eq!(tokens, vec![Token::Identifier("ifdef".to_string())]);
+    }
+}
+
+// =============================================================================
+// TERNARY OPERATOR TOKENS
+// =============================================================================
+
+#[test]
+fn test_question_mark() {
+    let result = lex("?");
+    assert!(result.is_ok());
+    if let Ok(tokens) = result {
+        assert_eq!(tokens, vec![Token::QuestionMark]);
+    }
+}
+
+#[test]
+fn test_colon() {
+    let result = lex(":");
+    assert!(result.is_ok());
+    if let Ok(tokens) = result {
+        assert_eq!(tokens, vec![Token::DoubleDot]);
+    }
+}
+
+#[test]
+fn test_ternary_expression() {
+    let result = lex("a ? b : c");
+    assert!(result.is_ok());
+    if let Ok(tokens) = result {
+        assert_eq!(
+            tokens,
+            vec![
+                Token::Identifier("a".to_string()),
+                Token::QuestionMark,
+                Token::Identifier("b".to_string()),
+                Token::DoubleDot,
+                Token::Identifier("c".to_string())
+            ]
+        );
+    }
+}
+
+#[test]
+fn test_ternary_with_constants() {
+    let result = lex("x ? 1 : 0");
+    assert!(result.is_ok());
+    if let Ok(tokens) = result {
+        assert_eq!(
+            tokens,
+            vec![
+                Token::Identifier("x".to_string()),
+                Token::QuestionMark,
+                Token::Constant("1".to_string()),
+                Token::DoubleDot,
+                Token::Constant("0".to_string())
+            ]
+        );
+    }
+}
+
+// =============================================================================
+// CONSECUTIVE OPERATORS WITHOUT SPACES
+// =============================================================================
+
+#[test]
+fn test_consecutive_and_no_space() {
+    let result = lex("a&&b");
+    assert!(result.is_ok());
+    if let Ok(tokens) = result {
+        assert_eq!(
+            tokens,
+            vec![
+                Token::Identifier("a".to_string()),
+                Token::And,
+                Token::Identifier("b".to_string())
+            ]
+        );
+    }
+}
+
+#[test]
+fn test_consecutive_or_no_space() {
+    let result = lex("a||b");
+    assert!(result.is_ok());
+    if let Ok(tokens) = result {
+        assert_eq!(
+            tokens,
+            vec![
+                Token::Identifier("a".to_string()),
+                Token::Or,
+                Token::Identifier("b".to_string())
+            ]
+        );
+    }
+}
+
+#[test]
+fn test_consecutive_less_equal_no_space() {
+    let result = lex("a<=b");
+    assert!(result.is_ok());
+    if let Ok(tokens) = result {
+        assert_eq!(
+            tokens,
+            vec![
+                Token::Identifier("a".to_string()),
+                Token::LessThanOrEqual,
+                Token::Identifier("b".to_string())
+            ]
+        );
+    }
+}
+
+#[test]
+fn test_consecutive_greater_equal_no_space() {
+    let result = lex("a>=b");
+    assert!(result.is_ok());
+    if let Ok(tokens) = result {
+        assert_eq!(
+            tokens,
+            vec![
+                Token::Identifier("a".to_string()),
+                Token::GreaterThanOrEqual,
+                Token::Identifier("b".to_string())
+            ]
+        );
+    }
+}
+
+#[test]
+fn test_consecutive_equal_no_space() {
+    let result = lex("a==b");
+    assert!(result.is_ok());
+    if let Ok(tokens) = result {
+        assert_eq!(
+            tokens,
+            vec![
+                Token::Identifier("a".to_string()),
+                Token::Equal,
+                Token::Identifier("b".to_string())
+            ]
+        );
+    }
+}
+
+#[test]
+fn test_consecutive_not_equal_no_space() {
+    let result = lex("a!=b");
+    assert!(result.is_ok());
+    if let Ok(tokens) = result {
+        assert_eq!(
+            tokens,
+            vec![
+                Token::Identifier("a".to_string()),
+                Token::NotEqual,
+                Token::Identifier("b".to_string())
+            ]
+        );
+    }
+}
+
+#[test]
+fn test_consecutive_shift_no_space() {
+    let result = lex("a<<b>>c");
+    assert!(result.is_ok());
+    if let Ok(tokens) = result {
+        assert_eq!(
+            tokens,
+            vec![
+                Token::Identifier("a".to_string()),
+                Token::LeftShift,
+                Token::Identifier("b".to_string()),
+                Token::RightShift,
+                Token::Identifier("c".to_string())
+            ]
+        );
+    }
+}
+
+#[test]
+fn test_triple_plus() {
+    // a+++b should tokenize as a, ++, +, b or a, +, +, +, b depending on lexer
+    // Since we have Decrement (--) but no Increment (++), this should be +, +, +
+    let result = lex("a+++b");
+    assert!(result.is_ok());
+    if let Ok(tokens) = result {
+        // Without ++ token, should be: a, +, +, +, b
+        assert_eq!(
+            tokens,
+            vec![
+                Token::Identifier("a".to_string()),
+                Token::Plus,
+                Token::Plus,
+                Token::Plus,
+                Token::Identifier("b".to_string())
+            ]
+        );
+    }
+}
+
+#[test]
+fn test_complex_no_spaces() {
+    let result = lex("a+b*c-d/e%f");
+    assert!(result.is_ok());
+    if let Ok(tokens) = result {
+        assert_eq!(
+            tokens,
+            vec![
+                Token::Identifier("a".to_string()),
+                Token::Plus,
+                Token::Identifier("b".to_string()),
+                Token::Multiply,
+                Token::Identifier("c".to_string()),
+                Token::Negate,
+                Token::Identifier("d".to_string()),
+                Token::Divide,
+                Token::Identifier("e".to_string()),
+                Token::Remainder,
+                Token::Identifier("f".to_string())
+            ]
+        );
+    }
+}
+
+#[test]
+fn test_ternary_no_spaces() {
+    let result = lex("a?b:c");
+    assert!(result.is_ok());
+    if let Ok(tokens) = result {
+        assert_eq!(
+            tokens,
+            vec![
+                Token::Identifier("a".to_string()),
+                Token::QuestionMark,
+                Token::Identifier("b".to_string()),
+                Token::DoubleDot,
+                Token::Identifier("c".to_string())
+            ]
+        );
+    }
+}
+

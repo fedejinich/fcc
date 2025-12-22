@@ -34,6 +34,22 @@ path = "test/tacky_tests.rs"
 name = "folder_tests"
 path = "test/folder_tests.rs"
 
+[[test]]
+name = "parser_tests"
+path = "test/parser_tests.rs"
+
+[[test]]
+name = "semantic_tests"
+path = "test/semantic_tests.rs"
+
+[[test]]
+name = "tacky_gen_tests"
+path = "test/tacky_gen_tests.rs"
+
+[[test]]
+name = "codegen_tests"
+path = "test/codegen_tests.rs"
+
 [lints.clippy]
 unwrap_used = "warn"
 expect_used = "warn"
