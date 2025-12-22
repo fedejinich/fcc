@@ -44,13 +44,18 @@ cargo build --release
 
 ## Test
 
-The project includes comprehensive unit tests:
+Run the test suite by running:
 
 ```bash
-bash tests.sh # runs tests for all chapters
+bash scripts/tests.sh # runs both unit and compliance tests
+# or
+bash scripts/tests.sh --unit # runs unit tests
+# or
+bash scripts/tests.sh --compliance # runs compliance tests
+
 ```
 
 ## Progress
 
-- [x] Chapter 1-4: Expressions and operators
-- [ ] Chapter 5: Local variables
+- [x] Chapter 1-6: If and conditionals
+- [ ] Chapter 7: Compound statements
