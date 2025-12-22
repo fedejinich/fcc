@@ -1,5 +1,6 @@
 use crate::c_ast::ast::{
-    BinaryOperator, Block, BlockItem, Declaration, Expression, FunctionDefinition, Identifier, Program, Statement, UnaryOperator
+    BinaryOperator, Block, BlockItem, Declaration, Expression, FunctionDefinition, Identifier,
+    Program, Statement, UnaryOperator,
 };
 use crate::codegen::x64::ast::{
     AsmBinaryOperator, AsmCondCode, AsmFunctionDefinition, AsmIdetifier, AsmInstruction,
@@ -64,6 +65,10 @@ pub trait FolderC {
     }
 
     fn fold_statement(&mut self, statement: Statement) -> Result<Statement, String> {
+        self.default_fold_statement(statement)
+    }
+
+    fn default_fold_statement(&mut self, statement: Statement) -> Result<Statement, String> {
         match statement {
             Statement::Return(expr) => Ok(Statement::Return(self.fold_expression(expr)?)),
             Statement::Expression(expr) => Ok(Statement::Expression(self.fold_expression(expr)?)),
@@ -76,7 +81,9 @@ pub trait FolderC {
                     None
                 },
             )),
-            Statement::Compound(block) => Ok(Statement::Compound(Box::new(self.fold_block(*block)?))),
+            Statement::Compound(block) => {
+                Ok(Statement::Compound(Box::new(self.fold_block(*block)?)))
+            }
             Statement::Null => Ok(Statement::Null),
         }
     }
@@ -114,10 +121,7 @@ pub trait FolderC {
         Ok(operator)
     }
 
-    fn fold_binary_operator(
-        &mut self,
-        operator: BinaryOperator,
-    ) -> Result<BinaryOperator, String> {
+    fn fold_binary_operator(&mut self, operator: BinaryOperator) -> Result<BinaryOperator, String> {
         Ok(operator)
     }
 }
