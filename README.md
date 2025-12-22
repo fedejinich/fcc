@@ -19,23 +19,6 @@ A Rust implementation of a C compiler for a small language subset, inspired by N
 ./fcc --help
 ```
 
-### Available flags
-
-```bash
-# Stop at specific compilation stages
-./fcc program.c --lex        # Stop after lexing
-./fcc program.c --parse      # Stop after parsing
-./fcc program.c --validate   # Stop after semantic analysis
-./fcc program.c --tacky      # Stop after generating TACKY IR
-./fcc program.c --codegen    # Stop after generating assembly
-
-# Debug output
-./fcc program.c --debug       # Enable debug logging
-./fcc program.c --trace       # Enable verbose logging
-./fcc program.c --print-ast   # Print the AST
-./fcc program.c --print-tacky # Print the TACKY IR
-```
-
 ## Build
 
 ```bash
