@@ -23,21 +23,21 @@ impl VariableResolver {
         Self::default()
     }
 
-    /// Wether a variable is named with the given name
-    fn is_var_named(&self, value: &str) -> bool {
-        let Some(_) = self.get_var(value) else {
+    /// Wether a variable is already named with the given name
+    fn is_var_named(&self, var_name: &Identifier) -> bool {
+        let Some(_) = self.get_var(var_name) else {
             return false;
         };
         return true;
     }
 
-    /// Wether a variable is declared with the given name
-    fn is_var_declared(&self, _value: &str) -> bool {
+    /// Wether a variable is already declared with the given name
+    fn is_var_declared(&self, _var_name: &Identifier) -> bool {
         todo!()
     }
 
-    pub fn get_var(&self, value: &str) -> Option<VarValue> {
-        self.variable_map.get(value).cloned()
+    pub fn get_var(&self, var_name: &Identifier) -> Option<VarValue> {
+        self.variable_map.get(&var_name.value).cloned()
     }
 }
 
@@ -45,8 +45,8 @@ impl FolderC for VariableResolver {
     fn fold_declaration(&mut self, declaration: Declaration) -> Result<Declaration, String> {
         trace!("resolving declaration: {declaration:?}");
 
-        if self.is_var_named(&declaration.name.value) &&
-            self.is_var_declared(&declaration.name.value) {
+        if self.is_var_named(&declaration.name) &&
+            self.is_var_declared(&declaration.name) {
             debug!("variable: {declaration}");
             return Err("variable already declared".to_string());
         }
