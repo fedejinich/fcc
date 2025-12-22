@@ -51,9 +51,20 @@ impl FunctionDefinition {
         token_eq(Token::OpenParen, tokens)?;
         token_eq(Token::Void, tokens)?;
         token_eq(Token::CloseParen, tokens)?;
-        token_eq(Token::OpenBrace, tokens)?;
 
-        trace!("Parsing {{ <block_item> }}");
+        let block = Block::parse_block(tokens)?;
+
+        trace!("<function> parsing completed successfully");
+
+        Ok(FunctionDefinition::new(identifier, block))
+    }
+}
+
+impl Block {
+    fn parse_block(tokens: &mut Peekable<Iter<Token>>) -> ParseResult<Self> {
+        trace!("Parsing <block> ::= \"{{\" <block_item> \"}}\"");
+
+        token_eq(Token::OpenBrace, tokens)?;
 
         let mut block_items = vec![];
         while let Some(next_token) = tokens.peek() {
@@ -63,13 +74,12 @@ impl FunctionDefinition {
             let block_item = BlockItem::parse_bi(tokens)?;
             block_items.push(block_item);
         }
-        let block = Block::new(block_items);
 
         token_eq(Token::CloseBrace, tokens)?;
 
-        trace!("<function> parsing completed successfully");
+        trace!("<block> parsing completed successfully");
 
-        Ok(FunctionDefinition::new(identifier, block))
+        Ok(Block::new(block_items))
     }
 }
 
@@ -159,6 +169,14 @@ impl Statement {
                 }
 
                 Statement::If(Box::new(expr), Box::new(then), el)
+            }
+            Token::OpenBrace => {
+                // parsing compound statement
+                trace!("Parsing <statement> ::= <block> ");
+
+                let block = Block::parse_block(tokens)?;
+
+                Statement::Compound(Box::new(block))
             }
             _ => {
                 trace!("Parsing <statement> ::= <exp> ;");
