@@ -4,12 +4,18 @@ pub struct Program {
 
 pub struct FunctionDefinition {
     pub name: Identifier,
-    pub body: Vec<BlockItem>,
+    pub body: Block,
 }
 
 #[derive(Clone, Debug)]
 pub struct Identifier {
     pub value: String,
+}
+
+#[allow(unused)]
+#[derive(Clone, Debug)]
+pub struct Block {
+    pub block_items: Vec<BlockItem>,
 }
 
 #[derive(Clone, Debug)]
@@ -24,11 +30,13 @@ pub struct Declaration {
     pub initializer: Option<Expression>,
 }
 
+#[allow(unused)]
 #[derive(Clone, Debug)]
 pub enum Statement {
     Return(Expression),
     Expression(Expression),
     If(Box<Expression>, Box<Statement>, Option<Box<Statement>>),
+    Compound(Box<Block>),
     Null,
 }
 
@@ -85,8 +93,23 @@ impl Program {
     }
 }
 
+impl Block {
+    pub fn new(block_items: Vec<BlockItem>) -> Self {
+        Self { block_items }
+    }
+}
+
+impl IntoIterator for Block {
+    type Item = BlockItem;
+    type IntoIter = std::vec::IntoIter<Self::Item>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.block_items.into_iter()
+    }
+}
+
 impl FunctionDefinition {
-    pub fn new(name: Identifier, body: Vec<BlockItem>) -> Self {
+    pub fn new(name: Identifier, body: Block) -> Self {
         FunctionDefinition { name, body }
     }
 }

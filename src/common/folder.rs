@@ -1,6 +1,5 @@
 use crate::c_ast::ast::{
-    BinaryOperator, BlockItem, Declaration, Expression, FunctionDefinition, Identifier, Program,
-    Statement, UnaryOperator,
+    BinaryOperator, Block, BlockItem, Declaration, Expression, FunctionDefinition, Identifier, Program, Statement, UnaryOperator
 };
 use crate::codegen::x64::ast::{
     AsmBinaryOperator, AsmCondCode, AsmFunctionDefinition, AsmIdetifier, AsmInstruction,
@@ -33,15 +32,21 @@ pub trait FolderC {
         &mut self,
         function: &FunctionDefinition,
     ) -> Result<FunctionDefinition, String> {
-        let body: Result<Vec<_>, String> = function
+        let folded_b_i: Result<Vec<_>, String> = function
             .body
-            .iter()
-            .map(|item| self.fold_block_item(item))
+            .clone() // TODO: this is a hack, we shoudl make all the parameters owned 
+            .into_iter()
+            .map(|item| self.fold_block_item(&item)) // TODO: should use a Block here
             .collect();
+
         Ok(FunctionDefinition::new(
             self.fold_identifier(&function.name)?,
-            body?,
+            Block::new(folded_b_i?),
         ))
+    }
+
+    fn _fold_block(&mut self, _block: &Block) -> Result<Block, String> {
+        todo!("to be implemented");
     }
 
     fn fold_block_item(&mut self, item: &BlockItem) -> Result<BlockItem, String> {
@@ -75,6 +80,7 @@ pub trait FolderC {
                     None
                 },
             )),
+            Statement::Compound(_block) => todo!("to be implemented"),
             Statement::Null => Ok(Statement::Null),
         }
     }
@@ -121,6 +127,7 @@ pub trait FolderC {
 }
 
 /// Another folder trait that can be used to fold Tacky AST into another Tacky AST.
+#[allow(unused)]
 pub trait FolderTacky {
     fn create() -> Self
     where

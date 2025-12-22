@@ -4,7 +4,7 @@ use log::{debug, trace};
 
 use crate::{
     c_ast::ast::{
-        BinaryOperator, BlockItem, Declaration, Expression, FunctionDefinition, Identifier,
+        BinaryOperator, Block, BlockItem, Declaration, Expression, FunctionDefinition, Identifier,
         Program, Statement, UnaryOperator,
     },
     tacky::ast::{
@@ -32,7 +32,7 @@ impl From<FunctionDefinition> for TackyFunctionDefinition {
         let mut instructions: Vec<TackyInstruction> = function_definition
             .body
             .into_iter()
-            .flat_map(TackyInstruction::from_bi)
+            .flat_map(TackyInstruction::from_block_item) // TODO: should use a Block here
             .collect();
 
         // add return 0 as last instruction (it's gonna be fixed in Part III)
@@ -49,17 +49,20 @@ impl From<Identifier> for TackyIdentifier {
     fn from(value: Identifier) -> Self {
         trace!("Converting <identifier>: {}", value.value);
         TackyIdentifier { value: value.value }
-        // TackyIdentifier::new(value.value.as_str())
     }
 }
 
 impl TackyInstruction {
-    fn from_bi(block_item: BlockItem) -> Vec<TackyInstruction> {
+    fn _from_block(_block: Block) -> Vec<TackyInstruction> {
+        todo!("to be implemented");
+    }
+
+    fn from_block_item(block_item: BlockItem) -> Vec<TackyInstruction> {
         trace!("Converting <block_item> to Tacky instructions");
 
         let i = match block_item {
-            BlockItem::S(statement) => TackyInstruction::from_st(statement),
-            BlockItem::D(declaration) => TackyInstruction::from_decl(declaration),
+            BlockItem::S(s) => TackyInstruction::from_statement(s),
+            BlockItem::D(d) => TackyInstruction::from_declaration(d),
         };
 
         debug!("Generated Tacky instructions: {i:?}");
@@ -67,7 +70,7 @@ impl TackyInstruction {
         i
     }
 
-    fn from_st(statement: Statement) -> Vec<TackyInstruction> {
+    fn from_statement(statement: Statement) -> Vec<TackyInstruction> {
         trace!("Converting <statement> to Tacky instructions");
         let mut instructions = vec![];
         let i = match statement {
@@ -88,11 +91,6 @@ impl TackyInstruction {
 
                 instructions
             }
-            Statement::Null => {
-                trace!("No need to convert <statement>: null");
-
-                vec![]
-            }
             // TODO: this can be optimized by having a special function to handle ifs with else
             // clauses (in that case we won't use the else_label)
             Statement::If(cond, then, el) => {
@@ -112,7 +110,7 @@ impl TackyInstruction {
                 instructions.push(TackyInstruction::Comment(
                     "instruction for statement_1".to_string(),
                 ));
-                for ins_statement_1 in TackyInstruction::from_st(*then) {
+                for ins_statement_1 in TackyInstruction::from_statement(*then) {
                     instructions.push(ins_statement_1);
                 }
 
@@ -124,13 +122,21 @@ impl TackyInstruction {
                     instructions.push(TackyInstruction::Comment(
                         "instruction for statement_2".to_string(),
                     ));
-                    for ins_statement_2 in TackyInstruction::from_st(*e) {
+                    for ins_statement_2 in TackyInstruction::from_statement(*e) {
                         instructions.push(ins_statement_2);
                     }
                 }
                 instructions.push(TackyInstruction::Label(end_label_id));
 
                 instructions
+            }
+            Statement::Compound(_b) => {
+                todo!("to be implemented");
+            }
+            Statement::Null => {
+                trace!("No need to convert <statement>: null");
+
+                vec![]
             }
         };
 
@@ -139,7 +145,7 @@ impl TackyInstruction {
         i
     }
 
-    fn from_decl(declaration: Declaration) -> Vec<TackyInstruction> {
+    fn from_declaration(declaration: Declaration) -> Vec<TackyInstruction> {
         trace!("Converting <declaration> to Tacky instructions");
         let mut instructions = vec![];
         if let Some(initializer) = declaration.initializer {

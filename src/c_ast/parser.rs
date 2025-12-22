@@ -4,8 +4,7 @@ use log::{debug, trace};
 
 use crate::{
     c_ast::ast::{
-        BinaryOperator, BlockItem, Declaration, Expression, FunctionDefinition, Identifier,
-        Program, Statement, UnaryOperator,
+        BinaryOperator, Block, BlockItem, Declaration, Expression, FunctionDefinition, Identifier, Program, Statement, UnaryOperator
     },
     lexer::{self, Token},
 };
@@ -55,20 +54,22 @@ impl FunctionDefinition {
 
         trace!("Parsing {{ <block_item> }}");
 
-        let mut body = vec![];
+        let mut block_items = vec![];
         while let Some(next_token) = tokens.peek() {
             if *next_token == &Token::CloseBrace {
                 break;
             }
             let block_item = BlockItem::parse_bi(tokens)?;
-            body.push(block_item);
+            block_items.push(block_item);
         }
+        let block = Block::new(block_items);
+
 
         token_eq(Token::CloseBrace, tokens)?;
 
         trace!("<function> parsing completed successfully");
 
-        Ok(FunctionDefinition::new(identifier, body))
+        Ok(FunctionDefinition::new(identifier, block))
     }
 }
 
