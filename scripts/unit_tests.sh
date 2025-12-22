@@ -6,7 +6,7 @@
 cd "$(dirname "$0")/.."
 
 echo "RUNNING UNIT TESTS"
-echo "========================"
+echo "---"
 echo
 
 # Run all our unit tests

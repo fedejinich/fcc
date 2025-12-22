@@ -172,6 +172,7 @@ impl Statement {
             }
             Token::OpenBrace => {
                 // parsing compound statement
+
                 trace!("Parsing <statement> ::= <block> ");
 
                 let block = Block::parse_block(tokens)?;

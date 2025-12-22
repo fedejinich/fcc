@@ -7,6 +7,7 @@ cd "$(dirname "$0")/.."
 # Default: run both
 RUN_UNIT=false
 RUN_COMPLIANCE=false
+STAGE=""
 
 usage() {
   echo "Usage: bash scripts/tests.sh [OPTIONS]"
@@ -14,9 +15,10 @@ usage() {
   echo "Run unit tests and/or compliance tests for the fcc compiler."
   echo ""
   echo "Options:"
-  echo "  --unit        Run only unit tests"
-  echo "  --compliance  Run only compliance tests"
-  echo "  --help        Show this help message"
+  echo "  --unit              Run only unit tests"
+  echo "  --compliance        Run only compliance tests"
+  echo "  --stage <STAGE>     Specify stage for compliance tests (only with --compliance)"
+  echo "  --help              Show this help message"
   echo ""
   echo "If no options are provided, runs both unit and compliance tests."
 }
@@ -32,6 +34,14 @@ while [[ $# -gt 0 ]]; do
     RUN_COMPLIANCE=true
     shift
     ;;
+  --stage)
+    if [[ $# -lt 2 ]]; then
+      echo "Error: --stage requires a value"
+      exit 1
+    fi
+    STAGE="$2"
+    shift 2
+    ;;
   --help)
     usage
     exit 0
@@ -44,6 +54,12 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
+# Validate --stage is only used with --compliance
+if [[ -n "$STAGE" && "$RUN_COMPLIANCE" == false ]]; then
+  echo "Error: --stage can only be used with --compliance"
+  exit 1
+fi
+
 # If no flags provided, run both
 if [[ "$RUN_UNIT" == false && "$RUN_COMPLIANCE" == false ]]; then
   RUN_UNIT=true
@@ -52,7 +68,7 @@ fi
 
 echo "FCC TEST RUNNER"
 echo ""
-echo "================================================================================"
+echo "---"
 echo ""
 echo "Cleaning existing build..."
 echo ""
@@ -75,7 +91,11 @@ if [[ "$RUN_UNIT" == true ]]; then
 fi
 
 if [[ "$RUN_COMPLIANCE" == true ]]; then
-  bash scripts/compliance_tests.sh
+  if [[ -n "$STAGE" ]]; then
+    bash scripts/compliance_tests.sh --stage "$STAGE"
+  else
+    bash scripts/compliance_tests.sh
+  fi
   echo ""
   echo "---"
   echo ""
