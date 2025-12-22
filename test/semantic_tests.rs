@@ -13,7 +13,7 @@ use fcc::lexer::lex;
 fn validate_program(src: &str) -> Result<Program, String> {
     let tokens = lex(src)?;
     let program = Program::try_from(tokens)?;
-    validate_semantics(&program)
+    validate_semantics(program)
 }
 
 // Helper: get block items as a vector from a validated program

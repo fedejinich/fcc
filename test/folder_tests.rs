@@ -25,7 +25,7 @@ fn test_basic_folder_trait() {
     let program = AsmProgram::new(function);
 
     let mut basic_folder = folder;
-    if let Ok(folded_program) = basic_folder.fold_program(&program) {
+    if let Ok(folded_program) = basic_folder.fold_program(program) {
         assert_eq!(folded_program.function_definition.name.value, "test");
         assert_eq!(folded_program.function_definition.instructions.len(), 1);
         match &folded_program.function_definition.instructions[0] {
@@ -76,21 +76,23 @@ fn test_folder_preserves_all_instruction_types() {
         AsmInstruction::Ret,
     ];
 
+    let instructions_clone = instructions.clone();
+
     let function = AsmFunctionDefinition::new(
         AsmIdetifier {
             value: "main".to_string(),
         },
-        instructions.clone(),
+        instructions,
     );
     let program = AsmProgram::new(function);
 
-    if let Ok(folded_program) = folder.fold_program(&program) {
+    if let Ok(folded_program) = folder.fold_program(program) {
         assert_eq!(
             folded_program.function_definition.instructions.len(),
-            instructions.len()
+            instructions_clone.len()
         );
 
-        for (original, folded) in instructions
+        for (original, folded) in instructions_clone
             .iter()
             .zip(&folded_program.function_definition.instructions)
         {
@@ -160,8 +162,9 @@ fn test_folder_with_all_operand_types() {
     ];
 
     for operand in operands {
-        if let Ok(folded) = folder.fold_operand(&operand) {
-            match (&operand, &folded) {
+        let operand_clone = operand.clone();
+        if let Ok(folded) = folder.fold_operand(operand) {
+            match (&operand_clone, &folded) {
                 (AsmOperand::Imm(o), AsmOperand::Imm(f)) => assert_eq!(o, f),
                 (AsmOperand::Register(o), AsmOperand::Register(f)) => assert_eq!(o, f),
                 (AsmOperand::Pseudo(o), AsmOperand::Pseudo(f)) => assert_eq!(o.value, f.value),
@@ -196,8 +199,9 @@ fn test_folder_with_all_binary_operators() {
     ];
 
     for operator in operators {
-        if let Ok(folded) = folder.fold_binary_operator(&operator) {
-            match (&operator, &folded) {
+        let operator_clone = operator.clone();
+        if let Ok(folded) = folder.fold_binary_operator(operator) {
+            match (&operator_clone, &folded) {
                 (AsmBinaryOperator::Add, AsmBinaryOperator::Add) => {}
                 (AsmBinaryOperator::Sub, AsmBinaryOperator::Sub) => {}
                 (AsmBinaryOperator::Mult, AsmBinaryOperator::Mult) => {}
@@ -227,8 +231,9 @@ fn test_folder_with_all_unary_operators() {
     let operators = vec![AsmUnaryOperator::Neg, AsmUnaryOperator::Not];
 
     for operator in operators {
-        if let Ok(folded) = folder.fold_unary_operator(&operator) {
-            match (&operator, &folded) {
+        let operator_clone = operator.clone();
+        if let Ok(folded) = folder.fold_unary_operator(operator) {
+            match (&operator_clone, &folded) {
                 (AsmUnaryOperator::Neg, AsmUnaryOperator::Neg) => {}
                 (AsmUnaryOperator::Not, AsmUnaryOperator::Not) => {}
                 _ => panic!("Unary operator types don't match"),
@@ -259,8 +264,9 @@ fn test_folder_with_all_condition_codes() {
     ];
 
     for code in codes {
-        if let Ok(folded) = folder.fold_cond_code(&code) {
-            match (&code, &folded) {
+        let code_clone = code.clone();
+        if let Ok(folded) = folder.fold_cond_code(code) {
+            match (&code_clone, &folded) {
                 (AsmCondCode::E, AsmCondCode::E) => {}
                 (AsmCondCode::NE, AsmCondCode::NE) => {}
                 (AsmCondCode::G, AsmCondCode::G) => {}
@@ -289,7 +295,7 @@ fn test_instruction_fixer_basic_functionality() {
 
     let mut fixer = InstructionFixer::create().with(-12);
 
-    if let Ok(fixed_function) = fixer.fold_function_definition(&function) {
+    if let Ok(fixed_function) = fixer.fold_function_definition(function) {
         assert_eq!(fixed_function.instructions.len(), 5);
 
         match &fixed_function.instructions[0] {
@@ -319,7 +325,7 @@ fn test_instruction_fixer_idiv_immediate() {
 
     let mut fixer = InstructionFixer::create().with(-4);
 
-    if let Ok(fixed_function) = fixer.fold_function_definition(&function) {
+    if let Ok(fixed_function) = fixer.fold_function_definition(function) {
         assert!(fixed_function.instructions.len() >= 3);
 
         match &fixed_function.instructions[1] {
@@ -367,7 +373,7 @@ fn test_pseudo_register_replacer_basic_functionality() {
     );
 
     let mut replacer = PseudoRegisterReplacer::create();
-    if let Ok(replaced_function) = replacer.fold_function_definition(&function) {
+    if let Ok(replaced_function) = replacer.fold_function_definition(function) {
         assert_eq!(replaced_function.instructions.len(), 3);
 
         match &replaced_function.instructions[0] {
@@ -417,7 +423,7 @@ fn test_pseudo_register_replacer_multiple_variables() {
     );
 
     let mut replacer = PseudoRegisterReplacer::create();
-    if let Ok(replaced_function) = replacer.fold_function_definition(&function) {
+    if let Ok(replaced_function) = replacer.fold_function_definition(function) {
         assert_eq!(replaced_function.instructions.len(), 4);
 
         match &replaced_function.instructions[0] {
@@ -456,8 +462,9 @@ fn test_folder_preserves_identifiers() {
         value: "test_identifier_123".to_string(),
     };
 
-    if let Ok(folded_id) = folder.fold_identifier(&original_id) {
-        assert_eq!(original_id.value, folded_id.value);
+    let original_value = original_id.value.clone();
+    if let Ok(folded_id) = folder.fold_identifier(original_id) {
+        assert_eq!(original_value, folded_id.value);
     }
 }
 
@@ -475,8 +482,9 @@ fn test_folder_preserves_registers() {
     let registers = vec![Reg::AX, Reg::DX, Reg::CX, Reg::CL, Reg::R10, Reg::R11];
 
     for reg in registers {
-        if let Ok(folded_reg) = folder.fold_reg(&reg) {
-            match (&reg, &folded_reg) {
+        let reg_clone = reg.clone();
+        if let Ok(folded_reg) = folder.fold_reg(reg) {
+            match (&reg_clone, &folded_reg) {
                 (Reg::AX, Reg::AX) => {}
                 (Reg::DX, Reg::DX) => {}
                 (Reg::CX, Reg::CX) => {}
@@ -488,4 +496,3 @@ fn test_folder_preserves_registers() {
         }
     }
 }
-

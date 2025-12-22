@@ -22,7 +22,7 @@ impl VariableResolver {
 }
 
 impl FolderC for VariableResolver {
-    fn fold_declaration(&mut self, declaration: &Declaration) -> Result<Declaration, String> {
+    fn fold_declaration(&mut self, declaration: Declaration) -> Result<Declaration, String> {
         trace!("resolving declaration: {declaration:?}");
 
         if self.variable_map.contains_key(&declaration.name.value) {
@@ -36,27 +36,26 @@ impl FolderC for VariableResolver {
 
         let init = declaration
             .initializer
-            .as_ref()
-            .map(|e| self.fold_expression(e)) // option result expr
-            .transpose()?; // result expr
+            .map(|e| self.fold_expression(e))
+            .transpose()?;
 
         Ok(Declaration::new(Identifier::new(unique_name), init))
     }
 
-    fn fold_expression(&mut self, expr: &Expression) -> Result<Expression, String> {
+    fn fold_expression(&mut self, expr: Expression) -> Result<Expression, String> {
         trace!("resolving expression: {expr:?}");
 
         let res = match expr {
-            Expression::Assignment(left, right) => match **left {
+            Expression::Assignment(left, right) => match *left {
                 Expression::Var(_) => Expression::Assignment(
-                    Box::new(self.fold_expression(left)?),
-                    Box::new(self.fold_expression(right)?),
+                    Box::new(self.fold_expression(*left)?),
+                    Box::new(self.fold_expression(*right)?),
                 ),
                 _ => {
                     return Err("invalid lvalue".to_string());
                 }
             },
-            Expression::Var(id) => {
+            Expression::Var(ref id) => {
                 if let Some(v) = self.variable_map.get(&id.value) {
                     Expression::Var(Identifier::new(v.clone()))
                 } else {
@@ -65,20 +64,19 @@ impl FolderC for VariableResolver {
                     return Err("undeclared variable".to_string());
                 }
             }
-            // TODO: this should be refactored by a call to the super method
             Expression::Unary(op, expr) => {
-                Expression::Unary(op.clone(), Box::new(self.fold_expression(expr)?))
+                Expression::Unary(op, Box::new(self.fold_expression(*expr)?))
             }
             Expression::Binary(op, left, right) => Expression::Binary(
-                op.clone(),
-                Box::new(self.fold_expression(left)?),
-                Box::new(self.fold_expression(right)?),
+                op,
+                Box::new(self.fold_expression(*left)?),
+                Box::new(self.fold_expression(*right)?),
             ),
-            Expression::Constant(c) => Expression::Constant(*c),
+            Expression::Constant(c) => Expression::Constant(c),
             Expression::Conditional(cond, then, el) => Expression::Conditional(
-                Box::new(self.fold_expression(cond)?),
-                Box::new(self.fold_expression(then)?),
-                Box::new(self.fold_expression(el)?),
+                Box::new(self.fold_expression(*cond)?),
+                Box::new(self.fold_expression(*then)?),
+                Box::new(self.fold_expression(*el)?),
             ),
         };
 
