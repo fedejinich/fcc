@@ -6,13 +6,15 @@ set -e
 
 echo "Running compliance tests"
 
-cd writing-a-c-compiler-tests/
+cd "$(dirname "$0")/.."
 
 echo "Cleaning previous build"
 cargo clean
 
 echo "Building fcc"
 cargo build
+
+cd writing-a-c-compiler-tests/
 
 CHAPTER=6
 
