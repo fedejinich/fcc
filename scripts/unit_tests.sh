@@ -3,6 +3,8 @@
 # FCC Unit Tests Runner
 # Runs all comprehensive unit tests for the FCC compiler
 
+cd "$(dirname "$0")/.."
+
 echo "Running FCC Unit Tests"
 echo "========================"
 echo
