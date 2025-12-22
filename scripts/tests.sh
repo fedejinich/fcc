@@ -70,14 +70,14 @@ echo ""
 if [[ "$RUN_UNIT" == true ]]; then
   bash scripts/unit_tests.sh
   echo ""
-  echo "================================================================================"
+  echo "---"
   echo ""
 fi
 
 if [[ "$RUN_COMPLIANCE" == true ]]; then
   bash scripts/compliance_tests.sh
   echo ""
-  echo "================================================================================"
+  echo "---"
   echo ""
 fi
 

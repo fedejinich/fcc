@@ -4,7 +4,8 @@ use log::{debug, trace};
 
 use crate::{
     c_ast::ast::{
-        BinaryOperator, Block, BlockItem, Declaration, Expression, FunctionDefinition, Identifier, Program, Statement, UnaryOperator
+        BinaryOperator, Block, BlockItem, Declaration, Expression, FunctionDefinition, Identifier,
+        Program, Statement, UnaryOperator,
     },
     lexer::{self, Token},
 };
@@ -63,7 +64,6 @@ impl FunctionDefinition {
             block_items.push(block_item);
         }
         let block = Block::new(block_items);
-
 
         token_eq(Token::CloseBrace, tokens)?;
 

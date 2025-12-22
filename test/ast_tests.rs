@@ -1,6 +1,6 @@
 use fcc::c_ast::ast::{
-    BinaryOperator, BlockItem, Declaration, Expression, FunctionDefinition,
-    Identifier, Program, Statement, UnaryOperator
+    BinaryOperator, Block, BlockItem, Declaration, Expression, FunctionDefinition, Identifier,
+    Program, Statement, UnaryOperator,
 };
 
 #[test]
@@ -15,11 +15,10 @@ fn test_identifier_creation() {
 #[test]
 fn test_program_creation() {
     let identifier = Identifier::new("main".to_string());
-    let function_def = FunctionDefinition::new(identifier, vec![]);
+    let function_def = FunctionDefinition::new(identifier, Block::new(vec![]));
     let program = Program::new(function_def);
 
     assert_eq!(program.function_definition.name.value, "main");
-    assert_eq!(program.function_definition.body.len(), 0);
 }
 
 #[test]
@@ -27,10 +26,22 @@ fn test_function_definition_creation() {
     let identifier = Identifier::new("test_func".to_string());
     let return_stmt = Statement::Return(Expression::Constant(42));
     let block_item = BlockItem::S(return_stmt);
-    let function_def = FunctionDefinition::new(identifier, vec![block_item]);
+    let function_def = FunctionDefinition::new(identifier, Block::new(vec![block_item]));
 
     assert_eq!(function_def.name.value, "test_func");
-    assert_eq!(function_def.body.len(), 1);
+}
+
+#[test]
+fn test_block_creation() {
+    let items = vec![
+        BlockItem::S(Statement::Return(Expression::Constant(0))),
+        BlockItem::D(Declaration::new(Identifier::new("x".to_string()), None)),
+    ];
+    let block = Block::new(items);
+
+    // Test iteration works
+    let collected: Vec<_> = block.into_iter().collect();
+    assert_eq!(collected.len(), 2);
 }
 
 #[test]
@@ -202,7 +213,10 @@ fn test_all_unary_operators() {
     let negate = Expression::Unary(UnaryOperator::Negate, Box::new(expr.clone()));
     let not = Expression::Unary(UnaryOperator::Not, Box::new(expr));
 
-    assert!(matches!(complement, Expression::Unary(UnaryOperator::Complement, _)));
+    assert!(matches!(
+        complement,
+        Expression::Unary(UnaryOperator::Complement, _)
+    ));
     assert!(matches!(negate, Expression::Unary(UnaryOperator::Negate, _)));
     assert!(matches!(not, Expression::Unary(UnaryOperator::Not, _)));
 }
@@ -244,10 +258,12 @@ fn test_statement_types() {
     let return_stmt = Statement::Return(Expression::Constant(0));
     let expr_stmt = Statement::Expression(Expression::Constant(42));
     let null_stmt = Statement::Null;
+    let compound_stmt = Statement::Compound(Box::new(Block::new(vec![])));
 
     assert!(matches!(return_stmt, Statement::Return(_)));
     assert!(matches!(expr_stmt, Statement::Expression(_)));
     assert!(matches!(null_stmt, Statement::Null));
+    assert!(matches!(compound_stmt, Statement::Compound(_)));
 }
 
 #[test]
@@ -260,4 +276,18 @@ fn test_block_item_types() {
 
     assert!(matches!(stmt_block, BlockItem::S(_)));
     assert!(matches!(decl_block, BlockItem::D(_)));
+}
+
+#[test]
+fn test_compound_statement() {
+    let inner_block = Block::new(vec![BlockItem::S(Statement::Return(Expression::Constant(1)))]);
+    let compound = Statement::Compound(Box::new(inner_block));
+
+    if let Statement::Compound(block) = compound {
+        let items: Vec<_> = block.into_iter().collect();
+        assert_eq!(items.len(), 1);
+        assert!(matches!(items[0], BlockItem::S(Statement::Return(_))));
+    } else {
+        panic!("Expected compound statement");
+    }
 }

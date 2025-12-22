@@ -97,6 +97,12 @@ impl Block {
     pub fn new(block_items: Vec<BlockItem>) -> Self {
         Self { block_items }
     }
+
+    // only used in tests
+    #[allow(dead_code)]
+    pub fn iter(&self) -> std::slice::Iter<'_, BlockItem> {
+        self.block_items.iter()
+    }
 }
 
 impl IntoIterator for Block {
