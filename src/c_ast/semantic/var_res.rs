@@ -55,7 +55,7 @@ impl VariableResolver {
     /// returns a copy of the variables map with all the variables marked as undeclared for the current block
     fn copy_variable_map(&self) -> HashMap<VarName, VarValue> {
         self.0
-            .clone()
+            .clone() // copy variables map
             .iter()
             .map(|(k, v)| {
                 let mut var_name = v.clone();

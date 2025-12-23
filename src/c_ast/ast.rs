@@ -102,6 +102,7 @@ impl Block {
     }
 }
 
+// TODO: i don't like this trait it seems forced
 impl IntoIterator for Block {
     type Item = BlockItem;
     type IntoIter = std::vec::IntoIter<Self::Item>;

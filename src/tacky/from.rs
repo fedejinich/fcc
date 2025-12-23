@@ -29,11 +29,8 @@ impl From<FunctionDefinition> for TackyFunctionDefinition {
     fn from(function_definition: FunctionDefinition) -> Self {
         trace!("Converting <function> body block items to Tacky instructions");
         debug!("<function>: {}", function_definition.name.value);
-        let mut instructions: Vec<TackyInstruction> = function_definition
-            .body
-            .into_iter()
-            .flat_map(TackyInstruction::from_block_item) // TODO: should use a Block here
-            .collect();
+
+        let mut instructions = TackyInstruction::from_block(function_definition.body);
 
         // add return 0 as last instruction (it's gonna be fixed in Part III)
         instructions.push(TackyInstruction::Return(TackyValue::Constant(0)));
@@ -53,8 +50,15 @@ impl From<Identifier> for TackyIdentifier {
 }
 
 impl TackyInstruction {
-    fn _from_block(_block: Block) -> Vec<TackyInstruction> {
-        todo!("to be implemented");
+    fn from_block(block: Block) -> Vec<TackyInstruction> {
+        trace!("Converting <block> to Tacky instructions");
+
+        let mut instructions: Vec<TackyInstruction> = block
+            .into_iter()
+            .flat_map(TackyInstruction::from_block_item) // TODO: should use a Block here
+            .collect();
+
+        instructions
     }
 
     fn from_block_item(block_item: BlockItem) -> Vec<TackyInstruction> {
@@ -130,8 +134,14 @@ impl TackyInstruction {
 
                 instructions
             }
-            Statement::Compound(_b) => {
-                todo!("to be implemented");
+            Statement::Compound(block) => {
+                trace!("Converting <statement>: compound");
+
+                let inst = TackyInstruction::from_block(*block);
+                for i in inst {
+                    instructions.push(i);
+                }
+                instructions
             }
             Statement::Null => {
                 trace!("No need to convert <statement>: null");
