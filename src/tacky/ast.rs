@@ -1,7 +1,9 @@
 //! This module contains  tacky AST which is an intermediate
 //! representation of the source code.
 
-use std::sync::atomic::{AtomicUsize, Ordering};
+use std::sync::atomic::AtomicUsize;
+
+use crate::common::util::temporary_name;
 
 pub struct TackyProgram {
     pub function_definition: TackyFunctionDefinition,
@@ -69,14 +71,10 @@ pub enum TackyBinaryOperator {
 
 static COUNTER: AtomicUsize = AtomicUsize::new(0);
 
-fn next_id() -> usize {
-    COUNTER.fetch_add(1, Ordering::Relaxed)
-}
-
 impl TackyIdentifier {
     pub fn new(value: &str) -> TackyIdentifier {
         TackyIdentifier {
-            value: format!("{}.{}", value, next_id()),
+            value: temporary_name(value, &COUNTER),
         }
     }
 }

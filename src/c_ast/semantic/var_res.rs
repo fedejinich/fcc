@@ -7,7 +7,7 @@ use log::{debug, trace};
 
 use crate::{
     c_ast::ast::{Declaration, Expression, Identifier, Statement},
-    common::folder::FolderC,
+    common::{folder::FolderC, util::temporary_name},
 };
 
 pub type UniqueName = String;
@@ -76,7 +76,7 @@ impl FolderC for VariableResolver {
             return Err("duplicate variable declaration".to_string());
         }
 
-        let unique_name: String = temporary_name(&declaration.name.value);
+        let unique_name: String = temporary_name(&declaration.name.value, &VAR_RES_COUNT);
 
         self.track_variable(declaration.name.clone(), unique_name.clone());
 
@@ -89,15 +89,22 @@ impl FolderC for VariableResolver {
     }
 
     fn fold_statement(&mut self, statement: Statement) -> Result<Statement, String> {
-        if let Statement::Compound(block) = statement {
-            let new_variable_map = self.copy_variable_map();
-            let mut new_var_resolver = Self::new_with(new_variable_map);
-            let resolved_block = new_var_resolver.fold_block(*block)?;
+        match statement {
+            Statement::Compound(block) => {
+                trace!("resolving compound statement");
 
-            return Ok(Statement::Compound(Box::new(resolved_block)));
-        };
+                let new_variable_map = self.copy_variable_map();
+                let mut new_var_resolver = Self::new_with(new_variable_map);
+                let resolved_block = new_var_resolver.fold_block(*block)?;
 
-        self.default_fold_statement(statement)
+                return Ok(Statement::Compound(Box::new(resolved_block)));
+            }
+            _ => {
+                trace!("resolving statement");
+
+                self.default_fold_statement(statement)
+            }
+        }
     }
 
     fn fold_expression(&mut self, expr: Expression) -> Result<Expression, String> {
@@ -142,13 +149,4 @@ impl FolderC for VariableResolver {
     }
 }
 
-static COUNTER: AtomicUsize = AtomicUsize::new(0);
-
-fn next_id() -> usize {
-    COUNTER.fetch_add(1, Ordering::Relaxed)
-}
-
-fn temporary_name(name: &str) -> String {
-    let id = next_id();
-    format!("{name}.{id}")
-}
+static VAR_RES_COUNT: AtomicUsize = AtomicUsize::new(0);

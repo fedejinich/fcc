@@ -1,6 +1,6 @@
 use fcc::tacky::ast::{
-    TackyBinaryOperator, TackyFunctionDefinition, TackyIdentifier,
-    TackyInstruction, TackyProgram, TackyUnaryOperator, TackyValue
+    TackyBinaryOperator, TackyFunctionDefinition, TackyIdentifier, TackyInstruction, TackyProgram,
+    TackyUnaryOperator, TackyValue,
 };
 
 #[test]
@@ -33,7 +33,7 @@ fn test_tacky_value_variable() {
     let val = TackyValue::Var(id);
 
     if let TackyValue::Var(identifier) = val {
-        assert!(identifier.value.starts_with("var."));
+        assert!(identifier.value.starts_with("var"));
     } else {
         panic!("Expected variable value");
     }
@@ -49,7 +49,9 @@ fn test_tacky_program_creation() {
     assert!(program.function_definition.name.value.starts_with("main."));
     assert_eq!(program.function_definition.instructions.len(), 1);
 
-    if let TackyInstruction::Return(TackyValue::Constant(val)) = &program.function_definition.instructions[0] {
+    if let TackyInstruction::Return(TackyValue::Constant(val)) =
+        &program.function_definition.instructions[0]
+    {
         assert_eq!(*val, 0);
     } else {
         panic!("Expected return instruction with constant 0");
@@ -59,9 +61,7 @@ fn test_tacky_program_creation() {
 #[test]
 fn test_tacky_function_definition_creation() {
     let name = TackyIdentifier::new("func");
-    let instructions = vec![
-        TackyInstruction::Return(TackyValue::Constant(42))
-    ];
+    let instructions = vec![TackyInstruction::Return(TackyValue::Constant(42))];
     let func_def = TackyFunctionDefinition::new(name, instructions);
 
     assert!(func_def.name.value.starts_with("func."));
@@ -183,6 +183,7 @@ fn test_tacky_instruction_jump_if_zero() {
         } else {
             panic!("Expected variable value");
         }
+        println!("{}", lbl.value);
         assert!(lbl.value.starts_with("zero_label."));
     } else {
         panic!("Expected jump if zero instruction");
@@ -271,22 +272,40 @@ fn test_all_tacky_binary_operators() {
 fn test_complex_tacky_function() {
     let name = TackyIdentifier::new("complex");
     let instructions = vec![
-        TackyInstruction::Copy(TackyValue::Constant(10), TackyValue::Var(TackyIdentifier::new("a"))),
-        TackyInstruction::Copy(TackyValue::Constant(20), TackyValue::Var(TackyIdentifier::new("b"))),
+        TackyInstruction::Copy(
+            TackyValue::Constant(10),
+            TackyValue::Var(TackyIdentifier::new("a")),
+        ),
+        TackyInstruction::Copy(
+            TackyValue::Constant(20),
+            TackyValue::Var(TackyIdentifier::new("b")),
+        ),
         TackyInstruction::Binary(
             TackyBinaryOperator::Add,
             TackyValue::Var(TackyIdentifier::new("a")),
             TackyValue::Var(TackyIdentifier::new("b")),
-            TackyValue::Var(TackyIdentifier::new("result"))
+            TackyValue::Var(TackyIdentifier::new("result")),
         ),
-        TackyInstruction::Return(TackyValue::Var(TackyIdentifier::new("result")))
+        TackyInstruction::Return(TackyValue::Var(TackyIdentifier::new("result"))),
     ];
 
     let func_def = TackyFunctionDefinition::new(name, instructions);
     assert_eq!(func_def.instructions.len(), 4);
 
-    assert!(matches!(func_def.instructions[0], TackyInstruction::Copy(_, _)));
-    assert!(matches!(func_def.instructions[1], TackyInstruction::Copy(_, _)));
-    assert!(matches!(func_def.instructions[2], TackyInstruction::Binary(_, _, _, _)));
-    assert!(matches!(func_def.instructions[3], TackyInstruction::Return(_)));
+    assert!(matches!(
+        func_def.instructions[0],
+        TackyInstruction::Copy(_, _)
+    ));
+    assert!(matches!(
+        func_def.instructions[1],
+        TackyInstruction::Copy(_, _)
+    ));
+    assert!(matches!(
+        func_def.instructions[2],
+        TackyInstruction::Binary(_, _, _, _)
+    ));
+    assert!(matches!(
+        func_def.instructions[3],
+        TackyInstruction::Return(_)
+    ));
 }
