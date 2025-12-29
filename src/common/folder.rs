@@ -26,15 +26,17 @@ pub trait FolderC {
         &mut self,
         function: FunctionDefinition,
     ) -> Result<FunctionDefinition, String> {
-        let folded_b_i: Result<Vec<_>, String> = function
-            .body
-            .into_iter()
-            .map(|item| self.fold_block_item(item))
-            .collect();
+        // let folded_b_i: Result<Vec<_>, String> = function
+        //     .body
+        //     .into_iter()
+        //     .map(|item| self.fold_block_item(item))
+        //     .collect();
+        let block = self.fold_block(function.body)?;
 
         Ok(FunctionDefinition::new(
             self.fold_identifier(function.name)?,
-            Block::new(folded_b_i?),
+            // Block::new(folded_b_i?),
+            block,
         ))
     }
 
