@@ -4,7 +4,7 @@ use log::{debug, trace};
 
 use crate::{
     c_ast::ast::{
-        BinaryOperator, BlockItem, Declaration, Expression, FunctionDefinition, Identifier,
+        BinaryOperator, Block, BlockItem, Declaration, Expression, FunctionDefinition, Identifier,
         Program, Statement, UnaryOperator,
     },
     tacky::ast::{
@@ -29,11 +29,8 @@ impl From<FunctionDefinition> for TackyFunctionDefinition {
     fn from(function_definition: FunctionDefinition) -> Self {
         trace!("Converting <function> body block items to Tacky instructions");
         debug!("<function>: {}", function_definition.name.value);
-        let mut instructions: Vec<TackyInstruction> = function_definition
-            .body
-            .into_iter()
-            .flat_map(TackyInstruction::from_bi)
-            .collect();
+
+        let mut instructions = TackyInstruction::from_block(function_definition.body);
 
         // add return 0 as last instruction (it's gonna be fixed in Part III)
         instructions.push(TackyInstruction::Return(TackyValue::Constant(0)));
@@ -49,17 +46,26 @@ impl From<Identifier> for TackyIdentifier {
     fn from(value: Identifier) -> Self {
         trace!("Converting <identifier>: {}", value.value);
         TackyIdentifier { value: value.value }
-        // TackyIdentifier::new(value.value.as_str())
     }
 }
 
 impl TackyInstruction {
-    fn from_bi(block_item: BlockItem) -> Vec<TackyInstruction> {
+    fn from_block(block: Block) -> Vec<TackyInstruction> {
+        trace!("Converting <block> to Tacky instructions");
+
+        block
+            .0
+            .into_iter()
+            .flat_map(TackyInstruction::from_block_item) // TODO: should use a Block here
+            .collect()
+    }
+
+    fn from_block_item(block_item: BlockItem) -> Vec<TackyInstruction> {
         trace!("Converting <block_item> to Tacky instructions");
 
         let i = match block_item {
-            BlockItem::S(statement) => TackyInstruction::from_st(statement),
-            BlockItem::D(declaration) => TackyInstruction::from_decl(declaration),
+            BlockItem::S(s) => TackyInstruction::from_statement(s),
+            BlockItem::D(d) => TackyInstruction::from_declaration(d),
         };
 
         debug!("Generated Tacky instructions: {i:?}");
@@ -67,7 +73,7 @@ impl TackyInstruction {
         i
     }
 
-    fn from_st(statement: Statement) -> Vec<TackyInstruction> {
+    fn from_statement(statement: Statement) -> Vec<TackyInstruction> {
         trace!("Converting <statement> to Tacky instructions");
         let mut instructions = vec![];
         let i = match statement {
@@ -80,18 +86,10 @@ impl TackyInstruction {
             }
             Statement::Expression(expr) => {
                 trace!("Converting <statement>: expression");
-                let v = TackyInstruction::from_expr(expr, &mut instructions);
-                instructions.push(TackyInstruction::Copy(
-                    v,
-                    TackyValue::Var(TackyIdentifier::new("result")),
-                ));
+
+                let _ = TackyInstruction::from_expr(expr, &mut instructions);
 
                 instructions
-            }
-            Statement::Null => {
-                trace!("No need to convert <statement>: null");
-
-                vec![]
             }
             // TODO: this can be optimized by having a special function to handle ifs with else
             // clauses (in that case we won't use the else_label)
@@ -112,7 +110,7 @@ impl TackyInstruction {
                 instructions.push(TackyInstruction::Comment(
                     "instruction for statement_1".to_string(),
                 ));
-                for ins_statement_1 in TackyInstruction::from_st(*then) {
+                for ins_statement_1 in TackyInstruction::from_statement(*then) {
                     instructions.push(ins_statement_1);
                 }
 
@@ -124,13 +122,27 @@ impl TackyInstruction {
                     instructions.push(TackyInstruction::Comment(
                         "instruction for statement_2".to_string(),
                     ));
-                    for ins_statement_2 in TackyInstruction::from_st(*e) {
+                    for ins_statement_2 in TackyInstruction::from_statement(*e) {
                         instructions.push(ins_statement_2);
                     }
                 }
                 instructions.push(TackyInstruction::Label(end_label_id));
 
                 instructions
+            }
+            Statement::Compound(block) => {
+                trace!("Converting <statement>: compound");
+
+                let inst = TackyInstruction::from_block(*block);
+                for i in inst {
+                    instructions.push(i);
+                }
+                instructions
+            }
+            Statement::Null => {
+                trace!("No need to convert <statement>: null");
+
+                vec![]
             }
         };
 
@@ -139,7 +151,7 @@ impl TackyInstruction {
         i
     }
 
-    fn from_decl(declaration: Declaration) -> Vec<TackyInstruction> {
+    fn from_declaration(declaration: Declaration) -> Vec<TackyInstruction> {
         trace!("Converting <declaration> to Tacky instructions");
         let mut instructions = vec![];
         if let Some(initializer) = declaration.initializer {
@@ -164,7 +176,6 @@ impl TackyInstruction {
     fn from_expr(expr: Expression, instructions: &mut Vec<TackyInstruction>) -> TackyValue {
         trace!("Converting <exp> to Tacky instructions");
         match expr {
-            // TODO: handle IF statement
             Expression::Conditional(cond, then, el) => {
                 trace!("Converting Conditional to Tacky instruction");
                 let result_id = TackyIdentifier::new("result");
@@ -250,90 +261,96 @@ impl TackyInstruction {
             }
             Expression::Binary(op, left, right) => {
                 trace!("Converting <binop>: {op:?}");
-                match op {
-                    BinaryOperator::And => {
-                        let result = TackyValue::Var(TackyIdentifier::new("and_result"));
+                TackyInstruction::from_bin_op(instructions, op, left, right)
+            }
+        }
+    }
 
-                        let false_label = TackyIdentifier::new("false_label");
-                        let end_label = TackyIdentifier::new("end");
+    fn from_bin_op(
+        instructions: &mut Vec<TackyInstruction>,
+        op: BinaryOperator,
+        left: Box<Expression>,
+        right: Box<Expression>,
+    ) -> TackyValue {
+        match op {
+            BinaryOperator::And => {
+                let result = TackyValue::Var(TackyIdentifier::new("and_result"));
 
-                        trace!("Converting left expression");
-                        // TODO: extract this to a function
-                        let v1 = TackyInstruction::from_expr(*left, instructions);
+                let false_label = TackyIdentifier::new("false_label");
+                let end_label = TackyIdentifier::new("end");
 
-                        let jump_if_v1 = TackyInstruction::JumpIfZero(v1, false_label.clone());
+                trace!("Converting left expression");
+                // TODO: extract this to a function
+                let v1 = TackyInstruction::from_expr(*left, instructions);
 
-                        instructions.push(jump_if_v1.clone());
+                let jump_if_v1 = TackyInstruction::JumpIfZero(v1, false_label.clone());
 
-                        trace!("Converting right expression");
-                        let v2 = TackyInstruction::from_expr(*right, instructions);
-                        let jump_if_v2 = TackyInstruction::JumpIfZero(v2, false_label.clone());
+                instructions.push(jump_if_v1.clone());
 
-                        instructions.push(jump_if_v2.clone());
+                trace!("Converting right expression");
+                let v2 = TackyInstruction::from_expr(*right, instructions);
+                let jump_if_v2 = TackyInstruction::JumpIfZero(v2, false_label.clone());
 
-                        let copy_1 =
-                            TackyInstruction::Copy(TackyValue::Constant(1), result.clone());
-                        let copy_0 =
-                            TackyInstruction::Copy(TackyValue::Constant(0), result.clone());
+                instructions.push(jump_if_v2.clone());
 
-                        instructions.push(copy_1.clone());
-                        instructions.push(TackyInstruction::Jump(end_label.clone()));
-                        instructions.push(TackyInstruction::Label(false_label));
-                        instructions.push(copy_0);
-                        instructions.push(TackyInstruction::Label(end_label));
+                let copy_1 = TackyInstruction::Copy(TackyValue::Constant(1), result.clone());
+                let copy_0 = TackyInstruction::Copy(TackyValue::Constant(0), result.clone());
 
-                        debug!("Generated result: {result:?}");
+                instructions.push(copy_1.clone());
+                instructions.push(TackyInstruction::Jump(end_label.clone()));
+                instructions.push(TackyInstruction::Label(false_label));
+                instructions.push(copy_0);
+                instructions.push(TackyInstruction::Label(end_label));
 
-                        result
-                    }
-                    BinaryOperator::Or => {
-                        let result = TackyValue::Var(TackyIdentifier::new("or_result"));
-                        let false_label = TackyIdentifier::new("false_label");
-                        let end_label = TackyIdentifier::new("end");
+                debug!("Generated result: {result:?}");
 
-                        trace!("Converting left expression");
-                        // TODO: extract this to a function
-                        let v1 = TackyInstruction::from_expr(*left, instructions);
+                result
+            }
+            BinaryOperator::Or => {
+                let result = TackyValue::Var(TackyIdentifier::new("or_result"));
+                let false_label = TackyIdentifier::new("false_label");
+                let end_label = TackyIdentifier::new("end");
 
-                        instructions.push(TackyInstruction::JumpIfNotZero(v1, false_label.clone()));
+                trace!("Converting left expression");
+                // TODO: extract this to a function
+                let v1 = TackyInstruction::from_expr(*left, instructions);
 
-                        trace!("Converting right expression");
-                        let v2 = TackyInstruction::from_expr(*right, instructions);
+                instructions.push(TackyInstruction::JumpIfNotZero(v1, false_label.clone()));
 
-                        instructions.push(TackyInstruction::JumpIfNotZero(v2, false_label.clone()));
+                trace!("Converting right expression");
+                let v2 = TackyInstruction::from_expr(*right, instructions);
 
-                        let copy_1 =
-                            TackyInstruction::Copy(TackyValue::Constant(1), result.clone());
-                        let copy_0 =
-                            TackyInstruction::Copy(TackyValue::Constant(0), result.clone());
+                instructions.push(TackyInstruction::JumpIfNotZero(v2, false_label.clone()));
 
-                        instructions.push(copy_0.clone());
-                        instructions.push(TackyInstruction::Jump(end_label.clone()));
-                        instructions.push(TackyInstruction::Label(false_label));
-                        instructions.push(copy_1);
-                        instructions.push(TackyInstruction::Label(end_label));
+                let copy_1 = TackyInstruction::Copy(TackyValue::Constant(1), result.clone());
+                let copy_0 = TackyInstruction::Copy(TackyValue::Constant(0), result.clone());
 
-                        debug!("Generated result: {result:?}");
+                instructions.push(copy_0.clone());
+                instructions.push(TackyInstruction::Jump(end_label.clone()));
+                instructions.push(TackyInstruction::Label(false_label));
+                instructions.push(copy_1);
+                instructions.push(TackyInstruction::Label(end_label));
 
-                        result
-                    }
-                    _ => {
-                        let v1 = TackyInstruction::from_expr(*left, instructions);
-                        let v2 = TackyInstruction::from_expr(*right, instructions);
-                        let dst = TackyValue::Var(TackyIdentifier::new("binary_op"));
-                        let binary_op = TackyBinaryOperator::from(op);
+                debug!("Generated result: {result:?}");
 
-                        debug!(
-                            "Binary {} {} to {}",
-                            v1.pretty_print(),
-                            v2.pretty_print(),
-                            dst.pretty_print()
-                        );
-                        instructions.push(TackyInstruction::Binary(binary_op, v1, v2, dst.clone()));
+                result
+            }
+            _ => {
+                let v1 = TackyInstruction::from_expr(*left, instructions);
+                let v2 = TackyInstruction::from_expr(*right, instructions);
+                let dst = TackyValue::Var(TackyIdentifier::new("binary_op"));
+                let binary_op = TackyBinaryOperator::from(op);
 
-                        dst
-                    }
-                }
+                debug!(
+                    "Binary {} {} to {}",
+                    v1.pretty_print(),
+                    v2.pretty_print(),
+                    dst.pretty_print()
+                );
+
+                instructions.push(TackyInstruction::Binary(binary_op, v1, v2, dst.clone()));
+
+                dst
             }
         }
     }

@@ -1,84 +1,149 @@
 use std::{
     collections::HashMap,
-    sync::atomic::{AtomicUsize, Ordering},
+    sync::atomic::AtomicUsize,
 };
 
 use log::{debug, trace};
 
 use crate::{
-    c_ast::ast::{Declaration, Expression, Identifier},
-    common::folder::FolderC,
+    c_ast::ast::{Declaration, Expression, Identifier, Statement},
+    common::{folder::FolderC, util::temporary_name},
 };
 
+pub type UniqueName = String;
+pub type FromCurrentBlock = bool;
+/// A tuple containing the variable unique name and whether it is declared for the current block
+pub type VarValue = (UniqueName, FromCurrentBlock);
+pub type VarName = String;
+
+static VAR_RES_COUNT: AtomicUsize = AtomicUsize::new(0);
+
 #[derive(Default)]
-pub struct VariableResolver {
-    variable_map: HashMap<String, String>,
-}
+pub struct VariableResolver(HashMap<VarName, VarValue>);
 
 impl VariableResolver {
     pub fn new() -> Self {
         Self::default()
     }
+
+    pub fn new_with(var_map: HashMap<VarName, VarValue>) -> Self {
+        Self(var_map)
+    }
+
+    /// Wether a variable is already named with the given name
+    fn is_var_named(&self, var_name: &Identifier) -> bool {
+        let Some(_) = self.get_var(var_name) else {
+            return false;
+        };
+        return true;
+    }
+
+    /// Wether a variable is already declared with the given name
+    fn is_var_declred(&self, var_name: &Identifier) -> bool {
+        let Some(var_value) = self.get_var(var_name) else {
+            return false;
+        };
+        return var_value.1;
+    }
+
+    pub fn get_var(&self, var_name: &Identifier) -> Option<VarValue> {
+        self.0.get(&var_name.value).cloned()
+    }
+
+    fn track_variable(&mut self, var_name: Identifier, unique_name: String) {
+        self.0.insert(var_name.value, (unique_name, true));
+    }
+
+    /// returns a copy of the variables map with all the variables marked as undeclared for the current block
+    fn copy_variable_map(&self) -> HashMap<VarName, VarValue> {
+        self.0
+            .clone() // copy variables map
+            .iter()
+            .map(|(k, v)| {
+                let mut var_name = v.clone();
+                var_name.1 = false;
+
+                (k.clone(), var_name)
+            })
+            .collect()
+    }
 }
 
 impl FolderC for VariableResolver {
-    fn fold_declaration(&mut self, declaration: &Declaration) -> Result<Declaration, String> {
+    fn fold_declaration(&mut self, declaration: Declaration) -> Result<Declaration, String> {
         trace!("resolving declaration: {declaration:?}");
 
-        if self.variable_map.contains_key(&declaration.name.value) {
+        if self.is_var_named(&declaration.name) && self.is_var_declred(&declaration.name) {
             debug!("variable: {declaration}");
-            return Err("variable already declared".to_string());
+            return Err("duplicate variable declaration".to_string());
         }
 
-        let unique_name: String = temporary_name(&declaration.name.value);
-        self.variable_map
-            .insert(declaration.name.value.clone(), unique_name.clone());
+        let unique_name: String = temporary_name(&declaration.name.value, &VAR_RES_COUNT);
+
+        self.track_variable(declaration.name.clone(), unique_name.clone());
 
         let init = declaration
             .initializer
-            .as_ref()
-            .map(|e| self.fold_expression(e)) // option result expr
-            .transpose()?; // result expr
+            .map(|e| self.fold_expression(e))
+            .transpose()?;
 
         Ok(Declaration::new(Identifier::new(unique_name), init))
     }
 
-    fn fold_expression(&mut self, expr: &Expression) -> Result<Expression, String> {
+    fn fold_statement(&mut self, statement: Statement) -> Result<Statement, String> {
+        match statement {
+            Statement::Compound(block) => {
+                trace!("resolving compound statement");
+
+                let new_variable_map = self.copy_variable_map();
+                let mut new_var_resolver = Self::new_with(new_variable_map);
+                let resolved_block = new_var_resolver.fold_block(*block)?;
+
+                return Ok(Statement::Compound(Box::new(resolved_block)));
+            }
+            _ => {
+                trace!("resolving statement");
+
+                self.default_fold_statement(statement)
+            }
+        }
+    }
+
+    fn fold_expression(&mut self, expr: Expression) -> Result<Expression, String> {
         trace!("resolving expression: {expr:?}");
 
         let res = match expr {
-            Expression::Assignment(left, right) => match **left {
+            Expression::Assignment(left, right) => match *left {
                 Expression::Var(_) => Expression::Assignment(
-                    Box::new(self.fold_expression(left)?),
-                    Box::new(self.fold_expression(right)?),
+                    Box::new(self.fold_expression(*left)?),
+                    Box::new(self.fold_expression(*right)?),
                 ),
                 _ => {
                     return Err("invalid lvalue".to_string());
                 }
             },
-            Expression::Var(id) => {
-                if let Some(v) = self.variable_map.get(&id.value) {
-                    Expression::Var(Identifier::new(v.clone()))
+            Expression::Var(ref id) => {
+                if let Some((var_unique_name, _)) = self.get_var(&id) {
+                    Expression::Var(Identifier::new(var_unique_name))
                 } else {
                     debug!("undeclared variable: {expr}");
 
                     return Err("undeclared variable".to_string());
                 }
             }
-            // TODO: this should be refactored by a call to the super method
             Expression::Unary(op, expr) => {
-                Expression::Unary(op.clone(), Box::new(self.fold_expression(expr)?))
+                Expression::Unary(op, Box::new(self.fold_expression(*expr)?))
             }
             Expression::Binary(op, left, right) => Expression::Binary(
-                op.clone(),
-                Box::new(self.fold_expression(left)?),
-                Box::new(self.fold_expression(right)?),
+                op,
+                Box::new(self.fold_expression(*left)?),
+                Box::new(self.fold_expression(*right)?),
             ),
-            Expression::Constant(c) => Expression::Constant(*c),
+            Expression::Constant(c) => Expression::Constant(c),
             Expression::Conditional(cond, then, el) => Expression::Conditional(
-                Box::new(self.fold_expression(cond)?),
-                Box::new(self.fold_expression(then)?),
-                Box::new(self.fold_expression(el)?),
+                Box::new(self.fold_expression(*cond)?),
+                Box::new(self.fold_expression(*then)?),
+                Box::new(self.fold_expression(*el)?),
             ),
         };
 
@@ -86,13 +151,3 @@ impl FolderC for VariableResolver {
     }
 }
 
-static COUNTER: AtomicUsize = AtomicUsize::new(0);
-
-fn next_id() -> usize {
-    COUNTER.fetch_add(1, Ordering::Relaxed)
-}
-
-fn temporary_name(name: &str) -> String {
-    let id = next_id();
-    format!("{name}.{id}")
-}

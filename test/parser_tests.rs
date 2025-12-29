@@ -13,6 +13,11 @@ fn parse_program(src: &str) -> Result<Program, String> {
     Program::try_from(tokens)
 }
 
+// Helper: get block items as a vector from a parsed program
+fn get_body_items(program: &Program) -> Vec<&BlockItem> {
+    program.function_definition.body.iter().collect()
+}
+
 // =============================================================================
 // HAPPY PATHS
 // =============================================================================
@@ -23,9 +28,11 @@ fn test_parser_simple_return() {
     let program = parse_program(src).expect("should parse");
 
     assert_eq!(program.function_definition.name.value, "main");
-    assert_eq!(program.function_definition.body.len(), 1);
 
-    match &program.function_definition.body[0] {
+    let items = get_body_items(&program);
+    assert_eq!(items.len(), 1);
+
+    match items[0] {
         BlockItem::S(Statement::Return(Expression::Constant(0))) => {}
         _ => panic!("Expected return 0 statement"),
     }
@@ -36,9 +43,10 @@ fn test_parser_decl_without_initializer() {
     let src = "int main(void){ int x; return 0; }";
     let program = parse_program(src).expect("should parse");
 
-    assert_eq!(program.function_definition.body.len(), 2);
+    let items = get_body_items(&program);
+    assert_eq!(items.len(), 2);
 
-    match &program.function_definition.body[0] {
+    match items[0] {
         BlockItem::D(decl) => {
             assert_eq!(decl.name.value, "x");
             assert!(decl.initializer.is_none());
@@ -52,9 +60,10 @@ fn test_parser_decl_with_initializer() {
     let src = "int main(void){ int x = 1; return x; }";
     let program = parse_program(src).expect("should parse");
 
-    assert_eq!(program.function_definition.body.len(), 2);
+    let items = get_body_items(&program);
+    assert_eq!(items.len(), 2);
 
-    match &program.function_definition.body[0] {
+    match items[0] {
         BlockItem::D(decl) => {
             assert_eq!(decl.name.value, "x");
             assert!(matches!(decl.initializer, Some(Expression::Constant(1))));
@@ -62,7 +71,7 @@ fn test_parser_decl_with_initializer() {
         _ => panic!("Expected declaration with initializer"),
     }
 
-    match &program.function_definition.body[1] {
+    match items[1] {
         BlockItem::S(Statement::Return(Expression::Var(id))) => {
             assert_eq!(id.value, "x");
         }
@@ -75,9 +84,10 @@ fn test_parser_if_without_else() {
     let src = "int main(void){ int x=0; if (x) return 1; return 0; }";
     let program = parse_program(src).expect("should parse");
 
-    assert_eq!(program.function_definition.body.len(), 3);
+    let items = get_body_items(&program);
+    assert_eq!(items.len(), 3);
 
-    match &program.function_definition.body[1] {
+    match items[1] {
         BlockItem::S(Statement::If(cond, then_branch, else_branch)) => {
             assert!(matches!(**cond, Expression::Var(_)));
             assert!(matches!(**then_branch, Statement::Return(_)));
@@ -92,9 +102,10 @@ fn test_parser_if_with_else() {
     let src = "int main(void){ int x=0; if (x) return 1; else return 2; }";
     let program = parse_program(src).expect("should parse");
 
-    assert_eq!(program.function_definition.body.len(), 2);
+    let items = get_body_items(&program);
+    assert_eq!(items.len(), 2);
 
-    match &program.function_definition.body[1] {
+    match items[1] {
         BlockItem::S(Statement::If(_, _, else_branch)) => {
             assert!(else_branch.is_some());
             match else_branch.as_ref().map(|b| b.as_ref()) {
@@ -112,8 +123,10 @@ fn test_parser_dangling_else() {
     let src = "int main(void){ int x=0; if (x) if (x) return 1; else return 2; return 3; }";
     let program = parse_program(src).expect("should parse");
 
+    let items = get_body_items(&program);
+
     // Find the outer if
-    match &program.function_definition.body[1] {
+    match items[1] {
         BlockItem::S(Statement::If(_, then_branch, outer_else)) => {
             // Outer if should NOT have else (dangling else goes to inner)
             assert!(outer_else.is_none(), "Outer if should not have else");
@@ -135,7 +148,9 @@ fn test_parser_ternary() {
     let src = "int main(void){ int x=0; return x ? 1 : 2; }";
     let program = parse_program(src).expect("should parse");
 
-    match &program.function_definition.body[1] {
+    let items = get_body_items(&program);
+
+    match items[1] {
         BlockItem::S(Statement::Return(Expression::Conditional(cond, then_expr, else_expr))) => {
             assert!(matches!(**cond, Expression::Var(_)));
             assert!(matches!(**then_expr, Expression::Constant(1)));
@@ -151,7 +166,9 @@ fn test_parser_precedence_mult_before_add() {
     let src = "int main(void){ return 1 + 2 * 3; }";
     let program = parse_program(src).expect("should parse");
 
-    match &program.function_definition.body[0] {
+    let items = get_body_items(&program);
+
+    match items[0] {
         BlockItem::S(Statement::Return(Expression::Binary(BinaryOperator::Add, left, right))) => {
             assert!(matches!(**left, Expression::Constant(1)));
             // right should be 2 * 3
@@ -173,9 +190,14 @@ fn test_parser_precedence_parens() {
     let src = "int main(void){ return (1 + 2) * 3; }";
     let program = parse_program(src).expect("should parse");
 
-    match &program.function_definition.body[0] {
-        BlockItem::S(Statement::Return(Expression::Binary(BinaryOperator::Multiply, left, right))) =>
-        {
+    let items = get_body_items(&program);
+
+    match items[0] {
+        BlockItem::S(Statement::Return(Expression::Binary(
+            BinaryOperator::Multiply,
+            left,
+            right,
+        ))) => {
             // left should be 1 + 2
             match left.as_ref() {
                 Expression::Binary(BinaryOperator::Add, l, r) => {
@@ -195,7 +217,9 @@ fn test_parser_unary_negate() {
     let src = "int main(void){ int x=1; return -x; }";
     let program = parse_program(src).expect("should parse");
 
-    match &program.function_definition.body[1] {
+    let items = get_body_items(&program);
+
+    match items[1] {
         BlockItem::S(Statement::Return(Expression::Unary(UnaryOperator::Negate, inner))) => {
             assert!(matches!(**inner, Expression::Var(_)));
         }
@@ -208,7 +232,9 @@ fn test_parser_unary_complement() {
     let src = "int main(void){ int x=1; return ~x; }";
     let program = parse_program(src).expect("should parse");
 
-    match &program.function_definition.body[1] {
+    let items = get_body_items(&program);
+
+    match items[1] {
         BlockItem::S(Statement::Return(Expression::Unary(UnaryOperator::Complement, _))) => {}
         _ => panic!("Expected return with unary complement"),
     }
@@ -219,7 +245,9 @@ fn test_parser_unary_not() {
     let src = "int main(void){ int x=1; return !x; }";
     let program = parse_program(src).expect("should parse");
 
-    match &program.function_definition.body[1] {
+    let items = get_body_items(&program);
+
+    match items[1] {
         BlockItem::S(Statement::Return(Expression::Unary(UnaryOperator::Not, _))) => {}
         _ => panic!("Expected return with unary not"),
     }
@@ -230,9 +258,14 @@ fn test_parser_unary_chained() {
     let src = "int main(void){ int x=1; return -~x; }";
     let program = parse_program(src).expect("should parse");
 
-    match &program.function_definition.body[1] {
+    let items = get_body_items(&program);
+
+    match items[1] {
         BlockItem::S(Statement::Return(Expression::Unary(UnaryOperator::Negate, inner))) => {
-            assert!(matches!(**inner, Expression::Unary(UnaryOperator::Complement, _)));
+            assert!(matches!(
+                **inner,
+                Expression::Unary(UnaryOperator::Complement, _)
+            ));
         }
         _ => panic!("Expected return with chained unary operators"),
     }
@@ -243,7 +276,9 @@ fn test_parser_logical_and() {
     let src = "int main(void){ int a=1; int b=0; return a && b; }";
     let program = parse_program(src).expect("should parse");
 
-    match &program.function_definition.body[2] {
+    let items = get_body_items(&program);
+
+    match items[2] {
         BlockItem::S(Statement::Return(Expression::Binary(BinaryOperator::And, _, _))) => {}
         _ => panic!("Expected return with AND expression"),
     }
@@ -254,7 +289,9 @@ fn test_parser_logical_or() {
     let src = "int main(void){ int a=0; int b=1; return a || b; }";
     let program = parse_program(src).expect("should parse");
 
-    match &program.function_definition.body[2] {
+    let items = get_body_items(&program);
+
+    match items[2] {
         BlockItem::S(Statement::Return(Expression::Binary(BinaryOperator::Or, _, _))) => {}
         _ => panic!("Expected return with OR expression"),
     }
@@ -282,7 +319,9 @@ fn test_parser_relational_operators() {
 
     for (src, expected_op) in cases {
         let program = parse_program(src).expect("should parse");
-        match &program.function_definition.body[0] {
+        let items = get_body_items(&program);
+
+        match items[0] {
             BlockItem::S(Statement::Return(Expression::Binary(op, _, _))) => {
                 assert!(
                     std::mem::discriminant(op) == std::mem::discriminant(&expected_op),

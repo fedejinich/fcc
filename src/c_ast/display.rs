@@ -2,8 +2,8 @@ use std::fmt;
 
 use crate::{
     c_ast::ast::{
-        BinaryOperator, BlockItem, Declaration, Expression, FunctionDefinition, Program, Statement,
-        UnaryOperator,
+        BinaryOperator, Block, BlockItem, Declaration, Expression, FunctionDefinition, Program,
+        Statement, UnaryOperator,
     },
     common::util::indent,
 };
@@ -31,6 +31,7 @@ impl fmt::Display for FunctionDefinition {
                     "body={}",
                     self.body
                         .clone()
+                        .0
                         .into_iter()
                         .map(|s| s.to_string())
                         .collect::<Vec<_>>()
@@ -40,6 +41,13 @@ impl fmt::Display for FunctionDefinition {
             )
         )?;
         Ok(())
+    }
+}
+
+#[allow(unused)]
+impl fmt::Display for Block {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        todo!("to be implemented");
     }
 }
 
@@ -91,6 +99,7 @@ impl fmt::Display for Statement {
                 }
                 writeln!(f, ")")
             }
+            Statement::Compound(b) => write!(f, "Compound(\n{b}\n)"),
             Statement::Null => writeln!(f, "Null"),
         }
     }

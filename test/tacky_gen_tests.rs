@@ -14,7 +14,7 @@ use fcc::tacky::ast::{TackyInstruction, TackyProgram, TackyBinaryOperator, Tacky
 fn lower_to_tacky(src: &str) -> Result<TackyProgram, String> {
     let tokens = lex(src)?;
     let program = Program::try_from(tokens)?;
-    let validated = validate_semantics(&program)?;
+    let validated = validate_semantics(program)?;
     Ok(TackyProgram::from(validated))
 }
 

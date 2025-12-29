@@ -4,13 +4,16 @@ pub struct Program {
 
 pub struct FunctionDefinition {
     pub name: Identifier,
-    pub body: Vec<BlockItem>,
+    pub body: Block,
 }
 
 #[derive(Clone, Debug)]
 pub struct Identifier {
     pub value: String,
 }
+
+#[derive(Clone, Debug)]
+pub struct Block(pub Vec<BlockItem>);
 
 #[derive(Clone, Debug)]
 pub enum BlockItem {
@@ -24,11 +27,13 @@ pub struct Declaration {
     pub initializer: Option<Expression>,
 }
 
+#[allow(unused)]
 #[derive(Clone, Debug)]
 pub enum Statement {
     Return(Expression),
     Expression(Expression),
     If(Box<Expression>, Box<Statement>, Option<Box<Statement>>),
+    Compound(Box<Block>),
     Null,
 }
 
@@ -85,8 +90,20 @@ impl Program {
     }
 }
 
+impl Block {
+    pub fn new(block_items: Vec<BlockItem>) -> Self {
+        Self(block_items)
+    }
+
+    // only used in tests
+    #[allow(dead_code)]
+    pub fn iter(&self) -> std::slice::Iter<'_, BlockItem> {
+        self.0.iter()
+    }
+}
+
 impl FunctionDefinition {
-    pub fn new(name: Identifier, body: Vec<BlockItem>) -> Self {
+    pub fn new(name: Identifier, body: Block) -> Self {
         FunctionDefinition { name, body }
     }
 }

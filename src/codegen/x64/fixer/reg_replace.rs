@@ -33,30 +33,29 @@ impl FolderAsm for PseudoRegisterReplacer {
 
     fn fold_function_definition(
         &mut self,
-        function: &AsmFunctionDefinition,
+        function: AsmFunctionDefinition,
     ) -> Result<AsmFunctionDefinition, String> {
-        let (pseudo_reg_map, last_offset) = ids_offset_map(function);
+        let (pseudo_reg_map, last_offset) = ids_offset_map(&function);
 
         self.last_offset = Some(last_offset);
         self.offset_map = Some(pseudo_reg_map.clone());
 
         debug!("Pseudo registers map: {pseudo_reg_map:?}");
 
-        // TODO: this is duplicated code
         let instructions: Result<Vec<_>, String> = function
             .instructions
-            .iter()
+            .into_iter()
             .map(|i| self.fold_instruction(i))
             .collect::<Result<Vec<_>, String>>()
             .map(|v| v.into_iter().flatten().collect());
 
         Ok(AsmFunctionDefinition::new(
-            function.name.clone(),
+            function.name,
             instructions?,
         ))
     }
 
-    fn fold_instruction(&mut self, instruction: &AsmInstruction) -> Result<Vec<AsmInstruction>, String> {
+    fn fold_instruction(&mut self, instruction: AsmInstruction) -> Result<Vec<AsmInstruction>, String> {
         use AsmInstruction::*;
         let res = match instruction {
             Mov(src, dst) => {
@@ -65,12 +64,12 @@ impl FolderAsm for PseudoRegisterReplacer {
             }
             Unary(unary_op, op) => {
                 trace!("Replace pseudoregisters for Unary({unary_op:?}, {op:?})");
-                Unary(unary_op.clone(), self.fold_operand(op)?)
+                Unary(unary_op, self.fold_operand(op)?)
             }
             Binary(bin_op, src, dst) => {
                 trace!("Replace pseudoregisters for Binary({bin_op:?}, {src:?}, {dst:?})");
                 Binary(
-                    bin_op.clone(),
+                    bin_op,
                     self.fold_operand(src)?,
                     self.fold_operand(dst)?,
                 )
@@ -81,7 +80,7 @@ impl FolderAsm for PseudoRegisterReplacer {
             }
             SetCC(cond_code, op) => {
                 trace!("Replace pseudoregisters for SetCC({cond_code:?}, {op:?})");
-                SetCC(cond_code.clone(), self.fold_operand(op)?)
+                SetCC(cond_code, self.fold_operand(op)?)
             }
             Cmp(op_1, op_2) => {
                 trace!("Replace pseudoregisters for Cmp({op_1:?}, {op_2:?})");
@@ -89,20 +88,20 @@ impl FolderAsm for PseudoRegisterReplacer {
             }
             JmpCC(_, _) | Label(_) | AllocateStack(_) | Comment(_) | Jmp(_) | Ret | Cdq => {
                 debug!("Not replacing registers {:?}", &instruction);
-                instruction.clone()
+                instruction
             }
         };
         Ok(vec![res])
     }
 
-    fn fold_operand(&mut self, operand: &AsmOperand) -> Result<AsmOperand, String> {
+    fn fold_operand(&mut self, operand: AsmOperand) -> Result<AsmOperand, String> {
         let Some(offset_map) = &self.offset_map else {
             return Err("offset_map not initialized".to_string());
         };
 
         Ok(offset_map
-            .get(operand)
-            .map_or(operand.clone(), |i| AsmOperand::Stack(*i)))
+            .get(&operand)
+            .map_or(operand, |i| AsmOperand::Stack(*i)))
     }
 }
 

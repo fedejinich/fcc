@@ -1,3 +1,5 @@
+use std::sync::atomic::{AtomicUsize, Ordering};
+
 pub fn replace_c_with_i(file: &str) -> String {
     if let Some(stripped) = file.strip_suffix(".c") {
         format!("{stripped}.i")
@@ -13,3 +15,9 @@ pub fn indent(s: &str, spaces: usize) -> String {
         .collect::<Vec<_>>()
         .join("\n")
 }
+
+pub fn temporary_name(name: &str, counter: &AtomicUsize) -> String {
+    let id = counter.fetch_add(1, Ordering::Relaxed);
+    format!("{name}.{id}")
+}
+

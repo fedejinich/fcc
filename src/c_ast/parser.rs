@@ -4,7 +4,7 @@ use log::{debug, trace};
 
 use crate::{
     c_ast::ast::{
-        BinaryOperator, BlockItem, Declaration, Expression, FunctionDefinition, Identifier,
+        BinaryOperator, Block, BlockItem, Declaration, Expression, FunctionDefinition, Identifier,
         Program, Statement, UnaryOperator,
     },
     lexer::{self, Token},
@@ -51,24 +51,35 @@ impl FunctionDefinition {
         token_eq(Token::OpenParen, tokens)?;
         token_eq(Token::Void, tokens)?;
         token_eq(Token::CloseParen, tokens)?;
+
+        let block = Block::parse_block(tokens)?;
+
+        trace!("<function> parsing completed successfully");
+
+        Ok(FunctionDefinition::new(identifier, block))
+    }
+}
+
+impl Block {
+    fn parse_block(tokens: &mut Peekable<Iter<Token>>) -> ParseResult<Self> {
+        trace!("Parsing <block> ::= \"{{\" <block_item> \"}}\"");
+
         token_eq(Token::OpenBrace, tokens)?;
 
-        trace!("Parsing {{ <block_item> }}");
-
-        let mut body = vec![];
+        let mut block_items = vec![];
         while let Some(next_token) = tokens.peek() {
             if *next_token == &Token::CloseBrace {
                 break;
             }
             let block_item = BlockItem::parse_bi(tokens)?;
-            body.push(block_item);
+            block_items.push(block_item);
         }
 
         token_eq(Token::CloseBrace, tokens)?;
 
-        trace!("<function> parsing completed successfully");
+        trace!("<block> parsing completed successfully");
 
-        Ok(FunctionDefinition::new(identifier, body))
+        Ok(Block::new(block_items))
     }
 }
 
@@ -158,6 +169,15 @@ impl Statement {
                 }
 
                 Statement::If(Box::new(expr), Box::new(then), el)
+            }
+            Token::OpenBrace => {
+                // parsing compound statement
+
+                trace!("Parsing <statement> ::= <block> ");
+
+                let block = Block::parse_block(tokens)?;
+
+                Statement::Compound(Box::new(block))
             }
             _ => {
                 trace!("Parsing <statement> ::= <exp> ;");

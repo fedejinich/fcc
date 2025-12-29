@@ -143,7 +143,7 @@ impl CompilerDriver {
             std::process::exit(0);
         }
 
-        c_program = validate_semantics(&c_program)?;
+        c_program = validate_semantics(c_program)?;
 
         if self.validate {
             std::process::exit(0);
@@ -161,7 +161,7 @@ impl CompilerDriver {
 
         let mut assembly_program = AsmProgram::from(tacky_program);
 
-        assembly_program = self.do_asm_passes(&assembly_program)?;
+        assembly_program = self.do_asm_passes(assembly_program)?;
 
         if self.codegen {
             std::process::exit(0);
@@ -186,13 +186,13 @@ impl CompilerDriver {
         Ok(assembly_file_name)
     }
 
-    fn do_asm_passes(&self, program: &AsmProgram) -> Result<AsmProgram, String> {
+    fn do_asm_passes(&self, program: AsmProgram) -> Result<AsmProgram, String> {
         let mut replacer = PseudoRegisterReplacer::create();
         let assembly_program = replacer.fold_program(program)?;
 
         let last_offset = replacer.last_offset();
         let mut fixer = InstructionFixer::create().with(last_offset);
-        fixer.fold_program(&assembly_program)
+        fixer.fold_program(assembly_program)
     }
 
     fn assemble_and_link(&self, assembly_file: String) -> Result<i32, String> {
