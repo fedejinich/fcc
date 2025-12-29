@@ -17,10 +17,7 @@ pub fn indent(s: &str, spaces: usize) -> String {
 }
 
 pub fn temporary_name(name: &str, counter: &AtomicUsize) -> String {
-    let id = next_id(counter);
+    let id = counter.fetch_add(1, Ordering::Relaxed);
     format!("{name}.{id}")
 }
 
-pub fn next_id(counter: &AtomicUsize) -> usize {
-    counter.fetch_add(1, Ordering::Relaxed)
-}

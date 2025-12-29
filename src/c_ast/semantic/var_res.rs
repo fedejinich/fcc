@@ -1,6 +1,6 @@
 use std::{
     collections::HashMap,
-    sync::atomic::{AtomicUsize, Ordering},
+    sync::atomic::AtomicUsize,
 };
 
 use log::{debug, trace};
@@ -15,6 +15,8 @@ pub type FromCurrentBlock = bool;
 /// A tuple containing the variable unique name and whether it is declared for the current block
 pub type VarValue = (UniqueName, FromCurrentBlock);
 pub type VarName = String;
+
+static VAR_RES_COUNT: AtomicUsize = AtomicUsize::new(0);
 
 #[derive(Default)]
 pub struct VariableResolver(HashMap<VarName, VarValue>);
@@ -149,4 +151,3 @@ impl FolderC for VariableResolver {
     }
 }
 
-static VAR_RES_COUNT: AtomicUsize = AtomicUsize::new(0);

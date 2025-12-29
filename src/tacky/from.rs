@@ -53,12 +53,10 @@ impl TackyInstruction {
     fn from_block(block: Block) -> Vec<TackyInstruction> {
         trace!("Converting <block> to Tacky instructions");
 
-        let mut instructions: Vec<TackyInstruction> = block
+        block
             .into_iter()
             .flat_map(TackyInstruction::from_block_item) // TODO: should use a Block here
-            .collect();
-
-        instructions
+            .collect()
     }
 
     fn from_block_item(block_item: BlockItem) -> Vec<TackyInstruction> {
@@ -180,7 +178,6 @@ impl TackyInstruction {
     fn from_expr(expr: Expression, instructions: &mut Vec<TackyInstruction>) -> TackyValue {
         trace!("Converting <exp> to Tacky instructions");
         match expr {
-            // TODO: handle IF statement
             Expression::Conditional(cond, then, el) => {
                 trace!("Converting Conditional to Tacky instruction");
                 let result_id = TackyIdentifier::new("result");
@@ -345,6 +342,7 @@ impl TackyInstruction {
                             v2.pretty_print(),
                             dst.pretty_print()
                         );
+
                         instructions.push(TackyInstruction::Binary(binary_op, v1, v2, dst.clone()));
 
                         dst
