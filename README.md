@@ -40,5 +40,5 @@ bash scripts/tests.sh --compliance # runs compliance tests
 
 ## Progress
 
-- [x] Chapter 1-6: If and conditionals
-- [ ] Chapter 7: Compound statements
+- [x] Chapter 1-7: Compound statements
+- [ ] Chapter 8: Loops
