@@ -85,11 +85,8 @@ impl TackyInstruction {
             }
             Statement::Expression(expr) => {
                 trace!("Converting <statement>: expression");
-                let v = TackyInstruction::from_expr(expr, &mut instructions);
-                instructions.push(TackyInstruction::Copy(
-                    v,
-                    TackyValue::Var(TackyIdentifier::new("result")),
-                ));
+
+                let _ = TackyInstruction::from_expr(expr, &mut instructions);
 
                 instructions
             }
