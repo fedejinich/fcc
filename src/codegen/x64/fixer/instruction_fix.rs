@@ -27,7 +27,7 @@ impl FolderAsm for InstructionFixer {
             return Err("last_offset should be set".to_string());
         };
 
-        let mut instructions = vec![AsmInstruction::AllocateStack(last_offset)];
+        let mut instructions = vec![AsmInstruction::AllocateStack(last_offset.abs())];
 
         let fixed_instructions: Result<Vec<_>, String> = function_definition
             .instructions
@@ -108,6 +108,7 @@ impl FolderAsm for InstructionFixer {
             }
             other => vec![other],
         };
+
         Ok(result)
     }
 }

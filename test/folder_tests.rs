@@ -293,13 +293,13 @@ fn test_instruction_fixer_basic_functionality() {
         instructions,
     );
 
-    let mut fixer = InstructionFixer::create().with(-12);
+    let mut fixer = InstructionFixer::create().with(12);
 
     if let Ok(fixed_function) = fixer.fold_function_definition(function) {
         assert_eq!(fixed_function.instructions.len(), 5);
 
         match &fixed_function.instructions[0] {
-            AsmInstruction::AllocateStack(-12) => {}
+            AsmInstruction::AllocateStack(12) => {}
             _ => panic!("Expected AllocateStack instruction"),
         }
 
