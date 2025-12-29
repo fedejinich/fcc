@@ -13,7 +13,7 @@ pub struct Identifier {
 }
 
 #[derive(Clone, Debug)]
-pub struct Block(Vec<BlockItem>);
+pub struct Block(pub Vec<BlockItem>);
 
 #[derive(Clone, Debug)]
 pub enum BlockItem {
@@ -99,16 +99,6 @@ impl Block {
     #[allow(dead_code)]
     pub fn iter(&self) -> std::slice::Iter<'_, BlockItem> {
         self.0.iter()
-    }
-}
-
-// TODO: i don't like this trait it seems forced
-impl IntoIterator for Block {
-    type Item = BlockItem;
-    type IntoIter = std::vec::IntoIter<Self::Item>;
-
-    fn into_iter(self) -> Self::IntoIter {
-        self.0.into_iter()
     }
 }
 

@@ -54,6 +54,7 @@ impl TackyInstruction {
         trace!("Converting <block> to Tacky instructions");
 
         block
+            .0
             .into_iter()
             .flat_map(TackyInstruction::from_block_item) // TODO: should use a Block here
             .collect()

@@ -31,6 +31,7 @@ impl fmt::Display for FunctionDefinition {
                     "body={}",
                     self.body
                         .clone()
+                        .0
                         .into_iter()
                         .map(|s| s.to_string())
                         .collect::<Vec<_>>()

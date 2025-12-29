@@ -40,7 +40,7 @@ fn test_block_creation() {
     let block = Block::new(items);
 
     // Test iteration works
-    let collected: Vec<_> = block.into_iter().collect();
+    let collected: Vec<_> = block.0.into_iter().collect();
     assert_eq!(collected.len(), 2);
 }
 
@@ -217,7 +217,10 @@ fn test_all_unary_operators() {
         complement,
         Expression::Unary(UnaryOperator::Complement, _)
     ));
-    assert!(matches!(negate, Expression::Unary(UnaryOperator::Negate, _)));
+    assert!(matches!(
+        negate,
+        Expression::Unary(UnaryOperator::Negate, _)
+    ));
     assert!(matches!(not, Expression::Unary(UnaryOperator::Not, _)));
 }
 
@@ -280,11 +283,13 @@ fn test_block_item_types() {
 
 #[test]
 fn test_compound_statement() {
-    let inner_block = Block::new(vec![BlockItem::S(Statement::Return(Expression::Constant(1)))]);
+    let inner_block = Block::new(vec![BlockItem::S(Statement::Return(Expression::Constant(
+        1,
+    )))]);
     let compound = Statement::Compound(Box::new(inner_block));
 
     if let Statement::Compound(block) = compound {
-        let items: Vec<_> = block.into_iter().collect();
+        let items: Vec<_> = block.0.into_iter().collect();
         assert_eq!(items.len(), 1);
         assert!(matches!(items[0], BlockItem::S(Statement::Return(_))));
     } else {
