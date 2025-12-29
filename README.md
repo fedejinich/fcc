@@ -35,6 +35,8 @@ bash scripts/tests.sh # runs both unit and compliance tests
 bash scripts/tests.sh --unit # runs unit tests
 # or
 bash scripts/tests.sh --compliance # runs compliance tests
+# or
+bash scripts/tests.sh --compliance --chapter 7 # runs compliance tests starting from chapter 7
 
 ```
 
