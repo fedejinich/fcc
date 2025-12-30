@@ -28,7 +28,7 @@ impl From<Program> for TackyProgram {
 impl From<FunctionDefinition> for TackyFunctionDefinition {
     fn from(function_definition: FunctionDefinition) -> Self {
         trace!("Converting <function> body block items to Tacky instructions");
-        debug!("<function>: {}", function_definition.name.0);
+        debug!("<function>: {}", function_definition.name.value());
 
         let mut instructions = TackyInstruction::from_block(function_definition.body);
 
@@ -44,8 +44,10 @@ impl From<FunctionDefinition> for TackyFunctionDefinition {
 
 impl From<Identifier> for TackyIdentifier {
     fn from(value: Identifier) -> Self {
-        trace!("Converting <identifier>: {}", value.0);
-        TackyIdentifier { value: value.0 }
+        trace!("Converting <identifier>: {}", value.value());
+        TackyIdentifier {
+            value: value.value().to_string(),
+        }
     }
 }
 
@@ -54,7 +56,8 @@ impl TackyInstruction {
         trace!("Converting <block> to Tacky instructions");
 
         block
-            .0
+            .block_items()
+            .clone()
             .into_iter()
             .flat_map(TackyInstruction::from_block_item) // TODO: should use a Block here
             .collect()

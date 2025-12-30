@@ -31,7 +31,8 @@ pub trait FolderC {
 
     fn fold_block(&mut self, block: Block) -> Result<Block, String> {
         let folded: Result<Vec<_>, String> = block
-            .0
+            .block_items()
+            .clone()
             .into_iter()
             .map(|item| self.fold_block_i(item))
             .collect();

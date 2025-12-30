@@ -1,7 +1,4 @@
-use std::{
-    collections::HashMap,
-    sync::atomic::AtomicUsize,
-};
+use std::{collections::HashMap, sync::atomic::AtomicUsize};
 
 use log::{debug, trace};
 
@@ -47,11 +44,12 @@ impl VariableResolver {
     }
 
     pub fn get_var(&self, var_name: &Identifier) -> Option<VarValue> {
-        self.0.get(&var_name.0).cloned()
+        self.0.get(var_name.value()).cloned()
     }
 
     fn track_variable(&mut self, var_name: Identifier, unique_name: String) {
-        self.0.insert(var_name.0, (unique_name, true));
+        self.0
+            .insert(var_name.value().to_string(), (unique_name, true));
     }
 
     /// returns a copy of the variables map with all the variables marked as undeclared for the current block
@@ -78,7 +76,7 @@ impl FolderC for VariableResolver {
             return Err("duplicate variable declaration".to_string());
         }
 
-        let unique_name: String = temporary_name(&declaration.name.0, &VAR_RES_COUNT);
+        let unique_name: String = temporary_name(declaration.name.value(), &VAR_RES_COUNT);
 
         self.track_variable(declaration.name.clone(), unique_name.clone());
 
@@ -131,9 +129,7 @@ impl FolderC for VariableResolver {
                     return Err("undeclared variable".to_string());
                 }
             }
-            Expression::Unary(op, expr) => {
-                Expression::Unary(op, Box::new(self.fold_expr(*expr)?))
-            }
+            Expression::Unary(op, expr) => Expression::Unary(op, Box::new(self.fold_expr(*expr)?)),
             Expression::Binary(op, left, right) => Expression::Binary(
                 op,
                 Box::new(self.fold_expr(*left)?),

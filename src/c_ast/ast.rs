@@ -8,10 +8,10 @@ pub struct FunctionDefinition {
 }
 
 #[derive(Clone, Debug)]
-pub struct Identifier(pub String);
+pub struct Identifier(String);
 
 #[derive(Clone, Debug)]
-pub struct Block(pub Vec<BlockItem>);
+pub struct Block(Vec<BlockItem>);
 
 #[derive(Clone, Debug)]
 pub enum BlockItem {
@@ -98,6 +98,10 @@ impl Block {
     pub fn iter(&self) -> std::slice::Iter<'_, BlockItem> {
         self.0.iter()
     }
+
+    pub fn block_items(&self) -> &Vec<BlockItem> {
+        &self.0
+    }
 }
 
 impl FunctionDefinition {
@@ -109,6 +113,10 @@ impl FunctionDefinition {
 impl Identifier {
     pub fn new(value: String) -> Self {
         Identifier(value.to_string())
+    }
+
+    pub fn value(&self) -> &str {
+        &self.0
     }
 }
 
