@@ -18,7 +18,7 @@ fn validate_program(src: &str) -> Result<Program, String> {
 
 // Helper: get block items as a vector from a validated program
 fn get_body_items(program: &Program) -> Vec<&BlockItem> {
-    program.function_definition.body.iter().collect()
+    program.function_definition().body().iter().collect()
 }
 
 // =============================================================================
@@ -35,13 +35,13 @@ fn test_semantic_variable_resolution_basic() {
 
     // Get the declaration name
     let decl_name = match items[0] {
-        BlockItem::D(decl) => decl.name.value.clone(),
+        BlockItem::D(decl) => decl.name().value().to_string(),
         _ => panic!("Expected declaration"),
     };
 
     // Get the return variable name
     let return_var_name = match items[1] {
-        BlockItem::S(Statement::Return(Expression::Var(id))) => id.value.clone(),
+        BlockItem::S(Statement::Return(Expression::Var(id))) => id.value().to_string(),
         _ => panic!("Expected return with variable"),
     };
 
@@ -61,12 +61,12 @@ fn test_semantic_two_distinct_variables() {
 
     // Get both declaration names
     let x_name = match items[0] {
-        BlockItem::D(decl) => decl.name.value.clone(),
+        BlockItem::D(decl) => decl.name().value().to_string(),
         _ => panic!("Expected declaration"),
     };
 
     let y_name = match items[1] {
-        BlockItem::D(decl) => decl.name.value.clone(),
+        BlockItem::D(decl) => decl.name().value().to_string(),
         _ => panic!("Expected declaration"),
     };
 

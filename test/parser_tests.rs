@@ -15,7 +15,7 @@ fn parse_program(src: &str) -> Result<Program, String> {
 
 // Helper: get block items as a vector from a parsed program
 fn get_body_items(program: &Program) -> Vec<&BlockItem> {
-    program.function_definition.body.iter().collect()
+    program.function_definition().body().iter().collect()
 }
 
 // =============================================================================
@@ -27,7 +27,7 @@ fn test_parser_simple_return() {
     let src = "int main(void){ return 0; }";
     let program = parse_program(src).expect("should parse");
 
-    assert_eq!(program.function_definition.name.value, "main");
+    assert_eq!(program.function_definition().name().value(), "main");
 
     let items = get_body_items(&program);
     assert_eq!(items.len(), 1);
@@ -48,8 +48,8 @@ fn test_parser_decl_without_initializer() {
 
     match items[0] {
         BlockItem::D(decl) => {
-            assert_eq!(decl.name.value, "x");
-            assert!(decl.initializer.is_none());
+            assert_eq!(decl.name().value(), "x");
+            assert!(decl.initializer().is_none());
         }
         _ => panic!("Expected declaration"),
     }
@@ -65,15 +65,15 @@ fn test_parser_decl_with_initializer() {
 
     match items[0] {
         BlockItem::D(decl) => {
-            assert_eq!(decl.name.value, "x");
-            assert!(matches!(decl.initializer, Some(Expression::Constant(1))));
+            assert_eq!(decl.name().value(), "x");
+            assert!(matches!(decl.initializer(), Some(Expression::Constant(1))));
         }
         _ => panic!("Expected declaration with initializer"),
     }
 
     match items[1] {
         BlockItem::S(Statement::Return(Expression::Var(id))) => {
-            assert_eq!(id.value, "x");
+            assert_eq!(id.value(), "x");
         }
         _ => panic!("Expected return x statement"),
     }

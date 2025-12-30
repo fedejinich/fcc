@@ -6,10 +6,10 @@ use fcc::c_ast::ast::{
 #[test]
 fn test_identifier_creation() {
     let id = Identifier::new("main".to_string());
-    assert_eq!(id.value, "main");
+    assert_eq!(id.value(), "main");
 
     let id2 = Identifier::new("variable_name".to_string());
-    assert_eq!(id2.value, "variable_name");
+    assert_eq!(id2.value(), "variable_name");
 }
 
 #[test]
@@ -18,7 +18,7 @@ fn test_program_creation() {
     let function_def = FunctionDefinition::new(identifier, Block::new(vec![]));
     let program = Program::new(function_def);
 
-    assert_eq!(program.function_definition.name.value, "main");
+    assert_eq!(program.function_definition().name().value(), "main");
 }
 
 #[test]
@@ -28,7 +28,7 @@ fn test_function_definition_creation() {
     let block_item = BlockItem::S(return_stmt);
     let function_def = FunctionDefinition::new(identifier, Block::new(vec![block_item]));
 
-    assert_eq!(function_def.name.value, "test_func");
+    assert_eq!(function_def.name().value(), "test_func");
 }
 
 #[test]
@@ -40,7 +40,7 @@ fn test_block_creation() {
     let block = Block::new(items);
 
     // Test iteration works
-    let collected: Vec<_> = block.0.into_iter().collect();
+    let collected: Vec<_> = block.block_items().clone().into_iter().collect();
     assert_eq!(collected.len(), 2);
 }
 
@@ -49,8 +49,8 @@ fn test_declaration_without_initializer() {
     let name = Identifier::new("x".to_string());
     let declaration = Declaration::new(name, None);
 
-    assert_eq!(declaration.name.value, "x");
-    assert!(declaration.initializer.is_none());
+    assert_eq!(declaration.name().value(), "x");
+    assert!(declaration.initializer().is_none());
 }
 
 #[test]
@@ -59,10 +59,10 @@ fn test_declaration_with_initializer() {
     let init_expr = Expression::Constant(10);
     let declaration = Declaration::new(name, Some(init_expr));
 
-    assert_eq!(declaration.name.value, "y");
-    assert!(declaration.initializer.is_some());
+    assert_eq!(declaration.name().value(), "y");
+    assert!(declaration.initializer().is_some());
 
-    if let Some(Expression::Constant(value)) = &declaration.initializer {
+    if let Some(Expression::Constant(value)) = declaration.initializer() {
         assert_eq!(*value, 10);
     } else {
         panic!("Expected constant expression");
@@ -86,7 +86,7 @@ fn test_expression_variable() {
     let expr = Expression::Var(id);
 
     if let Expression::Var(identifier) = expr {
-        assert_eq!(identifier.value, "var");
+        assert_eq!(identifier.value(), "var");
     } else {
         panic!("Expected variable expression");
     }
@@ -142,7 +142,7 @@ fn test_assignment_expression() {
 
     if let Expression::Assignment(left, right) = assign_expr {
         if let Expression::Var(id) = *left {
-            assert_eq!(id.value, "x");
+            assert_eq!(id.value(), "x");
         } else {
             panic!("Expected variable on left side of assignment");
         }
@@ -196,7 +196,7 @@ fn test_complex_binary_expression() {
         }
 
         if let Expression::Var(id) = *right {
-            assert_eq!(id.value, "c");
+            assert_eq!(id.value(), "c");
         } else {
             panic!("Expected variable 'c' on right side");
         }
@@ -289,7 +289,7 @@ fn test_compound_statement() {
     let compound = Statement::Compound(Box::new(inner_block));
 
     if let Statement::Compound(block) = compound {
-        let items: Vec<_> = block.0.into_iter().collect();
+        let items: Vec<_> = block.block_items().clone().into_iter().collect();
         assert_eq!(items.len(), 1);
         assert!(matches!(items[0], BlockItem::S(Statement::Return(_))));
     } else {
