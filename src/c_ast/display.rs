@@ -11,7 +11,7 @@ use crate::{
 impl fmt::Display for Program {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         writeln!(f, "Program(")?;
-        write!(f, "{}\n)", indent(&self.function_definition.to_string(), 4))
+        write!(f, "{}\n)", indent(&self.function_definition().to_string(), 4))
     }
 }
 
@@ -21,7 +21,7 @@ impl fmt::Display for FunctionDefinition {
         writeln!(
             f,
             "{}",
-            indent(&format!("name=\"{}\",", self.name.value()), 4)
+            indent(&format!("name=\"{}\",", self.name().value()), 4)
         )?;
         write!(
             f,
@@ -29,7 +29,7 @@ impl fmt::Display for FunctionDefinition {
             indent(
                 &format!(
                     "body={}",
-                    self.body
+                    self.body()
                         .block_items()
                         .clone()
                         .into_iter()

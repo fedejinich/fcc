@@ -17,7 +17,9 @@ impl From<Program> for TackyProgram {
     fn from(program: Program) -> Self {
         trace!("Converting C AST to Tacky IR");
 
-        let p = TackyProgram::new(TackyFunctionDefinition::from(program.function_definition));
+        let p = TackyProgram::new(TackyFunctionDefinition::from(
+            program.function_definition().clone(),
+        ));
 
         trace!("<program> conversion to Tacky IR completed successfully");
 
@@ -28,15 +30,18 @@ impl From<Program> for TackyProgram {
 impl From<FunctionDefinition> for TackyFunctionDefinition {
     fn from(function_definition: FunctionDefinition) -> Self {
         trace!("Converting <function> body block items to Tacky instructions");
-        debug!("<function>: {}", function_definition.name.value());
+        debug!(
+            "<function>: {}",
+            function_definition.name().value()
+        );
 
-        let mut instructions = TackyInstruction::from_block(function_definition.body);
+        let mut instructions = TackyInstruction::from_block(function_definition.body().clone());
 
         // add return 0 as last instruction (it's gonna be fixed in Part III)
         instructions.push(TackyInstruction::Return(TackyValue::Constant(0)));
 
         TackyFunctionDefinition::new(
-            TackyIdentifier::from(function_definition.name),
+            TackyIdentifier::from(function_definition.name().clone()),
             instructions,
         )
     }

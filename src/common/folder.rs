@@ -17,15 +17,13 @@ use crate::tacky::ast::{
 /// specific node type.
 pub trait FolderC {
     fn fold_prog(&mut self, program: Program) -> Result<Program, String> {
-        Ok(Program::new(
-            self.fold_fun_def(program.function_definition)?,
-        ))
+        Ok(Program::new(self.fold_fun_def(program.function_definition().clone())?))
     }
 
     fn fold_fun_def(&mut self, function: FunctionDefinition) -> Result<FunctionDefinition, String> {
         Ok(FunctionDefinition::new(
-            self.fold_id(function.name)?,
-            self.fold_block(function.body)?,
+            self.fold_id(function.name().clone())?,
+            self.fold_block(function.body().clone())?,
         ))
     }
 

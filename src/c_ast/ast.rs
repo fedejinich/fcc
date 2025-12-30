@@ -1,11 +1,8 @@
-pub struct Program {
-    pub function_definition: FunctionDefinition,
-}
+#[derive(Clone, Debug)]
+pub struct Program(FunctionDefinition);
 
-pub struct FunctionDefinition {
-    pub name: Identifier,
-    pub body: Block,
-}
+#[derive(Clone, Debug)]
+pub struct FunctionDefinition(Identifier, Block);
 
 #[derive(Clone, Debug)]
 pub struct Identifier(String);
@@ -82,9 +79,11 @@ pub enum BinaryOperator {
 
 impl Program {
     pub fn new(function_definition: FunctionDefinition) -> Self {
-        Program {
-            function_definition,
-        }
+        Program(function_definition)
+    }
+
+    pub fn function_definition(&self) -> &FunctionDefinition {
+        &self.0
     }
 }
 
@@ -106,7 +105,15 @@ impl Block {
 
 impl FunctionDefinition {
     pub fn new(name: Identifier, body: Block) -> Self {
-        FunctionDefinition { name, body }
+        FunctionDefinition(name, body)
+    }
+
+    pub fn name(&self) -> &Identifier {
+        &self.0
+    }
+
+    pub fn body(&self) -> &Block {
+        &self.1
     }
 }
 
