@@ -21,7 +21,7 @@ impl fmt::Display for FunctionDefinition {
         writeln!(
             f,
             "{}",
-            indent(&format!("name=\"{}\",", self.name.value), 4)
+            indent(&format!("name=\"{}\",", self.name.0), 4)
         )?;
         write!(
             f,
@@ -66,7 +66,7 @@ impl fmt::Display for Declaration {
         writeln!(
             f,
             "{}",
-            indent(&format!("name=\"{}\",", self.name.value), 4)
+            indent(&format!("name=\"{}\",", self.name.0), 4)
         )?;
         if let Some(v) = &self.initializer {
             writeln!(f, "{}", indent(&format!("value=\"{}\",", v.clone()), 4))?;
@@ -114,7 +114,7 @@ impl fmt::Display for Expression {
                 write!(f, "Binary({op}, {exp_1}, {exp_2})")
             }
             Expression::Assignment(left, right) => write!(f, "Assignment({left}, {right})"),
-            Expression::Var(id) => write!(f, "Var({})", id.value),
+            Expression::Var(id) => write!(f, "Var({})", id.0),
             Expression::Conditional(cond, then, el) => {
                 write!(f, "Conditional({cond}, {then}, {el})")
             }

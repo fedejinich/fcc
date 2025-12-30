@@ -8,9 +8,7 @@ pub struct FunctionDefinition {
 }
 
 #[derive(Clone, Debug)]
-pub struct Identifier {
-    pub value: String,
-}
+pub struct Identifier(pub String);
 
 #[derive(Clone, Debug)]
 pub struct Block(pub Vec<BlockItem>);
@@ -110,9 +108,7 @@ impl FunctionDefinition {
 
 impl Identifier {
     pub fn new(value: String) -> Self {
-        Identifier {
-            value: value.to_string(),
-        }
+        Identifier(value.to_string())
     }
 }
 

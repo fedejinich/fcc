@@ -28,7 +28,7 @@ impl From<Program> for TackyProgram {
 impl From<FunctionDefinition> for TackyFunctionDefinition {
     fn from(function_definition: FunctionDefinition) -> Self {
         trace!("Converting <function> body block items to Tacky instructions");
-        debug!("<function>: {}", function_definition.name.value);
+        debug!("<function>: {}", function_definition.name.0);
 
         let mut instructions = TackyInstruction::from_block(function_definition.body);
 
@@ -44,8 +44,8 @@ impl From<FunctionDefinition> for TackyFunctionDefinition {
 
 impl From<Identifier> for TackyIdentifier {
     fn from(value: Identifier) -> Self {
-        trace!("Converting <identifier>: {}", value.value);
-        TackyIdentifier { value: value.value }
+        trace!("Converting <identifier>: {}", value.0);
+        TackyIdentifier { value: value.0 }
     }
 }
 
