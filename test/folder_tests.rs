@@ -25,7 +25,7 @@ fn test_basic_folder_trait() {
     let program = AsmProgram::new(function);
 
     let mut basic_folder = folder;
-    if let Ok(folded_program) = basic_folder.fold_program(program) {
+    if let Ok(folded_program) = basic_folder.fold_prog(program) {
         assert_eq!(folded_program.function_definition.name.value, "test");
         assert_eq!(folded_program.function_definition.instructions.len(), 1);
         match &folded_program.function_definition.instructions[0] {
@@ -86,7 +86,7 @@ fn test_folder_preserves_all_instruction_types() {
     );
     let program = AsmProgram::new(function);
 
-    if let Ok(folded_program) = folder.fold_program(program) {
+    if let Ok(folded_program) = folder.fold_prog(program) {
         assert_eq!(
             folded_program.function_definition.instructions.len(),
             instructions_clone.len()
@@ -163,7 +163,7 @@ fn test_folder_with_all_operand_types() {
 
     for operand in operands {
         let operand_clone = operand.clone();
-        if let Ok(folded) = folder.fold_operand(operand) {
+        if let Ok(folded) = folder.fold_op(operand) {
             match (&operand_clone, &folded) {
                 (AsmOperand::Imm(o), AsmOperand::Imm(f)) => assert_eq!(o, f),
                 (AsmOperand::Register(o), AsmOperand::Register(f)) => assert_eq!(o, f),
@@ -200,7 +200,7 @@ fn test_folder_with_all_binary_operators() {
 
     for operator in operators {
         let operator_clone = operator.clone();
-        if let Ok(folded) = folder.fold_binary_operator(operator) {
+        if let Ok(folded) = folder.fold_bin_op(operator) {
             match (&operator_clone, &folded) {
                 (AsmBinaryOperator::Add, AsmBinaryOperator::Add) => {}
                 (AsmBinaryOperator::Sub, AsmBinaryOperator::Sub) => {}
@@ -232,7 +232,7 @@ fn test_folder_with_all_unary_operators() {
 
     for operator in operators {
         let operator_clone = operator.clone();
-        if let Ok(folded) = folder.fold_unary_operator(operator) {
+        if let Ok(folded) = folder.fold_un_op(operator) {
             match (&operator_clone, &folded) {
                 (AsmUnaryOperator::Neg, AsmUnaryOperator::Neg) => {}
                 (AsmUnaryOperator::Not, AsmUnaryOperator::Not) => {}
@@ -295,7 +295,7 @@ fn test_instruction_fixer_basic_functionality() {
 
     let mut fixer = InstructionFixer::create().with(12);
 
-    if let Ok(fixed_function) = fixer.fold_function_definition(function) {
+    if let Ok(fixed_function) = fixer.fold_fun_def(function) {
         assert_eq!(fixed_function.instructions.len(), 5);
 
         match &fixed_function.instructions[0] {
@@ -325,7 +325,7 @@ fn test_instruction_fixer_idiv_immediate() {
 
     let mut fixer = InstructionFixer::create().with(-4);
 
-    if let Ok(fixed_function) = fixer.fold_function_definition(function) {
+    if let Ok(fixed_function) = fixer.fold_fun_def(function) {
         assert!(fixed_function.instructions.len() >= 3);
 
         match &fixed_function.instructions[1] {
@@ -373,7 +373,7 @@ fn test_pseudo_register_replacer_basic_functionality() {
     );
 
     let mut replacer = PseudoRegisterReplacer::create();
-    if let Ok(replaced_function) = replacer.fold_function_definition(function) {
+    if let Ok(replaced_function) = replacer.fold_fun_def(function) {
         assert_eq!(replaced_function.instructions.len(), 3);
 
         match &replaced_function.instructions[0] {
@@ -423,7 +423,7 @@ fn test_pseudo_register_replacer_multiple_variables() {
     );
 
     let mut replacer = PseudoRegisterReplacer::create();
-    if let Ok(replaced_function) = replacer.fold_function_definition(function) {
+    if let Ok(replaced_function) = replacer.fold_fun_def(function) {
         assert_eq!(replaced_function.instructions.len(), 4);
 
         match &replaced_function.instructions[0] {

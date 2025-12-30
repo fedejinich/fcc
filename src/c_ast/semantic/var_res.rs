@@ -70,7 +70,7 @@ impl VariableResolver {
 }
 
 impl FolderC for VariableResolver {
-    fn fold_declaration(&mut self, declaration: Declaration) -> Result<Declaration, String> {
+    fn fold_decl(&mut self, declaration: Declaration) -> Result<Declaration, String> {
         trace!("resolving declaration: {declaration:?}");
 
         if self.is_var_named(&declaration.name) && self.is_var_declred(&declaration.name) {
@@ -84,13 +84,13 @@ impl FolderC for VariableResolver {
 
         let init = declaration
             .initializer
-            .map(|e| self.fold_expression(e))
+            .map(|e| self.fold_expr(e))
             .transpose()?;
 
         Ok(Declaration::new(Identifier::new(unique_name), init))
     }
 
-    fn fold_statement(&mut self, statement: Statement) -> Result<Statement, String> {
+    fn fold_st(&mut self, statement: Statement) -> Result<Statement, String> {
         match statement {
             Statement::Compound(block) => {
                 trace!("resolving compound statement");
@@ -104,19 +104,19 @@ impl FolderC for VariableResolver {
             _ => {
                 trace!("resolving statement");
 
-                self.default_fold_statement(statement)
+                self.default_fold_st(statement)
             }
         }
     }
 
-    fn fold_expression(&mut self, expr: Expression) -> Result<Expression, String> {
+    fn fold_expr(&mut self, expr: Expression) -> Result<Expression, String> {
         trace!("resolving expression: {expr:?}");
 
         let res = match expr {
             Expression::Assignment(left, right) => match *left {
                 Expression::Var(_) => Expression::Assignment(
-                    Box::new(self.fold_expression(*left)?),
-                    Box::new(self.fold_expression(*right)?),
+                    Box::new(self.fold_expr(*left)?),
+                    Box::new(self.fold_expr(*right)?),
                 ),
                 _ => {
                     return Err("invalid lvalue".to_string());
@@ -132,18 +132,18 @@ impl FolderC for VariableResolver {
                 }
             }
             Expression::Unary(op, expr) => {
-                Expression::Unary(op, Box::new(self.fold_expression(*expr)?))
+                Expression::Unary(op, Box::new(self.fold_expr(*expr)?))
             }
             Expression::Binary(op, left, right) => Expression::Binary(
                 op,
-                Box::new(self.fold_expression(*left)?),
-                Box::new(self.fold_expression(*right)?),
+                Box::new(self.fold_expr(*left)?),
+                Box::new(self.fold_expr(*right)?),
             ),
             Expression::Constant(c) => Expression::Constant(c),
             Expression::Conditional(cond, then, el) => Expression::Conditional(
-                Box::new(self.fold_expression(*cond)?),
-                Box::new(self.fold_expression(*then)?),
-                Box::new(self.fold_expression(*el)?),
+                Box::new(self.fold_expr(*cond)?),
+                Box::new(self.fold_expr(*then)?),
+                Box::new(self.fold_expr(*el)?),
             ),
         };
 

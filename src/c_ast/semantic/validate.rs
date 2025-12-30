@@ -6,6 +6,6 @@ use crate::common::folder::FolderC;
 pub fn validate_semantics(program: Program) -> Result<Program, String> {
     trace!("validating program semantics");
 
-    VariableResolver::new().fold_program(program)
+    VariableResolver::new().fold_prog(program)
 }
 

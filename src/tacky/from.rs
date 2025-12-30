@@ -64,8 +64,8 @@ impl TackyInstruction {
         trace!("Converting <block_item> to Tacky instructions");
 
         let i = match block_item {
-            BlockItem::S(s) => TackyInstruction::from_statement(s),
-            BlockItem::D(d) => TackyInstruction::from_declaration(d),
+            BlockItem::S(s) => TackyInstruction::from_st(s),
+            BlockItem::D(d) => TackyInstruction::from_decl(d),
         };
 
         debug!("Generated Tacky instructions: {i:?}");
@@ -73,7 +73,7 @@ impl TackyInstruction {
         i
     }
 
-    fn from_statement(statement: Statement) -> Vec<TackyInstruction> {
+    fn from_st(statement: Statement) -> Vec<TackyInstruction> {
         trace!("Converting <statement> to Tacky instructions");
         let mut instructions = vec![];
         let i = match statement {
@@ -110,7 +110,7 @@ impl TackyInstruction {
                 instructions.push(TackyInstruction::Comment(
                     "instruction for statement_1".to_string(),
                 ));
-                for ins_statement_1 in TackyInstruction::from_statement(*then) {
+                for ins_statement_1 in TackyInstruction::from_st(*then) {
                     instructions.push(ins_statement_1);
                 }
 
@@ -122,7 +122,7 @@ impl TackyInstruction {
                     instructions.push(TackyInstruction::Comment(
                         "instruction for statement_2".to_string(),
                     ));
-                    for ins_statement_2 in TackyInstruction::from_statement(*e) {
+                    for ins_statement_2 in TackyInstruction::from_st(*e) {
                         instructions.push(ins_statement_2);
                     }
                 }
@@ -151,7 +151,7 @@ impl TackyInstruction {
         i
     }
 
-    fn from_declaration(declaration: Declaration) -> Vec<TackyInstruction> {
+    fn from_decl(declaration: Declaration) -> Vec<TackyInstruction> {
         trace!("Converting <declaration> to Tacky instructions");
         let mut instructions = vec![];
         if let Some(initializer) = declaration.initializer {
