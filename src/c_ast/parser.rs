@@ -10,25 +10,23 @@ use crate::{
     lexer::{self, Token},
 };
 
-// ques: should i do a trait for 'from(tokens: Vec<Token>) -> ParseResult<Self>'?
-
 type ParseResult<T> = Result<T, String>;
 
 impl TryFrom<Vec<Token>> for Program {
     type Error = String;
 
-    fn try_from(tokens: Vec<Token>) -> Result<Self, Self::Error> {
+    fn try_from(tokens: Vec<Token>) -> ParseResult<Self> {
         trace!("Parsing <program>");
 
-        let mut iter = tokens.iter().peekable();
-        let function_definition = FunctionDefinition::parse_fd(&mut iter)?;
+        let mut tokens_iter = tokens.iter().peekable();
+        let function_definition = FunctionDefinition::parse_fd(&mut tokens_iter)?;
 
         let program_ast = Program::new(function_definition);
 
-        if iter.next().is_some() {
+        if tokens_iter.next().is_some() {
             return Err(format!(
                 "unexpected tokens remaining: {:?}",
-                iter.collect::<Vec<_>>()
+                tokens_iter.collect::<Vec<_>>()
             ));
         }
 
