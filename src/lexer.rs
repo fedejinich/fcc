@@ -163,6 +163,11 @@ fn build_identifier_or_keyword(s: String) -> Token {
         "return" => Token::Return,
         "if" => Token::If,
         "else" => Token::Else,
+        "do" => Token::Do,
+        "while" => Token::While,
+        "for" => Token::For,
+        "break" => Token::Break,
+        "continue" => Token::Continue,
         _ => Token::Identifier(s),
     }
 }
