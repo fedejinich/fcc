@@ -153,18 +153,21 @@ impl TackyInstruction {
 
     fn from_decl(declaration: Declaration) -> Vec<TackyInstruction> {
         trace!("Converting <declaration> to Tacky instructions");
-        let mut instructions = vec![];
-        if let Some(initializer) = declaration.initializer {
-            let v = TackyInstruction::from_expr(initializer, &mut instructions);
-            instructions.push(TackyInstruction::Copy(
-                v,
-                TackyValue::Var(TackyIdentifier::from(declaration.name)),
-            ));
-        } else {
-            trace!("No initializer");
-        }
 
-        // TODO: this might be wrong
+        let mut instructions = vec![];
+
+        let Some(initializer) = declaration.initializer else {
+            trace!("No initializer");
+
+            return instructions;
+        };
+
+        let v = TackyInstruction::from_expr(initializer, &mut instructions);
+        instructions.push(TackyInstruction::Copy(
+            v,
+            TackyValue::Var(TackyIdentifier::from(declaration.name)),
+        ));
+
         instructions
     }
 
@@ -175,6 +178,7 @@ impl TackyInstruction {
     // emits tacky instructions
     fn from_expr(expr: Expression, instructions: &mut Vec<TackyInstruction>) -> TackyValue {
         trace!("Converting <exp> to Tacky instructions");
+
         match expr {
             Expression::Conditional(cond, then, el) => {
                 trace!("Converting Conditional to Tacky instruction");

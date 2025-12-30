@@ -22,10 +22,7 @@ pub trait FolderC {
         ))
     }
 
-    fn fold_fun_def(
-        &mut self,
-        function: FunctionDefinition,
-    ) -> Result<FunctionDefinition, String> {
+    fn fold_fun_def(&mut self, function: FunctionDefinition) -> Result<FunctionDefinition, String> {
         Ok(FunctionDefinition::new(
             self.fold_id(function.name)?,
             self.fold_block(function.body)?,
@@ -197,10 +194,7 @@ pub trait FolderTacky {
         Ok(identifier)
     }
 
-    fn fold_un_op(
-        &mut self,
-        operator: TackyUnaryOperator,
-    ) -> Result<TackyUnaryOperator, String> {
+    fn fold_un_op(&mut self, operator: TackyUnaryOperator) -> Result<TackyUnaryOperator, String> {
         Ok(operator)
     }
 
@@ -238,15 +232,12 @@ pub trait FolderAsm {
             .collect::<Result<Vec<_>, String>>()
             .map(|v| v.into_iter().flatten().collect());
         Ok(AsmFunctionDefinition::new(
-            self.fold_identifier(function.name)?,
+            self.fold_id(function.name)?,
             instructions?,
         ))
     }
 
-    fn fold_ins(
-        &mut self,
-        instruction: AsmInstruction,
-    ) -> Result<Vec<AsmInstruction>, String> {
+    fn fold_ins(&mut self, instruction: AsmInstruction) -> Result<Vec<AsmInstruction>, String> {
         use AsmInstruction::*;
         let res = match instruction {
             Comment(comment) => Comment(comment),
@@ -260,13 +251,10 @@ pub trait FolderAsm {
             Cmp(src, dst) => Cmp(self.fold_op(src)?, self.fold_op(dst)?),
             Idiv(operand) => Idiv(self.fold_op(operand)?),
             Cdq => Cdq,
-            Jmp(identifier) => Jmp(self.fold_identifier(identifier)?),
-            JmpCC(code, identifier) => JmpCC(
-                self.fold_cond_code(code)?,
-                self.fold_identifier(identifier)?,
-            ),
+            Jmp(identifier) => Jmp(self.fold_id(identifier)?),
+            JmpCC(code, identifier) => JmpCC(self.fold_cond_code(code)?, self.fold_id(identifier)?),
             SetCC(code, operand) => SetCC(self.fold_cond_code(code)?, self.fold_op(operand)?),
-            Label(identifier) => Label(self.fold_identifier(identifier)?),
+            Label(identifier) => Label(self.fold_id(identifier)?),
             AllocateStack(size) => AllocateStack(size),
             Ret => Ret,
         };
@@ -279,26 +267,20 @@ pub trait FolderAsm {
         match operand {
             Imm(value) => Ok(Imm(value)),
             Register(reg) => Ok(Register(self.fold_reg(reg)?)),
-            Pseudo(identifier) => Ok(Pseudo(self.fold_identifier(identifier)?)),
+            Pseudo(identifier) => Ok(Pseudo(self.fold_id(identifier)?)),
             Stack(size) => Ok(Stack(size)),
         }
     }
 
-    fn fold_identifier(&mut self, identifier: AsmIdetifier) -> Result<AsmIdetifier, String> {
+    fn fold_id(&mut self, identifier: AsmIdetifier) -> Result<AsmIdetifier, String> {
         Ok(identifier)
     }
 
-    fn fold_un_op(
-        &mut self,
-        operator: AsmUnaryOperator,
-    ) -> Result<AsmUnaryOperator, String> {
+    fn fold_un_op(&mut self, operator: AsmUnaryOperator) -> Result<AsmUnaryOperator, String> {
         Ok(operator)
     }
 
-    fn fold_bin_op(
-        &mut self,
-        operator: AsmBinaryOperator,
-    ) -> Result<AsmBinaryOperator, String> {
+    fn fold_bin_op(&mut self, operator: AsmBinaryOperator) -> Result<AsmBinaryOperator, String> {
         Ok(operator)
     }
 

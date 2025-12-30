@@ -463,7 +463,7 @@ fn test_folder_preserves_identifiers() {
     };
 
     let original_value = original_id.value.clone();
-    if let Ok(folded_id) = folder.fold_identifier(original_id) {
+    if let Ok(folded_id) = folder.fold_id(original_id) {
         assert_eq!(original_value, folded_id.value);
     }
 }
