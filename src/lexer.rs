@@ -57,6 +57,18 @@ pub enum Token {
     Else,
     QuestionMark,
     DoubleDot,
+
+    // loops statements
+    Do,
+    While,
+    For,
+    Break,
+    Continue,
+    // goto statement
+    // Goto,
+    // switch statement
+    // Switch,
+    // Case,
 }
 
 pub fn lex(mut code: &str) -> Result<Vec<Token>, String> {
@@ -133,6 +145,14 @@ fn token_matchers() -> Vec<TokenMatcher> {
         TokenMatcher::new(|_| Token::Else, r"^else"),
         TokenMatcher::new(|_| Token::QuestionMark, r"^\?"),
         TokenMatcher::new(|_| Token::DoubleDot, r"^\:"),
+        TokenMatcher::new(|_| Token::Do, r"^do"),
+        TokenMatcher::new(|_| Token::While, r"^while"),
+        TokenMatcher::new(|_| Token::For, r"^for"),
+        TokenMatcher::new(|_| Token::Break, r"^break"),
+        TokenMatcher::new(|_| Token::Continue, r"^continue"),
+        // TokenMatcher::new(|_| Token::Goto, r"^goto"), for this i also need labeled statements
+        // TokenMatcher::new(|_| Token::Switch, r"^switch"),
+        // TokenMatcher::new(|_| Token::Case, r"^case"),
     ]
 }
 
