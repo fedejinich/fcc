@@ -21,8 +21,8 @@ pub enum BlockItem {
 
 #[derive(Clone, Debug)]
 pub struct Declaration {
-    pub name: Identifier,
-    pub initializer: Option<Expression>,
+    name: Identifier,
+    initializer: Option<Expression>,
 }
 
 #[allow(unused)]
@@ -123,5 +123,13 @@ impl Identifier {
 impl Declaration {
     pub fn new(name: Identifier, initializer: Option<Expression>) -> Self {
         Declaration { name, initializer }
+    }
+
+    pub fn name(&self) -> &Identifier {
+        &self.name
+    }
+
+    pub fn initializer(&self) -> Option<&Expression> {
+        self.initializer.as_ref()
     }
 }

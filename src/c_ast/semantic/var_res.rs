@@ -71,17 +71,18 @@ impl FolderC for VariableResolver {
     fn fold_decl(&mut self, declaration: Declaration) -> Result<Declaration, String> {
         trace!("resolving declaration: {declaration:?}");
 
-        if self.is_var_named(&declaration.name) && self.is_var_declred(&declaration.name) {
+        if self.is_var_named(declaration.name()) && self.is_var_declred(declaration.name()) {
             debug!("variable: {declaration}");
             return Err("duplicate variable declaration".to_string());
         }
 
-        let unique_name: String = temporary_name(declaration.name.value(), &VAR_RES_COUNT);
+        let unique_name: String = temporary_name(declaration.name().value(), &VAR_RES_COUNT);
 
-        self.track_variable(declaration.name.clone(), unique_name.clone());
+        self.track_variable(declaration.name().clone(), unique_name.clone());
 
         let init = declaration
-            .initializer
+            .initializer()
+            .cloned()
             .map(|e| self.fold_expr(e))
             .transpose()?;
 

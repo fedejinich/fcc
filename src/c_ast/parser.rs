@@ -119,7 +119,7 @@ impl Declaration {
 
         token_eq(Token::Semicolon, tokens)?;
 
-        let dec = Declaration { name, initializer };
+        let dec = Declaration::new(name, initializer);
 
         trace!("Parsed <declaration> {dec:?}");
 

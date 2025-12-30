@@ -66,9 +66,9 @@ impl fmt::Display for Declaration {
         writeln!(
             f,
             "{}",
-            indent(&format!("name=\"{}\",", self.name.value()), 4)
+            indent(&format!("name=\"{}\",", self.name().value()), 4)
         )?;
-        if let Some(v) = &self.initializer {
+        if let Some(v) = self.initializer() {
             writeln!(f, "{}", indent(&format!("value=\"{}\",", v.clone()), 4))?;
         }
         Ok(())

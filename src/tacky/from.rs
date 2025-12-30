@@ -159,7 +159,7 @@ impl TackyInstruction {
 
         let mut instructions = vec![];
 
-        let Some(initializer) = declaration.initializer else {
+        let Some(initializer) = declaration.initializer().cloned() else {
             trace!("No initializer");
 
             return instructions;
@@ -168,7 +168,7 @@ impl TackyInstruction {
         let v = TackyInstruction::from_expr(initializer, &mut instructions);
         instructions.push(TackyInstruction::Copy(
             v,
-            TackyValue::Var(TackyIdentifier::from(declaration.name)),
+            TackyValue::Var(TackyIdentifier::from(declaration.name().clone())),
         ));
 
         instructions

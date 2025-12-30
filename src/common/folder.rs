@@ -47,12 +47,12 @@ pub trait FolderC {
     }
 
     fn fold_decl(&mut self, declaration: Declaration) -> Result<Declaration, String> {
-        let initializer = match declaration.initializer {
-            Some(expr) => Some(self.fold_expr(expr)?),
+        let initializer = match declaration.initializer() {
+            Some(expr) => Some(self.fold_expr(expr.clone())?),
             None => None,
         };
         Ok(Declaration::new(
-            self.fold_id(declaration.name)?,
+            self.fold_id(declaration.name().clone())?,
             initializer,
         ))
     }
