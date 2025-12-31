@@ -2,11 +2,17 @@ use std::fmt;
 
 use crate::{
     c_ast::ast::{
-        BinaryOperator, Block, BlockItem, Declaration, Expression, FunctionDefinition, Program,
-        Statement, UnaryOperator,
+        BinaryOperator, Block, BlockItem, Declaration, Expression, FunctionDefinition, Identifier,
+        Program, Statement, UnaryOperator,
     },
     common::util::indent,
 };
+
+impl fmt::Display for Identifier {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.value())
+    }
+}
 
 impl fmt::Display for Program {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -104,11 +110,11 @@ impl fmt::Display for Statement {
                 writeln!(f, ")")
             }
             Statement::Compound(b) => write!(f, "Compound(\n{b}\n)"),
-            Statement::Break => writeln!(f, "Break"),
-            Statement::Continue => writeln!(f, "Continue"),
-            Statement::While(cond, body) => write!(f, "While({cond}, {body})"),
-            Statement::DoWhile(body, cond) => write!(f, "DoWhile({body}, {cond})"),
-            Statement::For(init, cond, post, body) => {
+            Statement::Break(id) => writeln!(f, "Break({id})"),
+            Statement::Continue(id) => writeln!(f, "Continue({id})"),
+            Statement::While(cond, body, id) => write!(f, "While({cond}, {body}, {id})"),
+            Statement::DoWhile(body, cond, id) => write!(f, "DoWhile({body}, {cond}, {id})"),
+            Statement::For(init, cond, post, body, id) => {
                 todo!("to be implemented")
             }
             Statement::Null => writeln!(f, "Null"),

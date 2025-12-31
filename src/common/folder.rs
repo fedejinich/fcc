@@ -84,17 +84,19 @@ pub trait FolderC {
             Statement::Compound(block) => {
                 Ok(Statement::Compound(Box::new(self.fold_block(*block)?)))
             }
-            Statement::Break => Ok(Statement::Break),
-            Statement::Continue => Ok(Statement::Continue),
-            Statement::While(cond, body) => Ok(Statement::While(
+            Statement::Break(id) => Ok(Statement::Break(id)),
+            Statement::Continue(id) => Ok(Statement::Continue(id)),
+            Statement::While(cond, body, id) => Ok(Statement::While(
                 Box::new(self.fold_expr(*cond)?),
                 Box::new(self.fold_st(*body)?),
+                id,
             )),
-            Statement::DoWhile(body, cond) => Ok(Statement::DoWhile(
+            Statement::DoWhile(body, cond, id) => Ok(Statement::DoWhile(
                 Box::new(self.fold_st(*body)?),
                 Box::new(self.fold_expr(*cond)?),
+                id,
             )),
-            Statement::For(for_init, cond, post, body) => {
+            Statement::For(for_init, cond, post, body, id) => {
                 let for_init = Box::new(self.fold_for_init(*for_init)?);
                 let cond = if let Some(cond) = cond {
                     Some(Box::new(self.fold_expr(*cond)?))
@@ -108,7 +110,7 @@ pub trait FolderC {
                 };
                 let body = Box::new(self.fold_st(*body)?);
 
-                Ok(Statement::For(for_init, cond, post, body))
+                Ok(Statement::For(for_init, cond, post, body, id))
             }
             Statement::Null => Ok(Statement::Null),
         }

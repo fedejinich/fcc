@@ -144,11 +144,11 @@ impl TackyInstruction {
                 }
                 instructions
             }
-            Statement::Break => todo!("to be implemented"),
-            Statement::Continue => todo!("to be implemented"),
-            Statement::While(cond, body) => todo!("to be implemented"),
-            Statement::DoWhile(body, cond) => todo!("to be implemented"),
-            Statement::For(init, cond, post, body) => todo!("to be implemented"),
+            Statement::Break(id) => todo!("to be implemented"),
+            Statement::Continue(id) => todo!("to be implemented"),
+            Statement::While(cond, body, id) => todo!("to be implemented"),
+            Statement::DoWhile(body, cond, id) => todo!("to be implemented"),
+            Statement::For(init, cond, post, body, id) => todo!("to be implemented"),
             Statement::Null => {
                 trace!("No need to convert <statement>: null");
 

@@ -37,19 +37,20 @@ pub enum Statement {
     // Compound(block)
     Compound(Box<Block>),
     // Break
-    Break,
+    Break(Identifier),
     // Continue
-    Continue,
+    Continue(Identifier),
     // While (exp condition, statement body)
-    While(Box<Expression>, Box<Statement>),
+    While(Box<Expression>, Box<Statement>, Identifier),
     // DoWhile (statement body, exp condition)
-    DoWhile(Box<Statement>, Box<Expression>),
+    DoWhile(Box<Statement>, Box<Expression>, Identifier),
     // For (for_init init, exp? condition, exp? post, statement body)
     For(
         Box<ForInit>,
         Option<Box<Expression>>,
         Option<Box<Expression>>,
         Box<Statement>,
+        Identifier,
     ),
     Null,
 }
