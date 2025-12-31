@@ -177,6 +177,15 @@ impl Statement {
 
                 Statement::Compound(Box::new(block))
             }
+            Token::Break => {
+                trace!("Parsing <statement> ::= break ;");
+
+                let _ = tokens.next(); // consume 'break'
+
+                token_eq(Token::Semicolon, tokens)?;
+
+                Statement::Break(Identifier::new("dummy".to_string()))
+            }
             _ => {
                 trace!("Parsing <statement> ::= <exp> ;");
 

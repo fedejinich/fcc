@@ -142,7 +142,7 @@ impl FunctionDefinition {
 
 impl Identifier {
     pub fn new(value: String) -> Self {
-        Identifier(value.to_string())
+        Identifier(value)
     }
 
     pub fn value(&self) -> &str {
