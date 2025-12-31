@@ -11,7 +11,11 @@ use crate::{
 impl fmt::Display for Program {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         writeln!(f, "Program(")?;
-        write!(f, "{}\n)", indent(&self.function_definition().to_string(), 4))
+        write!(
+            f,
+            "{}\n)",
+            indent(&self.function_definition().to_string(), 4)
+        )
     }
 }
 
@@ -100,6 +104,13 @@ impl fmt::Display for Statement {
                 writeln!(f, ")")
             }
             Statement::Compound(b) => write!(f, "Compound(\n{b}\n)"),
+            Statement::Break => writeln!(f, "Break"),
+            Statement::Continue => writeln!(f, "Continue"),
+            Statement::While(cond, body) => write!(f, "While({cond}, {body})"),
+            Statement::DoWhile(body, cond) => write!(f, "DoWhile({body}, {cond})"),
+            Statement::For(init, cond, post, body) => {
+                todo!("to be implemented")
+            }
             Statement::Null => writeln!(f, "Null"),
         }
     }

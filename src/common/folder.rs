@@ -1,6 +1,6 @@
 use crate::c_ast::ast::{
-    BinaryOperator, Block, BlockItem, Declaration, Expression, FunctionDefinition, Identifier,
-    Program, Statement, UnaryOperator,
+    BinaryOperator, Block, BlockItem, Declaration, Expression, ForInit, FunctionDefinition,
+    Identifier, Program, Statement, UnaryOperator,
 };
 use crate::codegen::x64::ast::{
     AsmBinaryOperator, AsmCondCode, AsmFunctionDefinition, AsmIdetifier, AsmInstruction,
@@ -17,7 +17,9 @@ use crate::tacky::ast::{
 /// specific node type.
 pub trait FolderC {
     fn fold_prog(&mut self, program: Program) -> Result<Program, String> {
-        Ok(Program::new(self.fold_fun_def(program.function_definition().clone())?))
+        Ok(Program::new(
+            self.fold_fun_def(program.function_definition().clone())?,
+        ))
     }
 
     fn fold_fun_def(&mut self, function: FunctionDefinition) -> Result<FunctionDefinition, String> {
@@ -55,6 +57,13 @@ pub trait FolderC {
         ))
     }
 
+    fn fold_for_init(&mut self, init: ForInit) -> Result<ForInit, String> {
+        match init {
+            ForInit::InitDecl(decl) => Ok(ForInit::InitDecl(Box::new(self.fold_decl(*decl)?))),
+            ForInit::InitExp(expr) => Ok(ForInit::InitExp(Box::new(self.fold_expr(*expr)?))),
+        }
+    }
+
     fn fold_st(&mut self, statement: Statement) -> Result<Statement, String> {
         self.default_fold_st(statement)
     }
@@ -74,6 +83,32 @@ pub trait FolderC {
             )),
             Statement::Compound(block) => {
                 Ok(Statement::Compound(Box::new(self.fold_block(*block)?)))
+            }
+            Statement::Break => Ok(Statement::Break),
+            Statement::Continue => Ok(Statement::Continue),
+            Statement::While(cond, body) => Ok(Statement::While(
+                Box::new(self.fold_expr(*cond)?),
+                Box::new(self.fold_st(*body)?),
+            )),
+            Statement::DoWhile(body, cond) => Ok(Statement::DoWhile(
+                Box::new(self.fold_st(*body)?),
+                Box::new(self.fold_expr(*cond)?),
+            )),
+            Statement::For(for_init, cond, post, body) => {
+                let for_init = Box::new(self.fold_for_init(*for_init)?);
+                let cond = if let Some(cond) = cond {
+                    Some(Box::new(self.fold_expr(*cond)?))
+                } else {
+                    None
+                };
+                let post = if let Some(post) = post {
+                    Some(Box::new(self.fold_expr(*post)?))
+                } else {
+                    None
+                };
+                let body = Box::new(self.fold_st(*body)?);
+
+                Ok(Statement::For(for_init, cond, post, body))
             }
             Statement::Null => Ok(Statement::Null),
         }

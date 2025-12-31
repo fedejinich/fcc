@@ -30,10 +30,7 @@ impl From<Program> for TackyProgram {
 impl From<FunctionDefinition> for TackyFunctionDefinition {
     fn from(function_definition: FunctionDefinition) -> Self {
         trace!("Converting <function> body block items to Tacky instructions");
-        debug!(
-            "<function>: {}",
-            function_definition.name().value()
-        );
+        debug!("<function>: {}", function_definition.name().value());
 
         let mut instructions = TackyInstruction::from_block(function_definition.body().clone());
 
@@ -147,6 +144,11 @@ impl TackyInstruction {
                 }
                 instructions
             }
+            Statement::Break => todo!("to be implemented"),
+            Statement::Continue => todo!("to be implemented"),
+            Statement::While(cond, body) => todo!("to be implemented"),
+            Statement::DoWhile(body, cond) => todo!("to be implemented"),
+            Statement::For(init, cond, post, body) => todo!("to be implemented"),
             Statement::Null => {
                 trace!("No need to convert <statement>: null");
 

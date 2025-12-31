@@ -19,13 +19,38 @@ pub enum BlockItem {
 #[derive(Clone, Debug)]
 pub struct Declaration(Identifier, Option<Expression>);
 
+#[derive(Clone, Debug)]
+pub enum ForInit {
+    InitDecl(Box<Declaration>),
+    InitExp(Box<Expression>),
+}
+
 #[allow(unused)]
 #[derive(Clone, Debug)]
 pub enum Statement {
+    // Return(exp)
     Return(Expression),
+    // Expression(exp)
     Expression(Expression),
+    // If (exp condition, statement then, statement? else)
     If(Box<Expression>, Box<Statement>, Option<Box<Statement>>),
+    // Compound(block)
     Compound(Box<Block>),
+    // Break
+    Break,
+    // Continue
+    Continue,
+    // While (exp condition, statement body)
+    While(Box<Expression>, Box<Statement>),
+    // DoWhile (statement body, exp condition)
+    DoWhile(Box<Statement>, Box<Expression>),
+    // For (for_init init, exp? condition, exp? post, statement body)
+    For(
+        Box<ForInit>,
+        Option<Box<Expression>>,
+        Option<Box<Expression>>,
+        Box<Statement>,
+    ),
     Null,
 }
 
