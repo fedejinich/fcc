@@ -186,6 +186,15 @@ impl Statement {
 
                 Statement::Break(Identifier::new("dummy".to_string()))
             }
+            Token::Continue => {
+                trace!("Parsing <statement> ::= continue ;");
+
+                let _ = tokens.next(); // consume 'continue'
+
+                token_eq(Token::Semicolon, tokens)?;
+
+                Statement::Continue(Identifier::new("dummy".to_string()))
+            }
             _ => {
                 trace!("Parsing <statement> ::= <exp> ;");
 
