@@ -189,11 +189,43 @@ impl Statement {
             Token::Continue => {
                 trace!("Parsing <statement> ::= continue ;");
 
-                let _ = tokens.next(); // consume 'continue'
+                token_eq(Token::Continue, tokens)?;
 
                 token_eq(Token::Semicolon, tokens)?;
 
                 Statement::Continue(Identifier::new("dummy".to_string()))
+            }
+            Token::While => {
+                trace!("Parsing <statement> ::= while ( <exp> ) <statement>");
+
+                token_eq(Token::While, tokens)?;
+                token_eq(Token::OpenParen, tokens)?;
+                let cond = Expression::parse_exp(tokens, 0)?;
+                token_eq(Token::CloseParen, tokens)?;
+                let body = Statement::parse_st(tokens)?;
+
+                Statement::While(
+                    Box::new(cond),
+                    Box::new(body),
+                    Identifier::new("dummy".to_string()),
+                )
+            }
+            Token::Do => {
+                trace!("Parsing <statement> ::= do <statement> while ( <exp> ) ;");
+
+                token_eq(Token::Do, tokens)?;
+                let body = Statement::parse_st(tokens)?;
+                token_eq(Token::While, tokens)?;
+                token_eq(Token::OpenParen, tokens)?;
+                let cond = Expression::parse_exp(tokens, 0)?;
+                token_eq(Token::CloseParen, tokens)?;
+                token_eq(Token::Semicolon, tokens)?;
+
+                Statement::DoWhile(
+                    Box::new(body),
+                    Box::new(cond),
+                    Identifier::new("dummy".to_string()),
+                )
             }
             _ => {
                 trace!("Parsing <statement> ::= <exp> ;");

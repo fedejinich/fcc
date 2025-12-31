@@ -122,13 +122,13 @@ impl FolderC for VariableResolver {
                 }
             },
             Expression::Var(ref id) => {
-                if let Some((var_unique_name, _)) = self.get_var(&id) {
-                    Expression::Var(Identifier::new(var_unique_name))
-                } else {
+                let Some((var_unique_name, _)) = self.get_var(&id) else {
                     debug!("undeclared variable: {expr}");
 
                     return Err("undeclared variable".to_string());
-                }
+                };
+
+                Expression::Var(Identifier::new(var_unique_name))
             }
             Expression::Unary(op, expr) => Expression::Unary(op, Box::new(self.fold_expr(*expr)?)),
             Expression::Binary(op, left, right) => Expression::Binary(
