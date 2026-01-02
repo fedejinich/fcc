@@ -20,6 +20,10 @@ impl InstructionFixer {
 }
 
 impl FolderAsm for InstructionFixer {
+    fn name(&self) -> &'static str {
+        "ins_fix"
+    }
+
     fn create() -> Self {
         Self::default()
     }

@@ -24,6 +24,10 @@ impl PseudoRegisterReplacer {
 }
 
 impl FolderAsm for PseudoRegisterReplacer {
+    fn name(&self) -> &'static str {
+        "reg_replace"
+    }
+
     fn create() -> Self {
         Self {
             offset_map: None,

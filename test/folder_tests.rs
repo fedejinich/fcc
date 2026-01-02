@@ -11,6 +11,9 @@ fn test_basic_folder_trait() {
     #[derive(Default)]
     struct BasicFolder;
     impl FolderAsm for BasicFolder {
+        fn name(&self) -> &'static str {
+            "test"
+        }
         fn create() -> Self {
             BasicFolder
         }
@@ -40,6 +43,9 @@ fn test_folder_preserves_all_instruction_types() {
     #[derive(Default)]
     struct IdentityFolder;
     impl FolderAsm for IdentityFolder {
+        fn name(&self) -> &'static str {
+            "test"
+        }
         fn create() -> Self {
             IdentityFolder
         }
@@ -139,6 +145,9 @@ fn test_folder_with_all_operand_types() {
     #[derive(Default)]
     struct IdentityFolder;
     impl FolderAsm for IdentityFolder {
+        fn name(&self) -> &'static str {
+            "test"
+        }
         fn create() -> Self {
             IdentityFolder
         }
@@ -180,6 +189,9 @@ fn test_folder_with_all_binary_operators() {
     #[derive(Default)]
     struct IdentityFolder;
     impl FolderAsm for IdentityFolder {
+        fn name(&self) -> &'static str {
+            "test"
+        }
         fn create() -> Self {
             IdentityFolder
         }
@@ -221,6 +233,9 @@ fn test_folder_with_all_unary_operators() {
     #[derive(Default)]
     struct IdentityFolder;
     impl FolderAsm for IdentityFolder {
+        fn name(&self) -> &'static str {
+            "test"
+        }
         fn create() -> Self {
             IdentityFolder
         }
@@ -247,6 +262,9 @@ fn test_folder_with_all_condition_codes() {
     #[derive(Default)]
     struct IdentityFolder;
     impl FolderAsm for IdentityFolder {
+        fn name(&self) -> &'static str {
+            "test"
+        }
         fn create() -> Self {
             IdentityFolder
         }
@@ -452,6 +470,9 @@ fn test_folder_preserves_identifiers() {
     #[derive(Default)]
     struct IdentityFolder;
     impl FolderAsm for IdentityFolder {
+        fn name(&self) -> &'static str {
+            "test"
+        }
         fn create() -> Self {
             IdentityFolder
         }
@@ -473,6 +494,9 @@ fn test_folder_preserves_registers() {
     #[derive(Default)]
     struct IdentityFolder;
     impl FolderAsm for IdentityFolder {
+        fn name(&self) -> &'static str {
+            "test"
+        }
         fn create() -> Self {
             IdentityFolder
         }

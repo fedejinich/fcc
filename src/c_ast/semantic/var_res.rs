@@ -68,6 +68,10 @@ impl VariableResolver {
 }
 
 impl FolderC for VariableResolver {
+    fn name(&self) -> &'static str {
+        "var_res"
+    }
+
     fn fold_decl(&mut self, declaration: Declaration) -> Result<Declaration, String> {
         trace!("[semantic] <declaration> {}", declaration.name().value());
 

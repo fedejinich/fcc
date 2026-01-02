@@ -1,3 +1,5 @@
+use log::{info, trace};
+
 use crate::c_ast::ast::{
     BinaryOperator, Block, BlockItem, Declaration, Expression, ForInit, FunctionDefinition,
     Identifier, Program, Statement, UnaryOperator,
@@ -16,13 +18,23 @@ use crate::tacky::ast::{
 /// another AST. This is useful when we want to traverse the AST and perform some operation on a
 /// specific node type.
 pub trait FolderC {
+    /// name of the pass for logging
+    fn name(&self) -> &'static str;
+
     fn fold_prog(&mut self, program: Program) -> Result<Program, String> {
-        Ok(Program::new(
-            self.fold_fun_def(program.function_definition().clone())?,
-        ))
+        info!("[{}] starting pass", self.name());
+        trace!("[{}] <program>", self.name());
+
+        let result = Program::new(self.fold_fun_def(program.function_definition().clone())?);
+
+        info!("[{}] pass completed", self.name());
+
+        Ok(result)
     }
 
     fn fold_fun_def(&mut self, function: FunctionDefinition) -> Result<FunctionDefinition, String> {
+        trace!("[{}] <function> {}", self.name(), function.name().value());
+
         Ok(FunctionDefinition::new(
             self.fold_id(function.name().clone())?,
             self.fold_block(function.body().clone())?,
@@ -30,12 +42,15 @@ pub trait FolderC {
     }
 
     fn fold_block(&mut self, block: Block) -> Result<Block, String> {
+        trace!("[{}] <block>", self.name());
+
         let folded: Result<Vec<_>, String> = block
             .block_items()
             .clone()
             .into_iter()
             .map(|item| self.fold_block_i(item))
             .collect();
+
         Ok(Block::new(folded?))
     }
 
@@ -47,10 +62,13 @@ pub trait FolderC {
     }
 
     fn fold_decl(&mut self, declaration: Declaration) -> Result<Declaration, String> {
+        trace!("[{}] <declaration>", self.name());
+
         let initializer = match declaration.initializer() {
             Some(expr) => Some(self.fold_expr(expr.clone())?),
             None => None,
         };
+
         Ok(Declaration::new(
             self.fold_id(declaration.name().clone())?,
             initializer,
@@ -58,6 +76,8 @@ pub trait FolderC {
     }
 
     fn fold_for_init(&mut self, init: ForInit) -> Result<ForInit, String> {
+        trace!("[{}] <for_init>", self.name());
+
         match init {
             ForInit::InitDecl(decl) => Ok(ForInit::InitDecl(Box::new(self.fold_decl(*decl)?))),
             ForInit::InitExp(expr) => {
@@ -66,12 +86,15 @@ pub trait FolderC {
                 } else {
                     None
                 };
+
                 return Ok(ForInit::InitExp(Box::new(res)));
             }
         }
     }
 
     fn fold_st(&mut self, statement: Statement) -> Result<Statement, String> {
+        trace!("[{}] <statement>", self.name());
+
         self.default_fold_st(statement)
     }
 
@@ -124,6 +147,8 @@ pub trait FolderC {
     }
 
     fn fold_expr(&mut self, expression: Expression) -> Result<Expression, String> {
+        trace!("[{}] <exp>", self.name());
+
         match expression {
             Expression::Constant(value) => Ok(Expression::Constant(value)),
             Expression::Var(identifier) => Ok(Expression::Var(self.fold_id(identifier)?)),
@@ -164,6 +189,9 @@ pub trait FolderC {
 /// Another folder trait that can be used to fold Tacky AST into another Tacky AST.
 #[allow(unused)]
 pub trait FolderTacky {
+    /// name of the pass for logging
+    fn name(&self) -> &'static str;
+
     fn create() -> Self
     where
         Self: Default,
@@ -172,21 +200,29 @@ pub trait FolderTacky {
     }
 
     fn fold_prog(&mut self, program: TackyProgram) -> Result<TackyProgram, String> {
-        Ok(TackyProgram::new(
-            self.fold_fun_def(program.function_definition)?,
-        ))
+        info!("[{}] starting pass", self.name());
+        trace!("[{}] <tacky_program>", self.name());
+
+        let result = TackyProgram::new(self.fold_fun_def(program.function_definition)?);
+
+        info!("[{}] pass completed", self.name());
+
+        Ok(result)
     }
 
     fn fold_fun_def(
         &mut self,
         function: TackyFunctionDefinition,
     ) -> Result<TackyFunctionDefinition, String> {
+        trace!("[{}] <tacky_function> {}", self.name(), function.name.value);
+
         let instructions: Result<Vec<_>, String> = function
             .instructions
             .into_iter()
             .map(|i| self.fold_instruction(i))
             .collect::<Result<Vec<_>, String>>()
             .map(|v| v.into_iter().flatten().collect());
+
         Ok(TackyFunctionDefinition::new(
             self.fold_id(function.name)?,
             instructions?,
@@ -197,6 +233,8 @@ pub trait FolderTacky {
         &mut self,
         instruction: TackyInstruction,
     ) -> Result<Vec<TackyInstruction>, String> {
+        trace!("[{}] <tacky_instruction>", self.name());
+
         use TackyInstruction::*;
         let res = match instruction {
             Comment(comment) => Comment(comment),
@@ -251,6 +289,9 @@ pub trait FolderTacky {
 
 /// Another folder trait that can be used to fold Asm AST into another Asm AST.
 pub trait FolderAsm {
+    /// name of the pass for logging
+    fn name(&self) -> &'static str;
+
     fn create() -> Self
     where
         Self: Default,
@@ -259,21 +300,29 @@ pub trait FolderAsm {
     }
 
     fn fold_prog(&mut self, program: AsmProgram) -> Result<AsmProgram, String> {
-        Ok(AsmProgram::new(
-            self.fold_fun_def(program.function_definition)?,
-        ))
+        info!("[{}] starting pass", self.name());
+        trace!("[{}] <asm_program>", self.name());
+
+        let result = AsmProgram::new(self.fold_fun_def(program.function_definition)?);
+
+        info!("[{}] pass completed", self.name());
+
+        Ok(result)
     }
 
     fn fold_fun_def(
         &mut self,
         function: AsmFunctionDefinition,
     ) -> Result<AsmFunctionDefinition, String> {
+        trace!("[{}] <asm_function> {}", self.name(), function.name.value);
+
         let instructions: Result<Vec<_>, String> = function
             .instructions
             .into_iter()
             .map(|i| self.fold_ins(i))
             .collect::<Result<Vec<_>, String>>()
             .map(|v| v.into_iter().flatten().collect());
+
         Ok(AsmFunctionDefinition::new(
             self.fold_id(function.name)?,
             instructions?,
@@ -281,6 +330,8 @@ pub trait FolderAsm {
     }
 
     fn fold_ins(&mut self, instruction: AsmInstruction) -> Result<Vec<AsmInstruction>, String> {
+        trace!("[{}] <asm_instruction>", self.name());
+
         use AsmInstruction::*;
         let res = match instruction {
             Comment(comment) => Comment(comment),
@@ -330,6 +381,7 @@ pub trait FolderAsm {
     fn fold_cond_code(&mut self, code: AsmCondCode) -> Result<AsmCondCode, String> {
         Ok(code)
     }
+
     fn fold_reg(&mut self, reg: Reg) -> Result<Reg, String> {
         Ok(reg)
     }
