@@ -46,13 +46,6 @@ impl From<Identifier> for TackyIdentifier {
     }
 }
 
-impl TackyIdentifier {
-    pub fn from_with_prefix(prefix: &str, label: Identifier) -> TackyIdentifier {
-        let id = prefix.to_string() + &label.value();
-        TackyIdentifier::new(&id)
-    }
-}
-
 impl TackyInstruction {
     fn from_block(block: Block) -> Vec<TackyInstruction> {
         block
@@ -126,7 +119,7 @@ impl TackyInstruction {
             Statement::Break(label) => {
                 trace!("[tacky] <statement> break");
 
-                let break_label = TackyIdentifier::from_with_prefix("break_", label);
+                let break_label = TackyIdentifier::with_prefix("break_", label);
                 instructions.push(TackyInstruction::Jump(break_label));
 
                 instructions
@@ -135,13 +128,34 @@ impl TackyInstruction {
             Statement::Continue(label) => {
                 trace!("[tacky] <statement> continue");
 
-                let continue_label = TackyIdentifier::from_with_prefix("continue_", label);
+                let continue_label = TackyIdentifier::with_prefix("continue_", label);
                 instructions.push(TackyInstruction::Jump(continue_label));
 
                 instructions
             }
             Statement::While(_cond, _body, _id) => todo!("to be implemented"),
-            Statement::DoWhile(_body, _cond, _id) => todo!("to be implemented"),
+            Statement::DoWhile(body, cond, label) => {
+                trace!("[tacky] <statement> do-while");
+
+                let start_label = TackyIdentifier::with_prefix("start_", label.clone());
+                let continue_label = TackyIdentifier::with_prefix("continue_", label.clone());
+                let break_label = TackyIdentifier::with_prefix("break_", label);
+                let v = TackyIdentifier::new("v");
+
+                instructions.push(TackyInstruction::Label(start_label.clone()));
+                instructions.extend(TackyInstruction::from_st(*body));
+                instructions.push(TackyInstruction::Label(continue_label));
+
+                let res = TackyInstruction::from_expr(*cond, &mut instructions);
+
+                instructions.push(TackyInstruction::Copy(res, TackyValue::Var(v.clone())));
+                instructions.push(TackyInstruction::JumpIfNotZero(
+                    TackyValue::Var(v),
+                    start_label,
+                ));
+                instructions.push(TackyInstruction::Label(break_label));
+                instructions
+            }
             Statement::For(_init, _cond, _post, _body, _id) => todo!("to be implemented"),
             Statement::Null => vec![],
         }

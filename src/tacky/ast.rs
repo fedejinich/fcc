@@ -3,7 +3,7 @@
 
 use std::sync::atomic::AtomicUsize;
 
-use crate::common::util::temporary_name;
+use crate::{c_ast::ast::Identifier, common::util::temporary_name};
 
 pub struct TackyProgram {
     pub function_definition: TackyFunctionDefinition,
@@ -72,10 +72,19 @@ pub enum TackyBinaryOperator {
 static COUNTER: AtomicUsize = AtomicUsize::new(0);
 
 impl TackyIdentifier {
+    /// Creates a new identifier with the given value
+    /// note: it increments the counter
     pub fn new(value: &str) -> TackyIdentifier {
         TackyIdentifier {
             value: temporary_name(value, &COUNTER),
         }
+    }
+
+    /// Creates a new identifier with the given prefix and the label's value
+    /// note: it does not increment the counter
+    pub fn with_prefix(prefix: &str, label: Identifier) -> TackyIdentifier {
+        let id = prefix.to_string() + &label.value();
+        TackyIdentifier { value: id }
     }
 }
 
