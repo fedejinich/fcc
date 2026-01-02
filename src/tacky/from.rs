@@ -46,6 +46,13 @@ impl From<Identifier> for TackyIdentifier {
     }
 }
 
+impl TackyIdentifier {
+    pub fn from_with_prefix(prefix: &str, label: Identifier) -> TackyIdentifier {
+        let id = prefix.to_string() + &label.value();
+        TackyIdentifier::new(&id)
+    }
+}
+
 impl TackyInstruction {
     fn from_block(block: Block) -> Vec<TackyInstruction> {
         block
@@ -116,8 +123,23 @@ impl TackyInstruction {
 
                 instructions
             }
-            Statement::Break(_id) => todo!("to be implemented"),
-            Statement::Continue(_id) => todo!("to be implemented"),
+            Statement::Break(label) => {
+                trace!("[tacky] <statement> break");
+
+                let break_label = TackyIdentifier::from_with_prefix("break_", label);
+                instructions.push(TackyInstruction::Jump(break_label));
+
+                instructions
+            }
+
+            Statement::Continue(label) => {
+                trace!("[tacky] <statement> continue");
+
+                let continue_label = TackyIdentifier::from_with_prefix("continue_", label);
+                instructions.push(TackyInstruction::Jump(continue_label));
+
+                instructions
+            }
             Statement::While(_cond, _body, _id) => todo!("to be implemented"),
             Statement::DoWhile(_body, _cond, _id) => todo!("to be implemented"),
             Statement::For(_init, _cond, _post, _body, _id) => todo!("to be implemented"),
