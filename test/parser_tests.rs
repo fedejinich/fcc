@@ -380,3 +380,247 @@ fn test_parser_error_extra_tokens() {
     let result = parse_program(src);
     assert!(result.is_err(), "Should fail with extra tokens");
 }
+
+// =============================================================================
+// LOOP STATEMENTS
+// =============================================================================
+
+#[test]
+fn test_parser_while_statement() {
+    let src = "int main(void){ int x=5; while (x) x = x - 1; return x; }";
+    let program = parse_program(src).expect("should parse");
+
+    let items = get_body_items(&program);
+    assert_eq!(items.len(), 3);
+
+    match items[1] {
+        BlockItem::S(Statement::While(cond, body, _label)) => {
+            assert!(matches!(**cond, Expression::Var(_)));
+            assert!(matches!(**body, Statement::Expression(_)));
+        }
+        _ => panic!("Expected while statement"),
+    }
+}
+
+#[test]
+fn test_parser_while_with_block() {
+    let src = "int main(void){ int x=5; while (x) { x = x - 1; } return x; }";
+    let program = parse_program(src).expect("should parse");
+
+    let items = get_body_items(&program);
+
+    match items[1] {
+        BlockItem::S(Statement::While(_, body, _)) => {
+            assert!(matches!(**body, Statement::Compound(_)));
+        }
+        _ => panic!("Expected while statement with block body"),
+    }
+}
+
+#[test]
+fn test_parser_do_while_statement() {
+    let src = "int main(void){ int x=0; do x = x + 1; while (x < 5); return x; }";
+    let program = parse_program(src).expect("should parse");
+
+    let items = get_body_items(&program);
+    assert_eq!(items.len(), 3);
+
+    match items[1] {
+        BlockItem::S(Statement::DoWhile(body, cond, _label)) => {
+            assert!(matches!(**body, Statement::Expression(_)));
+            assert!(matches!(**cond, Expression::Binary(BinaryOperator::LessThan, _, _)));
+        }
+        _ => panic!("Expected do-while statement"),
+    }
+}
+
+#[test]
+fn test_parser_do_while_with_block() {
+    let src = "int main(void){ int x=0; do { x = x + 1; } while (x < 5); return x; }";
+    let program = parse_program(src).expect("should parse");
+
+    let items = get_body_items(&program);
+
+    match items[1] {
+        BlockItem::S(Statement::DoWhile(body, _, _)) => {
+            assert!(matches!(**body, Statement::Compound(_)));
+        }
+        _ => panic!("Expected do-while statement with block body"),
+    }
+}
+
+#[test]
+fn test_parser_for_statement_full() {
+    let src = "int main(void){ for (int i = 0; i < 10; i = i + 1) return i; return 0; }";
+    let program = parse_program(src).expect("should parse");
+
+    let items = get_body_items(&program);
+
+    match items[0] {
+        BlockItem::S(Statement::For(init, cond, post, body, _label)) => {
+            // init should be a declaration
+            assert!(matches!(**init, fcc::c_ast::ast::ForInit::InitDecl(_)));
+            // cond should be present
+            assert!(cond.is_some());
+            // post should be present
+            assert!(post.is_some());
+            // body
+            assert!(matches!(**body, Statement::Return(_)));
+        }
+        _ => panic!("Expected for statement"),
+    }
+}
+
+#[test]
+fn test_parser_for_statement_empty_init() {
+    let src = "int main(void){ int i = 0; for (; i < 10; i = i + 1) i = i; return 0; }";
+    let program = parse_program(src).expect("should parse");
+
+    let items = get_body_items(&program);
+
+    match items[1] {
+        BlockItem::S(Statement::For(init, cond, post, _, _)) => {
+            // init should be empty expression
+            match init.as_ref() {
+                fcc::c_ast::ast::ForInit::InitExp(exp) => {
+                    assert!(exp.is_none(), "Init expression should be None");
+                }
+                _ => panic!("Expected InitExp for empty init"),
+            }
+            assert!(cond.is_some());
+            assert!(post.is_some());
+        }
+        _ => panic!("Expected for statement"),
+    }
+}
+
+#[test]
+fn test_parser_for_statement_empty_cond() {
+    let src = "int main(void){ for (int i = 0; ; i = i + 1) return i; return 0; }";
+    let program = parse_program(src).expect("should parse");
+
+    let items = get_body_items(&program);
+
+    match items[0] {
+        BlockItem::S(Statement::For(_, cond, post, _, _)) => {
+            assert!(cond.is_none(), "Condition should be None");
+            assert!(post.is_some());
+        }
+        _ => panic!("Expected for statement"),
+    }
+}
+
+#[test]
+fn test_parser_for_statement_empty_post() {
+    let src = "int main(void){ for (int i = 0; i < 10;) return i; return 0; }";
+    let program = parse_program(src).expect("should parse");
+
+    let items = get_body_items(&program);
+
+    match items[0] {
+        BlockItem::S(Statement::For(_, cond, post, _, _)) => {
+            assert!(cond.is_some());
+            assert!(post.is_none(), "Post expression should be None");
+        }
+        _ => panic!("Expected for statement"),
+    }
+}
+
+#[test]
+fn test_parser_for_statement_infinite() {
+    let src = "int main(void){ for (;;) return 0; return 1; }";
+    let program = parse_program(src).expect("should parse");
+
+    let items = get_body_items(&program);
+
+    match items[0] {
+        BlockItem::S(Statement::For(init, cond, post, _, _)) => {
+            match init.as_ref() {
+                fcc::c_ast::ast::ForInit::InitExp(exp) => {
+                    assert!(exp.is_none(), "Init should be None");
+                }
+                _ => panic!("Expected InitExp for empty init"),
+            }
+            assert!(cond.is_none(), "Condition should be None");
+            assert!(post.is_none(), "Post should be None");
+        }
+        _ => panic!("Expected for statement"),
+    }
+}
+
+#[test]
+fn test_parser_break_statement() {
+    let src = "int main(void){ while (1) break; return 0; }";
+    let program = parse_program(src).expect("should parse");
+
+    let items = get_body_items(&program);
+
+    match items[0] {
+        BlockItem::S(Statement::While(_, body, _)) => {
+            assert!(matches!(**body, Statement::Break(_)));
+        }
+        _ => panic!("Expected while with break"),
+    }
+}
+
+#[test]
+fn test_parser_continue_statement() {
+    let src = "int main(void){ while (1) continue; return 0; }";
+    let program = parse_program(src).expect("should parse");
+
+    let items = get_body_items(&program);
+
+    match items[0] {
+        BlockItem::S(Statement::While(_, body, _)) => {
+            assert!(matches!(**body, Statement::Continue(_)));
+        }
+        _ => panic!("Expected while with continue"),
+    }
+}
+
+#[test]
+fn test_parser_nested_loops() {
+    let src = "int main(void){ while (1) while (0) return 1; return 0; }";
+    let program = parse_program(src).expect("should parse");
+
+    let items = get_body_items(&program);
+
+    match items[0] {
+        BlockItem::S(Statement::While(_, body, _)) => {
+            assert!(matches!(**body, Statement::While(_, _, _)));
+        }
+        _ => panic!("Expected nested while statements"),
+    }
+}
+
+// =============================================================================
+// LOOP ERROR PATHS
+// =============================================================================
+
+#[test]
+fn test_parser_error_while_missing_paren() {
+    let src = "int main(void){ while x return 0; }";
+    let result = parse_program(src);
+    assert!(result.is_err(), "Should fail without parentheses in while");
+}
+
+#[test]
+fn test_parser_error_do_while_missing_while() {
+    let src = "int main(void){ do return 0; }";
+    let result = parse_program(src);
+    assert!(result.is_err(), "Should fail without while in do-while");
+}
+
+#[test]
+fn test_parser_error_do_while_missing_semicolon() {
+    let src = "int main(void){ do return 0; while (1) }";
+    let result = parse_program(src);
+    assert!(result.is_err(), "Should fail without semicolon after do-while");
+}
+
+#[test]
+fn test_parser_error_for_missing_semicolons() {
+    let src = "int main(void){ for (int i = 0 i < 10 i = i + 1) return 0; }";
+    let result = parse_program(src);
+    assert!(result.is_err(), "Should fail without semicolons in for");
+}
