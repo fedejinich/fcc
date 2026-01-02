@@ -113,6 +113,7 @@ impl Declaration {
         let mut initializer = None;
         if let Some(Token::Assignment) = tokens.peek() {
             let _ = tokens.next(); // consume '='
+            // TODO: replace this wiht parse_opt_exp
             initializer = Some(Expression::parse_exp(tokens, 0)?);
         }
 
@@ -167,6 +168,7 @@ impl Statement {
                 token_assert(Token::Return, tokens)?;
                 // start with a minimum precedence of zero so
                 // the result includes operators at every precedence level
+                // TODO: replace this wiht parse_opt_exp
                 let expr = Expression::parse_exp(tokens, 0)?;
                 token_assert(Token::Semicolon, tokens)?;
 
@@ -179,6 +181,7 @@ impl Statement {
 
                 let _ = tokens.next(); // consume 'if'
                 token_assert(Token::OpenParen, tokens)?;
+                // TODO: replace this wiht parse_opt_exp
                 let expr = Expression::parse_exp(tokens, 0)?;
                 token_assert(Token::CloseParen, tokens)?;
                 let then = Statement::parse_st(tokens)?;
@@ -223,6 +226,7 @@ impl Statement {
 
                 token_assert(Token::While, tokens)?;
                 token_assert(Token::OpenParen, tokens)?;
+                // TODO: replace this wiht parse_opt_exp
                 let cond = Expression::parse_exp(tokens, 0)?;
                 token_assert(Token::CloseParen, tokens)?;
                 let body = Statement::parse_st(tokens)?;
@@ -240,6 +244,7 @@ impl Statement {
                 let body = Statement::parse_st(tokens)?;
                 token_assert(Token::While, tokens)?;
                 token_assert(Token::OpenParen, tokens)?;
+                // TODO: replace this wiht parse_opt_exp
                 let cond = Expression::parse_exp(tokens, 0)?;
                 token_assert(Token::CloseParen, tokens)?;
                 token_assert(Token::Semicolon, tokens)?;
@@ -282,10 +287,8 @@ impl Statement {
             _ => {
                 trace!("Parsing <statement> ::= <exp> ;");
 
+                // TODO: replace this wiht parse_opt_exp
                 let exp = Expression::parse_exp(tokens, 0)?;
-
-                trace!("Remaining tokens: {:?}", tokens);
-
                 token_assert(Token::Semicolon, tokens)?;
 
                 Statement::Expression(exp)
@@ -309,7 +312,6 @@ impl Expression {
         let is_binary_op = |t: &Token| lexer::binary_operators().contains(t);
         while let Some(token) = next_token {
             if !is_binary_op(token) || precedence(token) < min_prec {
-                // trace!("No bin op ({token:?})");
                 trace!("Parsing single <exp> ::= <exp>");
                 break;
             }
@@ -317,6 +319,7 @@ impl Expression {
             match *token {
                 Token::Assignment => {
                     trace!("Parsing assignment");
+                    // TODO: replace this with a token_assert which also consumes the token
                     let _ = tokens.next(); // consume '='
                     let right = Expression::parse_exp(tokens, precedence(token))?;
                     left = Expression::Assignment(Box::new(left), Box::new(right));
@@ -346,8 +349,7 @@ impl Expression {
         Ok(left)
     }
 
-    // TODO: theoretically this function is also useful for parsing expression statements and null
-    // statements as well, i still need to figuere it out how to do this
+    // TODO: this should be the leading function for parsing expressions
     pub fn parse_opt_exp(
         tokens: &mut Peekable<Iter<Token>>,
         until: Token,
@@ -374,6 +376,7 @@ impl Expression {
     fn parse_conditional_middle(tokens: &mut Peekable<Iter<Token>>) -> ParseResult<Self> {
         trace!("Parsing <conditional_middle>");
         token_assert(Token::QuestionMark, tokens)?; // consume '?'
+        // TODO: replace this wiht parse_opt_exp
         let middle = Expression::parse_exp(tokens, 0)?;
         token_assert(Token::DoubleDot, tokens)?;
 
@@ -404,6 +407,7 @@ impl Expression {
             Token::OpenParen => {
                 trace!("Parsing \"(\" <exp> \")\"");
                 let _ = tokens.next();
+                // TODO: replace this wiht parse_opt_exp
                 let exp = Expression::parse_exp(tokens, 0)?;
                 token_assert(Token::CloseParen, tokens)?;
                 exp
