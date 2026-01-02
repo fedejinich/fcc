@@ -78,18 +78,12 @@ pub trait FolderC {
     fn fold_for_init(&mut self, init: ForInit) -> Result<ForInit, String> {
         trace!("[{}] <for_init>", self.name());
 
-        match init {
-            ForInit::InitDecl(decl) => Ok(ForInit::InitDecl(Box::new(self.fold_decl(*decl)?))),
-            ForInit::InitExp(expr) => {
-                let res = if let Some(e) = *expr {
-                    Some(self.fold_expr(e)?)
-                } else {
-                    None
-                };
+        let res = match init {
+            ForInit::InitDecl(decl) => ForInit::InitDecl(Box::new(self.fold_decl(*decl)?)),
+            ForInit::InitExp(expr) => ForInit::InitExp(self.fold_opt_expr(expr)?),
+        };
 
-                return Ok(ForInit::InitExp(Box::new(res)));
-            }
-        }
+        Ok(res)
     }
 
     fn fold_st(&mut self, statement: Statement) -> Result<Statement, String> {
@@ -99,10 +93,10 @@ pub trait FolderC {
     }
 
     fn default_fold_st(&mut self, statement: Statement) -> Result<Statement, String> {
-        match statement {
-            Statement::Return(expr) => Ok(Statement::Return(self.fold_expr(expr)?)),
-            Statement::Expression(expr) => Ok(Statement::Expression(self.fold_expr(expr)?)),
-            Statement::If(expr, then, el) => Ok(Statement::If(
+        let res = match statement {
+            Statement::Return(expr) => Statement::Return(self.fold_expr(expr)?),
+            Statement::Expression(expr) => Statement::Expression(self.fold_expr(expr)?),
+            Statement::If(expr, then, el) => Statement::If(
                 Box::new(self.fold_expr(*expr)?),
                 Box::new(self.fold_st(*then)?),
                 if let Some(el) = el {
@@ -110,40 +104,56 @@ pub trait FolderC {
                 } else {
                     None
                 },
-            )),
-            Statement::Compound(block) => {
-                Ok(Statement::Compound(Box::new(self.fold_block(*block)?)))
-            }
-            Statement::Break(id) => Ok(Statement::Break(id)),
-            Statement::Continue(id) => Ok(Statement::Continue(id)),
-            Statement::While(cond, body, id) => Ok(Statement::While(
+            ),
+            Statement::Compound(block) => Statement::Compound(Box::new(self.fold_block(*block)?)),
+            Statement::Break(id) => Statement::Break(id),
+            Statement::Continue(id) => Statement::Continue(id),
+            Statement::While(cond, body, id) => Statement::While(
                 Box::new(self.fold_expr(*cond)?),
                 Box::new(self.fold_st(*body)?),
                 id,
-            )),
-            Statement::DoWhile(body, cond, id) => Ok(Statement::DoWhile(
+            ),
+            Statement::DoWhile(body, cond, id) => Statement::DoWhile(
                 Box::new(self.fold_st(*body)?),
                 Box::new(self.fold_expr(*cond)?),
                 id,
-            )),
+            ),
             Statement::For(for_init, cond, post, body, id) => {
-                let for_init = Box::new(self.fold_for_init(*for_init)?);
-                let cond = if let Some(cond) = cond {
-                    Some(Box::new(self.fold_expr(*cond)?))
-                } else {
-                    None
-                };
-                let post = if let Some(post) = post {
-                    Some(Box::new(self.fold_expr(*post)?))
-                } else {
-                    None
-                };
-                let body = Box::new(self.fold_st(*body)?);
-
-                Ok(Statement::For(for_init, cond, post, body, id))
+                self.default_fold_st_for(for_init, cond, post, body, id)?
             }
-            Statement::Null => Ok(Statement::Null),
-        }
+            Statement::Null => Statement::Null,
+        };
+
+        Ok(res)
+    }
+
+    fn default_fold_st_for(
+        &mut self,
+        for_init: Box<ForInit>,
+        cond: Option<Box<Expression>>,
+        post: Option<Box<Expression>>,
+        body: Box<Statement>,
+        id: Identifier,
+    ) -> Result<Statement, String> {
+        let for_init = Box::new(self.fold_for_init(*for_init)?);
+        let cond = self.fold_opt_expr(cond)?;
+        let post = self.fold_opt_expr(post)?;
+        let body = Box::new(self.fold_st(*body)?);
+
+        Ok(Statement::For(for_init, cond, post, body, id))
+    }
+
+    fn fold_opt_expr(
+        &mut self,
+        opt_expr: Option<Box<Expression>>,
+    ) -> Result<Option<Box<Expression>>, String> {
+        let res = if let Some(cond) = opt_expr {
+            let expr = self.fold_expr(*cond)?;
+            Some(Box::new(expr))
+        } else {
+            None
+        };
+        Ok(res)
     }
 
     fn fold_expr(&mut self, expression: Expression) -> Result<Expression, String> {

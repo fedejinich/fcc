@@ -117,10 +117,10 @@ impl ForInit {
                 tokens,
             )?)));
         }
-        let opt_exp = Expression::parse_opt_exp(tokens, Token::Semicolon)?;
+        let opt_exp = Expression::parse_opt_exp(tokens, Token::Semicolon)?.map(|e| Box::new(e));
         token_assert(Token::Semicolon, tokens)?;
 
-        Ok(ForInit::InitExp(Box::new(opt_exp)))
+        Ok(ForInit::InitExp(opt_exp))
     }
 }
 

@@ -24,7 +24,7 @@ pub struct Declaration(Identifier, Option<Expression>);
 #[derive(Clone, Debug)]
 pub enum ForInit {
     InitDecl(Box<Declaration>),
-    InitExp(Box<Option<Expression>>),
+    InitExp(Option<Box<Expression>>),
 }
 
 #[allow(unused)]

@@ -103,19 +103,25 @@ impl FolderC for VariableResolver {
     }
 
     fn fold_st(&mut self, statement: Statement) -> Result<Statement, String> {
-        match statement {
+        let res = match statement {
             Statement::Compound(block) => {
                 trace!("[semantic] <statement> compound (new scope)");
 
                 let new_var_map = self.copy_variable_map();
                 let mut new_resolver = Self::new_with(new_var_map);
 
-                Ok(Statement::Compound(Box::new(
-                    new_resolver.fold_block(*block)?,
-                )))
+                Statement::Compound(Box::new(new_resolver.fold_block(*block)?))
             }
-            _ => self.default_fold_st(statement),
-        }
+            Statement::For(for_init, cond, post, body, id) => {
+                let new_var_map = self.copy_variable_map();
+                let mut new_resolver = Self::new_with(new_var_map);
+
+                new_resolver.default_fold_st_for(for_init, cond, post, body, id)?
+            }
+            _ => self.default_fold_st(statement)?,
+        };
+
+        Ok(res)
     }
 
     fn fold_expr(&mut self, expr: Expression) -> Result<Expression, String> {
