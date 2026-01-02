@@ -4,11 +4,12 @@ use clap::Parser;
 use log::{debug, error, info};
 
 use crate::c_ast::ast::Program;
-use crate::c_ast::semantic::validate::validate_semantics;
+use crate::c_ast::semantic::loop_lab::LoopLabeler;
+use crate::c_ast::semantic::var_res::VariableResolver;
 use crate::codegen::x64::ast::AsmProgram;
 use crate::codegen::x64::fixer::instruction_fix::InstructionFixer;
 use crate::codegen::x64::fixer::reg_replace::PseudoRegisterReplacer;
-use crate::common::folder::FolderAsm;
+use crate::common::folder::{FolderAsm, FolderC};
 use crate::common::util::replace_c_with_i;
 use crate::lexer::lex;
 use crate::tacky::ast::TackyProgram;
@@ -243,4 +244,10 @@ impl CompilerDriver {
             String::from("failed to get status code")
         })
     }
+}
+
+pub fn validate_semantics(program: Program) -> Result<Program, String> {
+    let program = VariableResolver::new().fold_prog(program)?;
+    let program = LoopLabeler::default().fold_prog(program);
+    program
 }

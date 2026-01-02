@@ -150,6 +150,17 @@ impl Identifier {
     pub fn value(&self) -> &str {
         &self.0
     }
+
+    /// Returns true if the identifier is a dummy label
+    pub fn is_dummy_label(&self) -> bool {
+        self.value() == "dummy_label"
+    }
+}
+
+impl PartialEq for Identifier {
+    fn eq(&self, other: &Self) -> bool {
+        self.0 == other.0
+    }
 }
 
 impl Declaration {

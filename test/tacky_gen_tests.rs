@@ -6,7 +6,7 @@ Suggestions: add property tests for instruction count bounds.
 */
 
 use fcc::c_ast::ast::Program;
-use fcc::c_ast::semantic::validate::validate_semantics;
+use fcc::driver::validate_semantics;
 use fcc::lexer::lex;
 use fcc::tacky::ast::{
     TackyBinaryOperator, TackyInstruction, TackyProgram, TackyUnaryOperator, TackyValue,

@@ -55,6 +55,8 @@ pub trait FolderC {
     }
 
     fn fold_block_i(&mut self, item: BlockItem) -> Result<BlockItem, String> {
+        trace!("[{}] <block_item>", self.name());
+
         match item {
             BlockItem::D(declaration) => Ok(BlockItem::D(self.fold_decl(declaration)?)),
             BlockItem::S(statement) => Ok(BlockItem::S(self.fold_st(statement)?)),
