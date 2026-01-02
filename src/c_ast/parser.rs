@@ -43,13 +43,13 @@ impl FunctionDefinition {
     fn parse_fd(tokens: &mut Peekable<Iter<Token>>) -> ParseResult<Self> {
         trace!("Parsing <function>");
 
-        token_eq(Token::Int, tokens)?;
+        token_assert(Token::Int, tokens)?;
 
         let identifier = Identifier::parse_id(tokens)?;
 
-        token_eq(Token::OpenParen, tokens)?;
-        token_eq(Token::Void, tokens)?;
-        token_eq(Token::CloseParen, tokens)?;
+        token_assert(Token::OpenParen, tokens)?;
+        token_assert(Token::Void, tokens)?;
+        token_assert(Token::CloseParen, tokens)?;
 
         let block = Block::parse_block(tokens)?;
 
@@ -63,7 +63,7 @@ impl Block {
     fn parse_block(tokens: &mut Peekable<Iter<Token>>) -> ParseResult<Self> {
         trace!("Parsing <block> ::= \"{{\" <block_item> \"}}\"");
 
-        token_eq(Token::OpenBrace, tokens)?;
+        token_assert(Token::OpenBrace, tokens)?;
 
         let mut block_items = vec![];
         while let Some(next_token) = tokens.peek() {
@@ -74,7 +74,7 @@ impl Block {
             block_items.push(block_item);
         }
 
-        token_eq(Token::CloseBrace, tokens)?;
+        token_assert(Token::CloseBrace, tokens)?;
 
         trace!("<block> parsing completed successfully");
 
@@ -107,7 +107,7 @@ impl Declaration {
     fn parse_decl(tokens: &mut Peekable<Iter<Token>>) -> ParseResult<Self> {
         trace!("Parsing <declaration> := \"int\" <identifier> [ \"=\" <exp> ] \";\"");
 
-        token_eq(Token::Int, tokens)?;
+        token_assert(Token::Int, tokens)?;
         let name = Identifier::parse_id(tokens)?;
 
         let mut initializer = None;
@@ -116,7 +116,7 @@ impl Declaration {
             initializer = Some(Expression::parse_exp(tokens, 0)?);
         }
 
-        token_eq(Token::Semicolon, tokens)?;
+        token_assert(Token::Semicolon, tokens)?;
 
         let dec = Declaration::new(name, initializer);
 
@@ -160,11 +160,11 @@ impl Statement {
             Token::Return => {
                 trace!("Parsing <statement> ::= return <exp> ;");
 
-                token_eq(Token::Return, tokens)?;
+                token_assert(Token::Return, tokens)?;
                 // start with a minimum precedence of zero so
                 // the result includes operators at every precedence level
                 let expr = Expression::parse_exp(tokens, 0)?;
-                token_eq(Token::Semicolon, tokens)?;
+                token_assert(Token::Semicolon, tokens)?;
 
                 Statement::Return(expr)
             }
@@ -174,9 +174,9 @@ impl Statement {
                 );
 
                 let _ = tokens.next(); // consume 'if'
-                token_eq(Token::OpenParen, tokens)?;
+                token_assert(Token::OpenParen, tokens)?;
                 let expr = Expression::parse_exp(tokens, 0)?;
-                token_eq(Token::CloseParen, tokens)?;
+                token_assert(Token::CloseParen, tokens)?;
                 let then = Statement::parse_st(tokens)?;
                 let mut el = None;
 
@@ -201,26 +201,26 @@ impl Statement {
 
                 let _ = tokens.next(); // consume 'break'
 
-                token_eq(Token::Semicolon, tokens)?;
+                token_assert(Token::Semicolon, tokens)?;
 
                 Statement::Break(Identifier::new("dummy".to_string()))
             }
             Token::Continue => {
                 trace!("Parsing <statement> ::= continue ;");
 
-                token_eq(Token::Continue, tokens)?;
+                token_assert(Token::Continue, tokens)?;
 
-                token_eq(Token::Semicolon, tokens)?;
+                token_assert(Token::Semicolon, tokens)?;
 
                 Statement::Continue(Identifier::new("dummy".to_string()))
             }
             Token::While => {
                 trace!("Parsing <statement> ::= while ( <exp> ) <statement>");
 
-                token_eq(Token::While, tokens)?;
-                token_eq(Token::OpenParen, tokens)?;
+                token_assert(Token::While, tokens)?;
+                token_assert(Token::OpenParen, tokens)?;
                 let cond = Expression::parse_exp(tokens, 0)?;
-                token_eq(Token::CloseParen, tokens)?;
+                token_assert(Token::CloseParen, tokens)?;
                 let body = Statement::parse_st(tokens)?;
 
                 Statement::While(
@@ -232,13 +232,13 @@ impl Statement {
             Token::Do => {
                 trace!("Parsing <statement> ::= do <statement> while ( <exp> ) ;");
 
-                token_eq(Token::Do, tokens)?;
+                token_assert(Token::Do, tokens)?;
                 let body = Statement::parse_st(tokens)?;
-                token_eq(Token::While, tokens)?;
-                token_eq(Token::OpenParen, tokens)?;
+                token_assert(Token::While, tokens)?;
+                token_assert(Token::OpenParen, tokens)?;
                 let cond = Expression::parse_exp(tokens, 0)?;
-                token_eq(Token::CloseParen, tokens)?;
-                token_eq(Token::Semicolon, tokens)?;
+                token_assert(Token::CloseParen, tokens)?;
+                token_assert(Token::Semicolon, tokens)?;
 
                 Statement::DoWhile(
                     Box::new(body),
@@ -249,21 +249,20 @@ impl Statement {
             Token::For => {
                 trace!("Parsing <statement> ::= for ( <for_init> ; <exp>? ; <exp>? ) <statement>");
 
-                token_eq(Token::For, tokens)?;
-                token_eq(Token::OpenParen, tokens)?;
+                token_assert(Token::For, tokens)?;
+                token_assert(Token::OpenParen, tokens)?;
+
+                trace!("Parsing <for_init>");
 
                 let for_init = ForInit::parse_for_init(tokens)?;
 
-                token_eq(Token::Semicolon, tokens)?;
+                trace!("Parsing <exp> ::= <exp> ;");
 
                 let cond = Expression::parse_opt_exp(tokens, Token::Semicolon)?;
 
-                token_eq(Token::Semicolon, tokens)?;
+                trace!("Parsing <exp> ::= <exp> ;");
 
                 let post = Expression::parse_opt_exp(tokens, Token::CloseParen)?;
-
-                token_eq(Token::CloseParen, tokens)?;
-
                 let body = Statement::parse_st(tokens)?;
 
                 Statement::For(
@@ -279,7 +278,7 @@ impl Statement {
 
                 let exp = Expression::parse_exp(tokens, 0)?;
 
-                token_eq(Token::Semicolon, tokens)?;
+                token_assert(Token::Semicolon, tokens)?;
 
                 Statement::Expression(exp)
             }
@@ -346,13 +345,14 @@ impl Expression {
     ) -> ParseResult<Option<Expression>> {
         // TODO: analyze if this check is redundant
         let Some(next_token) = tokens.peek() else {
-            return Err("could no token left to parse".to_string());
+            return Err("no token left to parse".to_string());
         };
 
         if *next_token == &until {
             trace!("No optional expression to parse");
 
             let _ = tokens.next(); // consume 'until'
+            // TODO: i think that we can replace this with token_eq(Token::Semicolon, tokens)?;
 
             return Ok(None);
         }
@@ -361,16 +361,16 @@ impl Expression {
         // and that we have an expression to parse
         let exp = Expression::parse_exp(tokens, 0)?;
 
-        token_eq(until, tokens)?;
+        // token_eq(until, tokens)?;
 
         Ok(Some(exp))
     }
 
     fn parse_conditional_middle(tokens: &mut Peekable<Iter<Token>>) -> ParseResult<Self> {
         trace!("Parsing <conditional_middle>");
-        token_eq(Token::QuestionMark, tokens)?; // consume '?'
+        token_assert(Token::QuestionMark, tokens)?; // consume '?'
         let middle = Expression::parse_exp(tokens, 0)?;
-        token_eq(Token::DoubleDot, tokens)?;
+        token_assert(Token::DoubleDot, tokens)?;
 
         Ok(middle)
     }
@@ -400,7 +400,7 @@ impl Expression {
                 trace!("Parsing \"(\" <exp> \")\"");
                 let _ = tokens.next();
                 let exp = Expression::parse_exp(tokens, 0)?;
-                token_eq(Token::CloseParen, tokens)?;
+                token_assert(Token::CloseParen, tokens)?;
                 exp
             }
             Token::Identifier(_) => {
@@ -510,16 +510,18 @@ impl Identifier {
     }
 }
 
-fn token_eq(expected: Token, tokens: &mut Peekable<Iter<Token>>) -> Result<(), String> {
+fn token_assert(expected: Token, tokens: &mut Peekable<Iter<Token>>) -> Result<(), String> {
     let Some(t) = tokens.next() else {
         debug!("No more tokens available when expecting: {expected:?}");
         return Err(String::from("empty tokens"));
     };
+
     if *t != expected {
         debug!("Token mismatch - expected: {expected:?}, got: {t:?}");
         return Err(format!("expected {expected:?}, got {t:?}"));
     }
-    debug!("Successfully matched token: {expected:?}");
+
+    trace!("token_assert successfully matched token: {expected:?}");
 
     Ok(())
 }
