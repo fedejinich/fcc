@@ -24,6 +24,9 @@ pub enum ForInit {
     InitDecl(Box<Declaration>),
     InitExp(Box<Expression>),
 }
+impl ForInit {
+    pub fn new(for_init: ForInit, cond: Expression, post: Expression, body: Statement) -> Self {}
+}
 
 #[allow(unused)]
 #[derive(Clone, Debug)]

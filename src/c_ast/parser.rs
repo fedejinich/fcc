@@ -4,8 +4,8 @@ use log::{debug, trace};
 
 use crate::{
     c_ast::ast::{
-        BinaryOperator, Block, BlockItem, Declaration, Expression, FunctionDefinition, Identifier,
-        Program, Statement, UnaryOperator,
+        BinaryOperator, Block, BlockItem, Declaration, Expression, ForInit, FunctionDefinition,
+        Identifier, Program, Statement, UnaryOperator,
     },
     lexer::{self, Token},
 };
@@ -125,6 +125,12 @@ impl Declaration {
     }
 }
 
+impl ForInit {
+    fn parse_for_init(tokens: &mut Peekable<Iter<Token>>) -> ParseResult<Self> {
+        todo!("to be implemented")
+    }
+}
+
 impl Statement {
     fn parse_st(tokens: &mut Peekable<Iter<Token>>) -> ParseResult<Self> {
         let Some(next_token) = tokens.peek() else {
@@ -227,6 +233,31 @@ impl Statement {
                     Identifier::new("dummy".to_string()),
                 )
             }
+            Token::For => {
+                trace!("Parsing <statement> ::= for ( <for_init> ; <exp>? ; <exp>? ) <statement>");
+
+                token_eq(Token::For, tokens)?;
+                token_eq(Token::OpenParen, tokens)?;
+                let for_init = ForInit::parse_for_init(tokens)?;
+                token_eq(Token::Semicolon, tokens)?;
+                let cond = Expression::parse_opt_exp(tokens, 0)
+                    .map(|e| Some(Box::new(e)))
+                    .map_or(None, |e| e);
+                token_eq(Token::Semicolon, tokens)?;
+                let post = Expression::parse_opt_exp(tokens, 0)
+                    .map(|e| Some(Box::new(e)))
+                    .map_or(None, |e| e);
+                token_eq(Token::CloseParen, tokens)?;
+                let body = Statement::parse_st(tokens)?;
+
+                Statement::For(
+                    Box::new(for_init),
+                    cond,
+                    post,
+                    Box::new(body),
+                    Identifier::new("dummy".to_string()),
+                )
+            }
             _ => {
                 trace!("Parsing <statement> ::= <exp> ;");
 
@@ -289,6 +320,13 @@ impl Expression {
         trace!("Parsed <exp> {:?}", &left);
 
         Ok(left)
+    }
+
+    pub fn parse_opt_exp(
+        tokens: &mut std::iter::Peekable<std::slice::Iter<'_, crate::lexer::Token>>,
+        min_prec: i32,
+    ) -> Option<Self> {
+        todo!()
     }
 
     fn parse_conditional_middle(tokens: &mut Peekable<Iter<Token>>) -> ParseResult<Self> {
