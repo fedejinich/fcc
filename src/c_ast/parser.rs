@@ -136,9 +136,13 @@ impl ForInit {
             return Ok(ForInit::InitDecl(Box::new(decl)));
         }
 
-        trace!("Parsing <for_init> ::= [ <exp> ]");
+        trace!("Parsing <for_init> ::= [ <exp> ] ;");
 
+        // este deberia consumir el semicolon porque si no lo hace el siguiente se corta al toque
+        // (que es lo que esta pasando)
         let opt_exp = Expression::parse_opt_exp(tokens, Token::Semicolon)?;
+
+        token_assert(Token::Semicolon, tokens)?;
 
         Ok(ForInit::InitExp(Box::new(opt_exp)))
     }
@@ -256,13 +260,15 @@ impl Statement {
 
                 let for_init = ForInit::parse_for_init(tokens)?;
 
-                trace!("Parsing <exp> ::= <exp> ;");
+                trace!("Parsing condition <exp> ::= <exp> ;");
 
                 let cond = Expression::parse_opt_exp(tokens, Token::Semicolon)?;
+                token_assert(Token::Semicolon, tokens)?;
 
-                trace!("Parsing <exp> ::= <exp> ;");
+                trace!("Parsing post <exp> ::= <exp> )");
 
                 let post = Expression::parse_opt_exp(tokens, Token::CloseParen)?;
+                token_assert(Token::CloseParen, tokens)?;
                 let body = Statement::parse_st(tokens)?;
 
                 Statement::For(
@@ -277,6 +283,8 @@ impl Statement {
                 trace!("Parsing <statement> ::= <exp> ;");
 
                 let exp = Expression::parse_exp(tokens, 0)?;
+
+                trace!("Remaining tokens: {:?}", tokens);
 
                 token_assert(Token::Semicolon, tokens)?;
 
@@ -349,19 +357,21 @@ impl Expression {
         };
 
         if *next_token == &until {
+            trace!("expected token: {until:?}\ngot token: {next_token:?}");
             trace!("No optional expression to parse");
 
-            let _ = tokens.next(); // consume 'until'
-            // TODO: i think that we can replace this with token_eq(Token::Semicolon, tokens)?;
+            // let _ = tokens.next(); // consume 'until'
+            // TODO: i think that we can replace this with a safer token_eq(Token::Semicolon, tokens)?;
 
+            // we don't consme this because is not part of the expression
             return Ok(None);
         }
+
+        trace!("Parsing <exp> ::= <exp> ;");
 
         // at this point we know that the next token is not the end of the optional expression
         // and that we have an expression to parse
         let exp = Expression::parse_exp(tokens, 0)?;
-
-        // token_eq(until, tokens)?;
 
         Ok(Some(exp))
     }
