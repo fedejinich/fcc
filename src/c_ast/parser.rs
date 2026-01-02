@@ -7,6 +7,7 @@ use crate::{
         BinaryOperator, Block, BlockItem, Declaration, Expression, ForInit, FunctionDefinition,
         Identifier, Program, Statement, UnaryOperator,
     },
+    common::util::opt_box,
     lexer::{self, Token},
 };
 
@@ -127,7 +128,19 @@ impl Declaration {
 
 impl ForInit {
     fn parse_for_init(tokens: &mut Peekable<Iter<Token>>) -> ParseResult<Self> {
-        todo!("to be implemented")
+        let peek = tokens.peek();
+        if Declaration::is_declaration(peek) {
+            trace!("Parsing <for_init> ::= <declaration>");
+            let decl = Declaration::parse_decl(tokens)?;
+
+            return Ok(ForInit::InitDecl(Box::new(decl)));
+        }
+
+        trace!("Parsing <for_init> ::= [ <exp> ]");
+
+        let opt_exp = Expression::parse_opt_exp(tokens, Token::Semicolon)?;
+
+        Ok(ForInit::InitExp(Box::new(opt_exp)))
     }
 }
 
@@ -238,22 +251,25 @@ impl Statement {
 
                 token_eq(Token::For, tokens)?;
                 token_eq(Token::OpenParen, tokens)?;
+
                 let for_init = ForInit::parse_for_init(tokens)?;
+
                 token_eq(Token::Semicolon, tokens)?;
-                let cond = Expression::parse_opt_exp(tokens, 0)
-                    .map(|e| Some(Box::new(e)))
-                    .map_or(None, |e| e);
+
+                let cond = Expression::parse_opt_exp(tokens, Token::Semicolon)?;
+
                 token_eq(Token::Semicolon, tokens)?;
-                let post = Expression::parse_opt_exp(tokens, 0)
-                    .map(|e| Some(Box::new(e)))
-                    .map_or(None, |e| e);
+
+                let post = Expression::parse_opt_exp(tokens, Token::CloseParen)?;
+
                 token_eq(Token::CloseParen, tokens)?;
+
                 let body = Statement::parse_st(tokens)?;
 
                 Statement::For(
                     Box::new(for_init),
-                    cond,
-                    post,
+                    opt_box(cond),
+                    opt_box(post),
                     Box::new(body),
                     Identifier::new("dummy".to_string()),
                 )
@@ -322,11 +338,32 @@ impl Expression {
         Ok(left)
     }
 
+    // TODO: theoretically this function is also useful for parsing expression statements and null
+    // statements as well, i still need to figuere it out how to do this
     pub fn parse_opt_exp(
-        tokens: &mut std::iter::Peekable<std::slice::Iter<'_, crate::lexer::Token>>,
-        min_prec: i32,
-    ) -> Option<Self> {
-        todo!()
+        tokens: &mut Peekable<Iter<Token>>,
+        until: Token,
+    ) -> ParseResult<Option<Expression>> {
+        // TODO: analyze if this check is redundant
+        let Some(next_token) = tokens.peek() else {
+            return Err("could no token left to parse".to_string());
+        };
+
+        if *next_token == &until {
+            trace!("No optional expression to parse");
+
+            let _ = tokens.next(); // consume 'until'
+
+            return Ok(None);
+        }
+
+        // at this point we know that the next token is not the end of the optional expression
+        // and that we have an expression to parse
+        let exp = Expression::parse_exp(tokens, 0)?;
+
+        token_eq(until, tokens)?;
+
+        Ok(Some(exp))
     }
 
     fn parse_conditional_middle(tokens: &mut Peekable<Iter<Token>>) -> ParseResult<Self> {

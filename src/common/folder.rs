@@ -60,7 +60,14 @@ pub trait FolderC {
     fn fold_for_init(&mut self, init: ForInit) -> Result<ForInit, String> {
         match init {
             ForInit::InitDecl(decl) => Ok(ForInit::InitDecl(Box::new(self.fold_decl(*decl)?))),
-            ForInit::InitExp(expr) => Ok(ForInit::InitExp(Box::new(self.fold_expr(*expr)?))),
+            ForInit::InitExp(expr) => {
+                let res = if let Some(e) = *expr {
+                    Some(self.fold_expr(e)?)
+                } else {
+                    None
+                };
+                return Ok(ForInit::InitExp(Box::new(res)));
+            }
         }
     }
 

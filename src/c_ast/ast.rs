@@ -1,3 +1,5 @@
+use crate::lexer::Token;
+
 #[derive(Clone, Debug)]
 pub struct Program(FunctionDefinition);
 
@@ -22,10 +24,7 @@ pub struct Declaration(Identifier, Option<Expression>);
 #[derive(Clone, Debug)]
 pub enum ForInit {
     InitDecl(Box<Declaration>),
-    InitExp(Box<Expression>),
-}
-impl ForInit {
-    pub fn new(for_init: ForInit, cond: Expression, post: Expression, body: Statement) -> Self {}
+    InitExp(Box<Option<Expression>>),
 }
 
 #[allow(unused)]
@@ -164,5 +163,10 @@ impl Declaration {
 
     pub fn initializer(&self) -> Option<&Expression> {
         self.1.as_ref()
+    }
+
+    pub fn is_declaration(token: Option<&&Token>) -> bool {
+        // right now we only support only one declaration type which is the 'int' type declaration
+        token == Some(&&Token::Int) // TODO: this is a workaround 
     }
 }
