@@ -1,7 +1,7 @@
 #![allow(clippy::uninlined_format_args)]
 
-use clap::Parser;
 use crate::driver::CompilerDriver;
+use clap::Parser;
 
 mod c_ast;
 mod codegen;

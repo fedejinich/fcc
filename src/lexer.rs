@@ -75,6 +75,7 @@ pub fn lex(mut code: &str) -> Result<Vec<Token>, String> {
     if code.is_empty() {
         return Ok(vec![]);
     }
+
     code = code.trim_start();
     let mut tokens = vec![];
 
@@ -85,17 +86,23 @@ pub fn lex(mut code: &str) -> Result<Vec<Token>, String> {
                 longest_match = Some((matcher.token_builder, String::from(new_match.as_str())));
             }
         }
+
         let Some((constructor, value)) = longest_match else {
             error!("[lexer] no match for: {}", &code[..code.len().min(20)]);
+
             return Err(String::from("couldn't find any match"));
         };
+
         tokens.push(constructor(value.clone()));
         if let Some(c) = code.strip_prefix(value.as_str()) {
             code = c.trim_start();
         }
     }
+
     info!("[lexer] {} tokens", tokens.len());
+
     debug!("[lexer] tokens: {tokens:?}");
+
     Ok(tokens)
 }
 
@@ -185,11 +192,14 @@ impl TokenMatcher {
     ) -> Result<Option<regex::Match<'a>>, String> {
         let Ok(regex) = Regex::new(self.regex) else {
             error!("[lexer] invalid regex: {}", self.regex);
+
             return Err(String::from("couldn't create regex"));
         };
+
         let Some(m) = regex.find(code) else {
             return Ok(None);
         };
+
         match longest_match {
             Some((_, v)) if m.len() <= v.len() => Ok(None),
             _ => Ok(Some(m)),

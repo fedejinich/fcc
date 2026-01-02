@@ -1,4 +1,9 @@
-use crate::{codegen::x64::ast::{AsmBinaryOperator, AsmFunctionDefinition, AsmInstruction, AsmOperand, Reg}, common::folder::FolderAsm};
+use crate::{
+    codegen::x64::ast::{
+        AsmBinaryOperator, AsmFunctionDefinition, AsmInstruction, AsmOperand, Reg,
+    },
+    common::folder::FolderAsm,
+};
 
 /// This pass fixes some instructions that are not supported by the x64 architecture.
 #[derive(Default)]
@@ -39,7 +44,10 @@ impl FolderAsm for InstructionFixer {
         let mut fixed_instructions = fixed_instructions?;
         instructions.append(&mut fixed_instructions);
 
-        Ok(AsmFunctionDefinition::new(function_definition.name, instructions))
+        Ok(AsmFunctionDefinition::new(
+            function_definition.name,
+            instructions,
+        ))
     }
 
     fn fold_ins(&mut self, instruction: AsmInstruction) -> Result<Vec<AsmInstruction>, String> {

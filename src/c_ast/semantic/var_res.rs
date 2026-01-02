@@ -70,25 +70,31 @@ impl VariableResolver {
 impl FolderC for VariableResolver {
     fn fold_decl(&mut self, declaration: Declaration) -> Result<Declaration, String> {
         trace!("[semantic] <declaration> {}", declaration.name().value());
+
         if self.is_var_named(declaration.name()) && self.is_var_declred(declaration.name()) {
             error!(
                 "[semantic] duplicate variable: {}",
                 declaration.name().value()
             );
+
             return Err("duplicate variable declaration".to_string());
         }
+
         let unique_name = temporary_name(declaration.name().value(), &VAR_RES_COUNT);
+
         debug!(
             "[semantic] {} -> {}",
             declaration.name().value(),
             unique_name
         );
+
         self.track_variable(declaration.name().clone(), unique_name.clone());
         let init = declaration
             .initializer()
             .cloned()
             .map(|e| self.fold_expr(e))
             .transpose()?;
+
         Ok(Declaration::new(Identifier::new(unique_name), init))
     }
 
@@ -96,8 +102,10 @@ impl FolderC for VariableResolver {
         match statement {
             Statement::Compound(block) => {
                 trace!("[semantic] <statement> compound (new scope)");
+
                 let new_var_map = self.copy_variable_map();
                 let mut new_resolver = Self::new_with(new_var_map);
+
                 Ok(Statement::Compound(Box::new(
                     new_resolver.fold_block(*block)?,
                 )))
@@ -115,14 +123,17 @@ impl FolderC for VariableResolver {
                 )),
                 _ => {
                     error!("[semantic] invalid lvalue in assignment");
+
                     Err("invalid lvalue".to_string())
                 }
             },
             Expression::Var(ref id) => {
                 let Some((unique_name, _)) = self.get_var(id) else {
                     error!("[semantic] undeclared variable: {}", id.value());
+
                     return Err("undeclared variable".to_string());
                 };
+
                 Ok(Expression::Var(Identifier::new(unique_name)))
             }
             Expression::Unary(op, e) => Ok(Expression::Unary(op, Box::new(self.fold_expr(*e)?))),

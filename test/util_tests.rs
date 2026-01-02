@@ -1,6 +1,5 @@
 use fcc::common::util::{indent, opt_box, replace_c_with_i};
 
-
 #[test]
 fn test_replace_c_with_i_valid_c_file() {
     assert_eq!(replace_c_with_i("main.c"), "main.i");

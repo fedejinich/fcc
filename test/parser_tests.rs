@@ -428,7 +428,10 @@ fn test_parser_do_while_statement() {
     match items[1] {
         BlockItem::S(Statement::DoWhile(body, cond, _label)) => {
             assert!(matches!(**body, Statement::Expression(_)));
-            assert!(matches!(**cond, Expression::Binary(BinaryOperator::LessThan, _, _)));
+            assert!(matches!(
+                **cond,
+                Expression::Binary(BinaryOperator::LessThan, _, _)
+            ));
         }
         _ => panic!("Expected do-while statement"),
     }
@@ -615,7 +618,10 @@ fn test_parser_error_do_while_missing_while() {
 fn test_parser_error_do_while_missing_semicolon() {
     let src = "int main(void){ do return 0; while (1) }";
     let result = parse_program(src);
-    assert!(result.is_err(), "Should fail without semicolon after do-while");
+    assert!(
+        result.is_err(),
+        "Should fail without semicolon after do-while"
+    );
 }
 
 #[test]

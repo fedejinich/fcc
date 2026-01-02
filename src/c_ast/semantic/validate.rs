@@ -4,4 +4,3 @@ use crate::common::folder::FolderC;
 pub fn validate_semantics(program: Program) -> Result<Program, String> {
     VariableResolver::new().fold_prog(program)
 }
-

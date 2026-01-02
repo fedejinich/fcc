@@ -1,4 +1,13 @@
-use crate::{codegen::x64::ast::{AsmBinaryOperator, AsmCondCode, AsmFunctionDefinition, AsmIdetifier, AsmInstruction, AsmOperand, AsmProgram, AsmUnaryOperator, Reg}, tacky::ast::{TackyBinaryOperator, TackyFunctionDefinition, TackyIdentifier, TackyInstruction, TackyProgram, TackyUnaryOperator, TackyValue}};
+use crate::{
+    codegen::x64::ast::{
+        AsmBinaryOperator, AsmCondCode, AsmFunctionDefinition, AsmIdetifier, AsmInstruction,
+        AsmOperand, AsmProgram, AsmUnaryOperator, Reg,
+    },
+    tacky::ast::{
+        TackyBinaryOperator, TackyFunctionDefinition, TackyIdentifier, TackyInstruction,
+        TackyProgram, TackyUnaryOperator, TackyValue,
+    },
+};
 
 impl From<TackyProgram> for AsmProgram {
     fn from(tacky_program: TackyProgram) -> Self {
@@ -62,9 +71,11 @@ impl AsmInstruction {
                         ),
                     ],
                     // relational operators
-                    TackyBinaryOperator::Equal 
-                    | TackyBinaryOperator::NotEqual | TackyBinaryOperator::GreaterThan
-                    | TackyBinaryOperator::LessThan | TackyBinaryOperator::LessThanOrEqual 
+                    TackyBinaryOperator::Equal
+                    | TackyBinaryOperator::NotEqual
+                    | TackyBinaryOperator::GreaterThan
+                    | TackyBinaryOperator::LessThan
+                    | TackyBinaryOperator::LessThanOrEqual
                     | TackyBinaryOperator::GreaterThanOrEqual => vec![
                         AsmInstruction::Comment(format!("relational operator: {:?}", op.clone())),
                         AsmInstruction::Cmp(AsmOperand::from(src_2), AsmOperand::from(src_1)),
@@ -96,9 +107,10 @@ impl AsmInstruction {
                 AsmInstruction::Cmp(AsmOperand::Imm(0), AsmOperand::from(condition)),
                 AsmInstruction::JmpCC(AsmCondCode::NE, AsmIdetifier::from(target)),
             ],
-            TackyInstruction::Copy(src, dst) => vec![
-                AsmInstruction::Mov(AsmOperand::from(src), AsmOperand::from(dst)),
-            ],
+            TackyInstruction::Copy(src, dst) => vec![AsmInstruction::Mov(
+                AsmOperand::from(src),
+                AsmOperand::from(dst),
+            )],
             TackyInstruction::Label(id) => vec![AsmInstruction::Label(AsmIdetifier::from(id))],
         }
     }

@@ -6,7 +6,7 @@
 
 pub mod c_ast;
 pub mod codegen;
+pub mod common;
 pub mod driver;
 pub mod lexer;
 pub mod tacky;
-pub mod common;

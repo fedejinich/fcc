@@ -8,7 +8,9 @@ Suggestions: add property tests for instruction count bounds.
 use fcc::c_ast::ast::Program;
 use fcc::c_ast::semantic::validate::validate_semantics;
 use fcc::lexer::lex;
-use fcc::tacky::ast::{TackyInstruction, TackyProgram, TackyBinaryOperator, TackyUnaryOperator, TackyValue};
+use fcc::tacky::ast::{
+    TackyBinaryOperator, TackyInstruction, TackyProgram, TackyUnaryOperator, TackyValue,
+};
 
 // Helper: full pipeline from source to Tacky IR
 fn lower_to_tacky(src: &str) -> Result<TackyProgram, String> {
@@ -20,32 +22,44 @@ fn lower_to_tacky(src: &str) -> Result<TackyProgram, String> {
 
 // Helper: check if instructions contain at least one Return
 fn has_return(instructions: &[TackyInstruction]) -> bool {
-    instructions.iter().any(|i| matches!(i, TackyInstruction::Return(_)))
+    instructions
+        .iter()
+        .any(|i| matches!(i, TackyInstruction::Return(_)))
 }
 
 // Helper: check if instructions contain a Jump
 fn has_jump(instructions: &[TackyInstruction]) -> bool {
-    instructions.iter().any(|i| matches!(i, TackyInstruction::Jump(_)))
+    instructions
+        .iter()
+        .any(|i| matches!(i, TackyInstruction::Jump(_)))
 }
 
 // Helper: check if instructions contain JumpIfZero
 fn has_jump_if_zero(instructions: &[TackyInstruction]) -> bool {
-    instructions.iter().any(|i| matches!(i, TackyInstruction::JumpIfZero(_, _)))
+    instructions
+        .iter()
+        .any(|i| matches!(i, TackyInstruction::JumpIfZero(_, _)))
 }
 
 // Helper: check if instructions contain JumpIfNotZero
 fn has_jump_if_not_zero(instructions: &[TackyInstruction]) -> bool {
-    instructions.iter().any(|i| matches!(i, TackyInstruction::JumpIfNotZero(_, _)))
+    instructions
+        .iter()
+        .any(|i| matches!(i, TackyInstruction::JumpIfNotZero(_, _)))
 }
 
 // Helper: check if instructions contain a Label
 fn has_label(instructions: &[TackyInstruction]) -> bool {
-    instructions.iter().any(|i| matches!(i, TackyInstruction::Label(_)))
+    instructions
+        .iter()
+        .any(|i| matches!(i, TackyInstruction::Label(_)))
 }
 
 // Helper: check if instructions contain a Copy
 fn has_copy(instructions: &[TackyInstruction]) -> bool {
-    instructions.iter().any(|i| matches!(i, TackyInstruction::Copy(_, _)))
+    instructions
+        .iter()
+        .any(|i| matches!(i, TackyInstruction::Copy(_, _)))
 }
 
 // Helper: check if instructions contain a Binary with specific operator
@@ -72,7 +86,10 @@ fn test_tacky_gen_return_constant() {
     let tacky = lower_to_tacky(src).expect("should lower");
 
     let instructions = &tacky.function_definition.instructions;
-    assert!(has_return(instructions), "Should contain Return instruction");
+    assert!(
+        has_return(instructions),
+        "Should contain Return instruction"
+    );
 }
 
 #[test]
@@ -81,10 +98,13 @@ fn test_tacky_gen_return_constant_nonzero() {
     let tacky = lower_to_tacky(src).expect("should lower");
 
     let instructions = &tacky.function_definition.instructions;
-    
+
     // Should have a return, and somewhere there should be constant 42
-    assert!(has_return(instructions), "Should contain Return instruction");
-    
+    assert!(
+        has_return(instructions),
+        "Should contain Return instruction"
+    );
+
     // Check that 42 appears somewhere in the instructions
     let has_42 = instructions.iter().any(|i| match i {
         TackyInstruction::Return(TackyValue::Constant(42)) => true,
@@ -100,7 +120,10 @@ fn test_tacky_gen_unary_negate() {
     let tacky = lower_to_tacky(src).expect("should lower");
 
     let instructions = &tacky.function_definition.instructions;
-    assert!(has_unary_op(instructions, &TackyUnaryOperator::Negate), "Should contain Negate unary");
+    assert!(
+        has_unary_op(instructions, &TackyUnaryOperator::Negate),
+        "Should contain Negate unary"
+    );
 }
 
 #[test]
@@ -109,7 +132,10 @@ fn test_tacky_gen_unary_complement() {
     let tacky = lower_to_tacky(src).expect("should lower");
 
     let instructions = &tacky.function_definition.instructions;
-    assert!(has_unary_op(instructions, &TackyUnaryOperator::Complement), "Should contain Complement unary");
+    assert!(
+        has_unary_op(instructions, &TackyUnaryOperator::Complement),
+        "Should contain Complement unary"
+    );
 }
 
 #[test]
@@ -118,7 +144,10 @@ fn test_tacky_gen_unary_not() {
     let tacky = lower_to_tacky(src).expect("should lower");
 
     let instructions = &tacky.function_definition.instructions;
-    assert!(has_unary_op(instructions, &TackyUnaryOperator::Not), "Should contain Not unary");
+    assert!(
+        has_unary_op(instructions, &TackyUnaryOperator::Not),
+        "Should contain Not unary"
+    );
 }
 
 // =============================================================================
@@ -131,7 +160,10 @@ fn test_tacky_gen_binary_add() {
     let tacky = lower_to_tacky(src).expect("should lower");
 
     let instructions = &tacky.function_definition.instructions;
-    assert!(has_binary_op(instructions, &TackyBinaryOperator::Add), "Should contain Add binary");
+    assert!(
+        has_binary_op(instructions, &TackyBinaryOperator::Add),
+        "Should contain Add binary"
+    );
 }
 
 #[test]
@@ -140,7 +172,10 @@ fn test_tacky_gen_binary_subtract() {
     let tacky = lower_to_tacky(src).expect("should lower");
 
     let instructions = &tacky.function_definition.instructions;
-    assert!(has_binary_op(instructions, &TackyBinaryOperator::Subtract), "Should contain Subtract binary");
+    assert!(
+        has_binary_op(instructions, &TackyBinaryOperator::Subtract),
+        "Should contain Subtract binary"
+    );
 }
 
 #[test]
@@ -149,7 +184,10 @@ fn test_tacky_gen_binary_multiply() {
     let tacky = lower_to_tacky(src).expect("should lower");
 
     let instructions = &tacky.function_definition.instructions;
-    assert!(has_binary_op(instructions, &TackyBinaryOperator::Multiply), "Should contain Multiply binary");
+    assert!(
+        has_binary_op(instructions, &TackyBinaryOperator::Multiply),
+        "Should contain Multiply binary"
+    );
 }
 
 #[test]
@@ -158,7 +196,10 @@ fn test_tacky_gen_binary_divide() {
     let tacky = lower_to_tacky(src).expect("should lower");
 
     let instructions = &tacky.function_definition.instructions;
-    assert!(has_binary_op(instructions, &TackyBinaryOperator::Divide), "Should contain Divide binary");
+    assert!(
+        has_binary_op(instructions, &TackyBinaryOperator::Divide),
+        "Should contain Divide binary"
+    );
 }
 
 #[test]
@@ -167,7 +208,10 @@ fn test_tacky_gen_binary_remainder() {
     let tacky = lower_to_tacky(src).expect("should lower");
 
     let instructions = &tacky.function_definition.instructions;
-    assert!(has_binary_op(instructions, &TackyBinaryOperator::Remainder), "Should contain Remainder binary");
+    assert!(
+        has_binary_op(instructions, &TackyBinaryOperator::Remainder),
+        "Should contain Remainder binary"
+    );
 }
 
 // =============================================================================
@@ -180,9 +224,12 @@ fn test_tacky_gen_and_short_circuit() {
     let tacky = lower_to_tacky(src).expect("should lower");
 
     let instructions = &tacky.function_definition.instructions;
-    
+
     // AND short-circuit should generate JumpIfZero and labels
-    assert!(has_jump_if_zero(instructions), "AND should use JumpIfZero for short-circuit");
+    assert!(
+        has_jump_if_zero(instructions),
+        "AND should use JumpIfZero for short-circuit"
+    );
     assert!(has_label(instructions), "AND should generate labels");
 }
 
@@ -192,9 +239,12 @@ fn test_tacky_gen_or_short_circuit() {
     let tacky = lower_to_tacky(src).expect("should lower");
 
     let instructions = &tacky.function_definition.instructions;
-    
+
     // OR short-circuit should generate JumpIfNotZero and labels
-    assert!(has_jump_if_not_zero(instructions), "OR should use JumpIfNotZero for short-circuit");
+    assert!(
+        has_jump_if_not_zero(instructions),
+        "OR should use JumpIfNotZero for short-circuit"
+    );
     assert!(has_label(instructions), "OR should generate labels");
 }
 
@@ -208,7 +258,7 @@ fn test_tacky_gen_assignment() {
     let tacky = lower_to_tacky(src).expect("should lower");
 
     let instructions = &tacky.function_definition.instructions;
-    
+
     // Assignment should generate Copy instructions
     assert!(has_copy(instructions), "Assignment should generate Copy");
 }
@@ -223,12 +273,17 @@ fn test_tacky_gen_ternary() {
     let tacky = lower_to_tacky(src).expect("should lower");
 
     let instructions = &tacky.function_definition.instructions;
-    
+
     // Ternary should generate control flow
-    assert!(has_jump_if_zero(instructions) || has_jump_if_not_zero(instructions), 
-            "Ternary should generate conditional jump");
+    assert!(
+        has_jump_if_zero(instructions) || has_jump_if_not_zero(instructions),
+        "Ternary should generate conditional jump"
+    );
     assert!(has_label(instructions), "Ternary should generate labels");
-    assert!(has_jump(instructions), "Ternary should generate unconditional jump");
+    assert!(
+        has_jump(instructions),
+        "Ternary should generate unconditional jump"
+    );
 }
 
 #[test]
@@ -237,10 +292,12 @@ fn test_tacky_gen_ternary_with_expressions() {
     let tacky = lower_to_tacky(src).expect("should lower");
 
     let instructions = &tacky.function_definition.instructions;
-    
+
     // Should have relational comparison and control flow
-    assert!(has_binary_op(instructions, &TackyBinaryOperator::GreaterThan), 
-            "Should have GreaterThan comparison");
+    assert!(
+        has_binary_op(instructions, &TackyBinaryOperator::GreaterThan),
+        "Should have GreaterThan comparison"
+    );
     assert!(has_label(instructions), "Ternary should generate labels");
 }
 
@@ -254,7 +311,7 @@ fn test_tacky_gen_if_without_else() {
     let tacky = lower_to_tacky(src).expect("should lower");
 
     let instructions = &tacky.function_definition.instructions;
-    
+
     // If without else should generate conditional jump and labels
     assert!(has_jump_if_zero(instructions), "If should use JumpIfZero");
     assert!(has_label(instructions), "If should generate labels");
@@ -266,17 +323,25 @@ fn test_tacky_gen_if_with_else() {
     let tacky = lower_to_tacky(src).expect("should lower");
 
     let instructions = &tacky.function_definition.instructions;
-    
+
     // If with else should generate conditional jump, unconditional jump, and labels
     assert!(has_jump_if_zero(instructions), "If should use JumpIfZero");
-    assert!(has_jump(instructions), "If-else should have unconditional jump");
+    assert!(
+        has_jump(instructions),
+        "If-else should have unconditional jump"
+    );
     assert!(has_label(instructions), "If-else should generate labels");
-    
+
     // Should have multiple labels (at least else_label and end_label)
-    let label_count = instructions.iter()
+    let label_count = instructions
+        .iter()
         .filter(|i| matches!(i, TackyInstruction::Label(_)))
         .count();
-    assert!(label_count >= 2, "If-else should have at least 2 labels, found {}", label_count);
+    assert!(
+        label_count >= 2,
+        "If-else should have at least 2 labels, found {}",
+        label_count
+    );
 }
 
 #[test]
@@ -285,10 +350,15 @@ fn test_tacky_gen_if_with_complex_condition() {
     let tacky = lower_to_tacky(src).expect("should lower");
 
     let instructions = &tacky.function_definition.instructions;
-    
-    assert!(has_binary_op(instructions, &TackyBinaryOperator::LessThan), 
-            "Should have LessThan comparison");
-    assert!(has_jump_if_zero(instructions), "If should use conditional jump");
+
+    assert!(
+        has_binary_op(instructions, &TackyBinaryOperator::LessThan),
+        "Should have LessThan comparison"
+    );
+    assert!(
+        has_jump_if_zero(instructions),
+        "If should use conditional jump"
+    );
 }
 
 // =============================================================================
@@ -298,19 +368,41 @@ fn test_tacky_gen_if_with_complex_condition() {
 #[test]
 fn test_tacky_gen_relational_operators() {
     let cases = [
-        ("int main(void){ return 1 < 2; }", TackyBinaryOperator::LessThan),
-        ("int main(void){ return 1 <= 2; }", TackyBinaryOperator::LessThanOrEqual),
-        ("int main(void){ return 1 > 2; }", TackyBinaryOperator::GreaterThan),
-        ("int main(void){ return 1 >= 2; }", TackyBinaryOperator::GreaterThanOrEqual),
-        ("int main(void){ return 1 == 2; }", TackyBinaryOperator::Equal),
-        ("int main(void){ return 1 != 2; }", TackyBinaryOperator::NotEqual),
+        (
+            "int main(void){ return 1 < 2; }",
+            TackyBinaryOperator::LessThan,
+        ),
+        (
+            "int main(void){ return 1 <= 2; }",
+            TackyBinaryOperator::LessThanOrEqual,
+        ),
+        (
+            "int main(void){ return 1 > 2; }",
+            TackyBinaryOperator::GreaterThan,
+        ),
+        (
+            "int main(void){ return 1 >= 2; }",
+            TackyBinaryOperator::GreaterThanOrEqual,
+        ),
+        (
+            "int main(void){ return 1 == 2; }",
+            TackyBinaryOperator::Equal,
+        ),
+        (
+            "int main(void){ return 1 != 2; }",
+            TackyBinaryOperator::NotEqual,
+        ),
     ];
 
     for (src, ref expected_op) in cases {
         let tacky = lower_to_tacky(src).expect("should lower");
         let instructions = &tacky.function_definition.instructions;
-        assert!(has_binary_op(instructions, expected_op), 
-                "Should have {:?} for source: {}", expected_op, src);
+        assert!(
+            has_binary_op(instructions, expected_op),
+            "Should have {:?} for source: {}",
+            expected_op,
+            src
+        );
     }
 }
 
@@ -321,18 +413,37 @@ fn test_tacky_gen_relational_operators() {
 #[test]
 fn test_tacky_gen_bitwise_operators() {
     let cases = [
-        ("int main(void){ int x=1; int y=2; return x & y; }", TackyBinaryOperator::BitwiseAnd),
-        ("int main(void){ int x=1; int y=2; return x | y; }", TackyBinaryOperator::BitwiseOr),
-        ("int main(void){ int x=1; int y=2; return x ^ y; }", TackyBinaryOperator::BitwiseXor),
-        ("int main(void){ int x=1; return x << 2; }", TackyBinaryOperator::LeftShift),
-        ("int main(void){ int x=8; return x >> 2; }", TackyBinaryOperator::RightShift),
+        (
+            "int main(void){ int x=1; int y=2; return x & y; }",
+            TackyBinaryOperator::BitwiseAnd,
+        ),
+        (
+            "int main(void){ int x=1; int y=2; return x | y; }",
+            TackyBinaryOperator::BitwiseOr,
+        ),
+        (
+            "int main(void){ int x=1; int y=2; return x ^ y; }",
+            TackyBinaryOperator::BitwiseXor,
+        ),
+        (
+            "int main(void){ int x=1; return x << 2; }",
+            TackyBinaryOperator::LeftShift,
+        ),
+        (
+            "int main(void){ int x=8; return x >> 2; }",
+            TackyBinaryOperator::RightShift,
+        ),
     ];
 
     for (src, ref expected_op) in cases {
         let tacky = lower_to_tacky(src).expect("should lower");
         let instructions = &tacky.function_definition.instructions;
-        assert!(has_binary_op(instructions, expected_op), 
-                "Should have {:?} for source: {}", expected_op, src);
+        assert!(
+            has_binary_op(instructions, expected_op),
+            "Should have {:?} for source: {}",
+            expected_op,
+            src
+        );
     }
 }
 
@@ -346,9 +457,12 @@ fn test_tacky_gen_declaration_with_init() {
     let tacky = lower_to_tacky(src).expect("should lower");
 
     let instructions = &tacky.function_definition.instructions;
-    
+
     // Declaration with initializer should generate Copy
-    assert!(has_copy(instructions), "Declaration with init should generate Copy");
+    assert!(
+        has_copy(instructions),
+        "Declaration with init should generate Copy"
+    );
 }
 
 #[test]
@@ -357,7 +471,7 @@ fn test_tacky_gen_declaration_without_init() {
     let tacky = lower_to_tacky(src).expect("should lower");
 
     let instructions = &tacky.function_definition.instructions;
-    
+
     // Should still work and have copies for assignment
     assert!(has_copy(instructions), "Assignment should generate Copy");
     assert!(has_return(instructions), "Should have return");
