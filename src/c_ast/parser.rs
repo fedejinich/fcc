@@ -256,16 +256,16 @@ impl Statement {
                 token_assert(Token::For, tokens)?;
                 token_assert(Token::OpenParen, tokens)?;
 
-                trace!("Parsing <for_init>");
+                trace!("Parsing <for_init> ; ...");
 
                 let for_init = ForInit::parse_for_init(tokens)?;
 
-                trace!("Parsing condition <exp> ::= <exp> ;");
+                trace!("Parsing condition <statement> ::= ... <exp> ; ...");
 
                 let cond = Expression::parse_opt_exp(tokens, Token::Semicolon)?;
                 token_assert(Token::Semicolon, tokens)?;
 
-                trace!("Parsing post <exp> ::= <exp> )");
+                trace!("Parsing post <statement> ::= ... <exp> )");
 
                 let post = Expression::parse_opt_exp(tokens, Token::CloseParen)?;
                 token_assert(Token::CloseParen, tokens)?;
@@ -309,7 +309,8 @@ impl Expression {
         let is_binary_op = |t: &Token| lexer::binary_operators().contains(t);
         while let Some(token) = next_token {
             if !is_binary_op(token) || precedence(token) < min_prec {
-                trace!("No bin op ({token:?})");
+                // trace!("No bin op ({token:?})");
+                trace!("Parsing single <exp> ::= <exp>");
                 break;
             }
             trace!("Parsing <exp> ::= <exp> <binop> <exp>");
@@ -357,17 +358,11 @@ impl Expression {
         };
 
         if *next_token == &until {
-            trace!("expected token: {until:?}\ngot token: {next_token:?}");
             trace!("No optional expression to parse");
-
-            // let _ = tokens.next(); // consume 'until'
-            // TODO: i think that we can replace this with a safer token_eq(Token::Semicolon, tokens)?;
 
             // we don't consme this because is not part of the expression
             return Ok(None);
         }
-
-        trace!("Parsing <exp> ::= <exp> ;");
 
         // at this point we know that the next token is not the end of the optional expression
         // and that we have an expression to parse
@@ -432,10 +427,9 @@ impl Expression {
 // operators are sorted according to the official spec
 // https://en.cppreference.com/w/c/language/operator_precedence.html
 fn precedence(token: &Token) -> i32 {
-    debug!("<precedence>: {token:?}");
     match token {
         Token::Multiply | Token::Divide | Token::Remainder => 50,
-        Token::Plus | Token::Negate => 45,
+        Token::Add | Token::Negate => 45,
         Token::LeftShift | Token::RightShift => 44,
         Token::LessThan
         | Token::LessThanOrEqual
@@ -460,7 +454,7 @@ impl BinaryOperator {
             return Err("could not parse binary operator".to_string());
         };
         let binop = match token {
-            Token::Plus => BinaryOperator::Add,
+            Token::Add => BinaryOperator::Add,
             Token::Multiply => BinaryOperator::Multiply,
             Token::Divide => BinaryOperator::Divide,
             Token::Remainder => BinaryOperator::Remainder,

@@ -28,7 +28,7 @@ pub enum Token {
     Assignment,
 
     // binary operators
-    Plus,
+    Add,
     Multiply,
     Divide,
     Remainder,
@@ -122,7 +122,7 @@ fn token_matchers() -> Vec<TokenMatcher> {
         TokenMatcher::new(|_| Token::Complement, r"^\~"),
         TokenMatcher::new(|_| Token::Negate, r"^\-"),
         TokenMatcher::new(|_| Token::Decrement, r"^\--"),
-        TokenMatcher::new(|_| Token::Plus, r"^\+"),
+        TokenMatcher::new(|_| Token::Add, r"^\+"),
         TokenMatcher::new(|_| Token::Multiply, r"^\*"),
         TokenMatcher::new(|_| Token::Divide, r"^\/"),
         TokenMatcher::new(|_| Token::Remainder, r"^\%"),
@@ -220,7 +220,7 @@ impl TokenMatcher {
 
 pub fn binary_operators() -> Vec<Token> {
     vec![
-        Token::Plus,
+        Token::Add,
         Token::Negate,
         Token::Multiply,
         Token::Divide,
