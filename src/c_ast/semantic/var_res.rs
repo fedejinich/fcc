@@ -1,6 +1,6 @@
 use std::{collections::HashMap, sync::atomic::AtomicUsize};
 
-use log::{debug, trace};
+use log::{debug, error, trace};
 
 use crate::{
     c_ast::ast::{Declaration, Expression, Identifier, Statement},
@@ -69,81 +69,74 @@ impl VariableResolver {
 
 impl FolderC for VariableResolver {
     fn fold_decl(&mut self, declaration: Declaration) -> Result<Declaration, String> {
-        trace!("resolving declaration: {declaration:?}");
-
+        trace!("[semantic] <declaration> {}", declaration.name().value());
         if self.is_var_named(declaration.name()) && self.is_var_declred(declaration.name()) {
-            debug!("variable: {declaration}");
+            error!(
+                "[semantic] duplicate variable: {}",
+                declaration.name().value()
+            );
             return Err("duplicate variable declaration".to_string());
         }
-
-        let unique_name: String = temporary_name(declaration.name().value(), &VAR_RES_COUNT);
-
+        let unique_name = temporary_name(declaration.name().value(), &VAR_RES_COUNT);
+        debug!(
+            "[semantic] {} -> {}",
+            declaration.name().value(),
+            unique_name
+        );
         self.track_variable(declaration.name().clone(), unique_name.clone());
-
         let init = declaration
             .initializer()
             .cloned()
             .map(|e| self.fold_expr(e))
             .transpose()?;
-
         Ok(Declaration::new(Identifier::new(unique_name), init))
     }
 
     fn fold_st(&mut self, statement: Statement) -> Result<Statement, String> {
         match statement {
             Statement::Compound(block) => {
-                trace!("resolving compound statement");
-
-                let new_variable_map = self.copy_variable_map();
-                let mut new_var_resolver = Self::new_with(new_variable_map);
-                let resolved_block = new_var_resolver.fold_block(*block)?;
-
-                return Ok(Statement::Compound(Box::new(resolved_block)));
+                trace!("[semantic] <statement> compound (new scope)");
+                let new_var_map = self.copy_variable_map();
+                let mut new_resolver = Self::new_with(new_var_map);
+                Ok(Statement::Compound(Box::new(
+                    new_resolver.fold_block(*block)?,
+                )))
             }
-            _ => {
-                trace!("resolving statement");
-
-                self.default_fold_st(statement)
-            }
+            _ => self.default_fold_st(statement),
         }
     }
 
     fn fold_expr(&mut self, expr: Expression) -> Result<Expression, String> {
-        trace!("resolving expression: {expr:?}");
-
-        let res = match expr {
+        match expr {
             Expression::Assignment(left, right) => match *left {
-                Expression::Var(_) => Expression::Assignment(
+                Expression::Var(_) => Ok(Expression::Assignment(
                     Box::new(self.fold_expr(*left)?),
                     Box::new(self.fold_expr(*right)?),
-                ),
+                )),
                 _ => {
-                    return Err("invalid lvalue".to_string());
+                    error!("[semantic] invalid lvalue in assignment");
+                    Err("invalid lvalue".to_string())
                 }
             },
             Expression::Var(ref id) => {
-                let Some((var_unique_name, _)) = self.get_var(&id) else {
-                    debug!("undeclared variable: {expr}");
-
+                let Some((unique_name, _)) = self.get_var(id) else {
+                    error!("[semantic] undeclared variable: {}", id.value());
                     return Err("undeclared variable".to_string());
                 };
-
-                Expression::Var(Identifier::new(var_unique_name))
+                Ok(Expression::Var(Identifier::new(unique_name)))
             }
-            Expression::Unary(op, expr) => Expression::Unary(op, Box::new(self.fold_expr(*expr)?)),
-            Expression::Binary(op, left, right) => Expression::Binary(
+            Expression::Unary(op, e) => Ok(Expression::Unary(op, Box::new(self.fold_expr(*e)?))),
+            Expression::Binary(op, l, r) => Ok(Expression::Binary(
                 op,
-                Box::new(self.fold_expr(*left)?),
-                Box::new(self.fold_expr(*right)?),
-            ),
-            Expression::Constant(c) => Expression::Constant(c),
-            Expression::Conditional(cond, then, el) => Expression::Conditional(
-                Box::new(self.fold_expr(*cond)?),
-                Box::new(self.fold_expr(*then)?),
-                Box::new(self.fold_expr(*el)?),
-            ),
-        };
-
-        Ok(res)
+                Box::new(self.fold_expr(*l)?),
+                Box::new(self.fold_expr(*r)?),
+            )),
+            Expression::Constant(c) => Ok(Expression::Constant(c)),
+            Expression::Conditional(c, t, e) => Ok(Expression::Conditional(
+                Box::new(self.fold_expr(*c)?),
+                Box::new(self.fold_expr(*t)?),
+                Box::new(self.fold_expr(*e)?),
+            )),
+        }
     }
 }

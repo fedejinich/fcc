@@ -1,6 +1,6 @@
 use std::{iter::Peekable, slice::Iter};
 
-use log::{debug, trace};
+use log::{debug, error, trace};
 
 use crate::{
     c_ast::ast::{
@@ -17,132 +17,92 @@ impl TryFrom<Vec<Token>> for Program {
     type Error = String;
 
     fn try_from(tokens: Vec<Token>) -> ParseResult<Self> {
-        trace!("Parsing <program>");
-
+        trace!("[parser] <program>");
         let mut tokens_iter = tokens.iter().peekable();
         let function_definition = FunctionDefinition::parse_fd(&mut tokens_iter)?;
-
         let program_ast = Program::new(function_definition);
 
         if tokens_iter.next().is_some() {
+            error!("[parser] unexpected tokens remaining");
             return Err(format!(
                 "unexpected tokens remaining: {:?}",
                 tokens_iter.collect::<Vec<_>>()
             ));
         }
-
-        trace!("<program> parsing completed successfully");
-
-        debug!("Parsed C source code successfully");
-
         Ok(program_ast)
     }
 }
 
 impl FunctionDefinition {
     fn parse_fd(tokens: &mut Peekable<Iter<Token>>) -> ParseResult<Self> {
-        trace!("Parsing <function>");
-
+        trace!("[parser] <function>");
         token_assert(Token::Int, tokens)?;
-
         let identifier = Identifier::parse_id(tokens)?;
-
+        debug!("[parser] function: {}", identifier.value());
         token_assert(Token::OpenParen, tokens)?;
         token_assert(Token::Void, tokens)?;
         token_assert(Token::CloseParen, tokens)?;
-
         let block = Block::parse_block(tokens)?;
-
-        trace!("<function> parsing completed successfully");
-
         Ok(FunctionDefinition::new(identifier, block))
     }
 }
 
 impl Block {
     fn parse_block(tokens: &mut Peekable<Iter<Token>>) -> ParseResult<Self> {
-        trace!("Parsing <block> ::= \"{{\" <block_item> \"}}\"");
-
+        trace!("[parser] <block>");
         token_assert(Token::OpenBrace, tokens)?;
-
         let mut block_items = vec![];
         while let Some(next_token) = tokens.peek() {
             if *next_token == &Token::CloseBrace {
                 break;
             }
-            let block_item = BlockItem::parse_bi(tokens)?;
-            block_items.push(block_item);
+            block_items.push(BlockItem::parse_bi(tokens)?);
         }
-
         token_assert(Token::CloseBrace, tokens)?;
-
-        trace!("<block> parsing completed successfully");
-
+        debug!("[parser] block with {} items", block_items.len());
         Ok(Block::new(block_items))
     }
 }
 
 impl BlockItem {
     fn parse_bi(tokens: &mut Peekable<Iter<Token>>) -> ParseResult<Self> {
-        trace!("Parsing <block_item>");
         let Some(next_token) = tokens.peek() else {
+            error!("[parser] expected <block_item>");
             return Err("could not parse block item".to_string());
         };
-        let block_item = match next_token {
-            Token::Int => {
-                trace!("Parsing <block_item> ::= <declaration>");
-                BlockItem::D(Declaration::parse_decl(tokens)?)
-            }
-            _ => {
-                trace!("Parsing <block_item> ::= <statement>");
-                BlockItem::S(Statement::parse_st(tokens)?)
-            }
-        };
-        Ok(block_item)
+        match next_token {
+            Token::Int => Ok(BlockItem::D(Declaration::parse_decl(tokens)?)),
+            _ => Ok(BlockItem::S(Statement::parse_st(tokens)?)),
+        }
     }
 }
 
 impl Declaration {
     fn parse_decl(tokens: &mut Peekable<Iter<Token>>) -> ParseResult<Self> {
-        trace!("Parsing <declaration> := int <identifier> [ = <exp> ] ;");
-
+        trace!("[parser] <declaration>");
         token_assert(Token::Int, tokens)?;
         let name = Identifier::parse_id(tokens)?;
-
         let mut initializer = None;
         if let Some(Token::Assignment) = tokens.peek() {
             let _ = tokens.next(); // consume '='
             initializer = Expression::parse_opt_exp(tokens, Token::Semicolon)?;
         }
-
         token_assert(Token::Semicolon, tokens)?;
-
-        let dec = Declaration::new(name, initializer);
-
-        trace!("Parsed <declaration> {dec:?}");
-
-        Ok(dec)
+        debug!("[parser] declaration: {}", name.value());
+        Ok(Declaration::new(name, initializer))
     }
 }
 
 impl ForInit {
     fn parse_for_init(tokens: &mut Peekable<Iter<Token>>) -> ParseResult<Self> {
-        let peek = tokens.peek();
-        if Declaration::is_declaration(peek) {
-            trace!("Parsing <for_init> ::= <declaration>");
-            let decl = Declaration::parse_decl(tokens)?;
-
-            return Ok(ForInit::InitDecl(Box::new(decl)));
+        trace!("[parser] <for_init>");
+        if Declaration::is_declaration(tokens.peek()) {
+            return Ok(ForInit::InitDecl(Box::new(Declaration::parse_decl(
+                tokens,
+            )?)));
         }
-
-        trace!("Parsing <for_init> ::= [ <exp> ] ;");
-
-        // este deberia consumir el semicolon porque si no lo hace el siguiente se corta al toque
-        // (que es lo que esta pasando)
         let opt_exp = Expression::parse_opt_exp(tokens, Token::Semicolon)?;
-
         token_assert(Token::Semicolon, tokens)?;
-
         Ok(ForInit::InitExp(Box::new(opt_exp)))
     }
 }
@@ -150,80 +110,61 @@ impl ForInit {
 impl Statement {
     fn parse_st(tokens: &mut Peekable<Iter<Token>>) -> ParseResult<Self> {
         let Some(next_token) = tokens.peek() else {
+            error!("[parser] expected <statement>");
             return Err("could not parse statement".to_string());
         };
         let statement = match next_token {
             Token::Semicolon => {
-                trace!("Parsing <statement> ::= ;");
-
+                trace!("[parser] <statement> null");
                 let _ = tokens.next();
-
                 Statement::Null
             }
             Token::Return => {
-                trace!("Parsing <statement> ::= return <exp> ;");
-
+                trace!("[parser] <statement> return");
                 token_assert(Token::Return, tokens)?;
-                // start with a minimum precedence of zero so
-                // the result includes operators at every precedence level
                 let expr = Expression::parse_exp(tokens, Token::Semicolon)?;
                 token_assert(Token::Semicolon, tokens)?;
-
                 Statement::Return(expr)
             }
             Token::If => {
-                trace!("Parsing <statement> ::= if ( <exp> ) <statement> [ else <statement> ] ;");
-
+                trace!("[parser] <statement> if");
                 let _ = tokens.next(); // consume 'if'
                 token_assert(Token::OpenParen, tokens)?;
                 let expr = Expression::parse_exp(tokens, Token::CloseParen)?;
                 token_assert(Token::CloseParen, tokens)?;
                 let then = Statement::parse_st(tokens)?;
-                let mut el = None;
-
-                if let Some(Token::Else) = tokens.peek() {
+                let el = if let Some(Token::Else) = tokens.peek() {
+                    debug!("[parser] found else branch");
                     let _ = tokens.next(); // consume 'else'
-                    el = Some(Box::new(Statement::parse_st(tokens)?));
-                }
-
+                    Some(Box::new(Statement::parse_st(tokens)?))
+                } else {
+                    None
+                };
                 Statement::If(Box::new(expr), Box::new(then), el)
             }
             Token::OpenBrace => {
-                // parsing compound statement
-
-                trace!("Parsing <statement> ::= <block> ");
-
-                let block = Block::parse_block(tokens)?;
-
-                Statement::Compound(Box::new(block))
+                trace!("[parser] <statement> compound");
+                Statement::Compound(Box::new(Block::parse_block(tokens)?))
             }
             Token::Break => {
-                trace!("Parsing <statement> ::= break ;");
-
+                trace!("[parser] <statement> break");
                 let _ = tokens.next(); // consume 'break'
-
                 token_assert(Token::Semicolon, tokens)?;
-
                 Statement::Break(Identifier::new("dummy".to_string()))
             }
             Token::Continue => {
-                trace!("Parsing <statement> ::= continue ;");
-
+                trace!("[parser] <statement> continue");
                 token_assert(Token::Continue, tokens)?;
-
                 token_assert(Token::Semicolon, tokens)?;
-
                 Statement::Continue(Identifier::new("dummy".to_string()))
             }
             Token::While => {
-                trace!("Parsing <statement> ::= while ( <exp> ) <statement>");
-
+                trace!("[parser] <statement> while");
                 token_assert(Token::While, tokens)?;
                 token_assert(Token::OpenParen, tokens)?;
                 let cond = Expression::parse_exp(tokens, Token::CloseParen)?;
                 token_assert(Token::CloseParen, tokens)?;
                 let body = Statement::parse_st(tokens)?;
-
                 Statement::While(
                     Box::new(cond),
                     Box::new(body),
@@ -231,8 +172,7 @@ impl Statement {
                 )
             }
             Token::Do => {
-                trace!("Parsing <statement> ::= do <statement> while ( <exp> ) ;");
-
+                trace!("[parser] <statement> do-while");
                 token_assert(Token::Do, tokens)?;
                 let body = Statement::parse_st(tokens)?;
                 token_assert(Token::While, tokens)?;
@@ -240,7 +180,6 @@ impl Statement {
                 let cond = Expression::parse_exp(tokens, Token::CloseParen)?;
                 token_assert(Token::CloseParen, tokens)?;
                 token_assert(Token::Semicolon, tokens)?;
-
                 Statement::DoWhile(
                     Box::new(body),
                     Box::new(cond),
@@ -248,28 +187,15 @@ impl Statement {
                 )
             }
             Token::For => {
-                trace!(
-                    "Parsing <statement> ::= for ( <for_init> ; [ <exp> ] ; [ <exp> ] ) <statement>"
-                );
-
+                trace!("[parser] <statement> for");
                 token_assert(Token::For, tokens)?;
                 token_assert(Token::OpenParen, tokens)?;
-
-                trace!("Parsing <for_init> ; ...");
-
                 let for_init = ForInit::parse_for_init(tokens)?;
-
-                trace!("Parsing condition <statement> ::= ... <exp> ; ...");
-
                 let cond = Expression::parse_opt_exp(tokens, Token::Semicolon)?;
                 token_assert(Token::Semicolon, tokens)?;
-
-                trace!("Parsing post <statement> ::= ... <exp> )");
-
                 let post = Expression::parse_opt_exp(tokens, Token::CloseParen)?;
                 token_assert(Token::CloseParen, tokens)?;
                 let body = Statement::parse_st(tokens)?;
-
                 Statement::For(
                     Box::new(for_init),
                     opt_box(cond),
@@ -279,139 +205,109 @@ impl Statement {
                 )
             }
             _ => {
-                trace!("Parsing <statement> ::= <exp> ;");
-
+                trace!("[parser] <statement> expression");
                 let exp = Expression::parse_exp(tokens, Token::Semicolon)?;
                 token_assert(Token::Semicolon, tokens)?;
-
                 Statement::Expression(exp)
             }
         };
-
-        trace!("Parsed <statement>");
-
         Ok(statement)
     }
 }
 
 impl Expression {
-    /// Parses an expression until the given token is encountered without consuming it.
     pub fn parse_exp(tokens: &mut Peekable<Iter<Token>>, until: Token) -> ParseResult<Self> {
-        Self::parse_opt_exp(tokens, until)?
-            .map(|e| e)
-            .ok_or("expected expression".to_string())
+        Self::parse_opt_exp(tokens, until)?.ok_or_else(|| {
+            error!("[parser] expected <exp>");
+            "expected expression".to_string()
+        })
     }
 
-    /// Pareses an expression (if there's one available) until the given token is encountered without consuming it
     pub fn parse_opt_exp(
         tokens: &mut Peekable<Iter<Token>>,
         until: Token,
     ) -> ParseResult<Option<Self>> {
         let Some(next_token) = tokens.peek() else {
+            error!("[parser] no tokens left for <exp>");
             return Err("no token left to parse".to_string());
         };
         if *next_token == &until {
             return Ok(None);
         }
-        let exp = Self::parse_exp_with_prec(tokens, 0)?;
-
-        Ok(Some(exp))
+        Ok(Some(Self::parse_exp_with_prec(tokens, 0)?))
     }
 
-    /// Parses an expression using minimum precedence algorithm
     fn parse_exp_with_prec(tokens: &mut Peekable<Iter<Token>>, min_prec: i32) -> ParseResult<Self> {
-        trace!("Parsing <exp> with min_prec: {min_prec}");
+        trace!("[parser] <exp> prec={min_prec}");
         let mut left = Expression::parse_fact(tokens)?;
-        let mut next_token = tokens.peek().copied();
-
         let is_binary_op = |t: &Token| lexer::binary_operators().contains(t);
-        while let Some(token) = next_token {
+
+        while let Some(token) = tokens.peek().copied() {
             if !is_binary_op(token) || precedence(token) < min_prec {
-                trace!("Parsing single <exp> ::= <exp>");
                 break;
             }
-            trace!("Parsing <exp> ::= <exp> <binop> <exp>");
-            match *token {
+            left = match *token {
                 Token::Assignment => {
-                    trace!("Parsing assignment");
+                    trace!("[parser] <exp> assignment");
                     let _ = tokens.next(); // consume '='
                     let right = Expression::parse_exp_with_prec(tokens, precedence(token))?;
-                    left = Expression::Assignment(Box::new(left), Box::new(right));
+                    Expression::Assignment(Box::new(left), Box::new(right))
                 }
                 Token::QuestionMark => {
-                    trace!("Parsing <exp> ::= <exp> ? <exp> : <exp>");
+                    trace!("[parser] <exp> ternary");
                     let middle = Expression::parse_conditional_middle(tokens)?;
                     let right = Expression::parse_exp_with_prec(tokens, precedence(token))?;
-                    left =
-                        Expression::Conditional(Box::new(left), Box::new(middle), Box::new(right));
+                    Expression::Conditional(Box::new(left), Box::new(middle), Box::new(right))
                 }
                 _ => {
                     let op = BinaryOperator::parse_bin(tokens)?;
-                    trace!(
-                        "Parsing binary operator <exp> with precedence {}",
-                        precedence(token) + 1
-                    );
                     let right = Expression::parse_exp_with_prec(tokens, precedence(token) + 1)?;
-                    left = Expression::Binary(op, Box::new(left), Box::new(right));
+                    Expression::Binary(op, Box::new(left), Box::new(right))
                 }
-            }
-            next_token = tokens.peek().copied();
+            };
         }
-
-        trace!("Parsed <exp> {:?}", &left);
-
         Ok(left)
     }
 
     fn parse_conditional_middle(tokens: &mut Peekable<Iter<Token>>) -> ParseResult<Self> {
-        trace!("Parsing <conditional_middle>");
-        token_assert(Token::QuestionMark, tokens)?; // consume '?'
+        token_assert(Token::QuestionMark, tokens)?;
         let middle = Expression::parse_exp(tokens, Token::DoubleDot)?;
         token_assert(Token::DoubleDot, tokens)?;
-
         Ok(middle)
     }
 
     fn parse_fact(tokens: &mut Peekable<Iter<Token>>) -> ParseResult<Self> {
-        trace!("Parsing <factor>");
         let Some(next_token) = tokens.peek() else {
+            error!("[parser] expected <factor>");
             return Err("could not parse factor".to_string());
         };
-        let factor = match next_token {
+        match next_token {
             Token::Constant(n) => {
-                trace!("Parsing <factor> ::= <int>");
+                let n = n.clone();
                 let _ = tokens.next();
-                if let Ok(num) = n.parse::<i32>() {
-                    Expression::Constant(num)
-                } else {
-                    return Err("could not parse constant".to_string());
-                }
+                n.parse::<i32>().map(Expression::Constant).map_err(|_| {
+                    error!("[parser] invalid constant: {n}");
+                    "could not parse constant".to_string()
+                })
             }
             Token::Complement | Token::Negate | Token::Not => {
-                trace!("Parsing <unop> <factor>");
                 let unary = UnaryOperator::parse_un(tokens)?;
                 let exp = Expression::parse_fact(tokens)?;
-                Expression::Unary(unary, Box::new(exp))
+                Ok(Expression::Unary(unary, Box::new(exp)))
             }
             Token::OpenParen => {
-                trace!("Parsing \"(\" <exp> \")\"");
                 let _ = tokens.next();
                 let exp = Expression::parse_exp(tokens, Token::CloseParen)?;
                 token_assert(Token::CloseParen, tokens)?;
-                exp
+                Ok(exp)
             }
-            Token::Identifier(_) => {
-                let id = Identifier::parse_id(tokens)?;
-                Expression::Var(id)
-            }
+            Token::Identifier(_) => Ok(Expression::Var(Identifier::parse_id(tokens)?)),
             _ => {
-                trace!("Exiting <factor> (error) {next_token:?}");
+                error!("[parser] unexpected token in <factor>: {next_token:?}");
                 let _ = tokens.next();
-                return Err("could not parse expression".to_string());
+                Err("could not parse expression".to_string())
             }
-        };
-
-        Ok(factor)
+        }
     }
 }
 
@@ -443,81 +339,72 @@ fn precedence(token: &Token) -> i32 {
 impl BinaryOperator {
     fn parse_bin(tokens: &mut Peekable<Iter<Token>>) -> ParseResult<Self> {
         let Some(token) = tokens.next() else {
+            error!("[parser] expected <binop>");
             return Err("could not parse binary operator".to_string());
         };
-        let binop = match token {
-            Token::Add => BinaryOperator::Add,
-            Token::Multiply => BinaryOperator::Multiply,
-            Token::Divide => BinaryOperator::Divide,
-            Token::Remainder => BinaryOperator::Remainder,
-            Token::Negate => BinaryOperator::Subtract,
-            // binary operators
-            Token::BitwiseAnd => BinaryOperator::BitwiseAnd,
-            Token::BitwiseOr => BinaryOperator::BitwiseOr,
-            Token::BitwiseXor => BinaryOperator::BitwiseXor,
-            Token::LeftShift => BinaryOperator::LeftShift,
-            Token::RightShift => BinaryOperator::RightShift,
-            // logical operators
-            Token::And => BinaryOperator::And,
-            Token::Or => BinaryOperator::Or,
-            // relational operators
-            Token::Equal => BinaryOperator::Equal,
-            Token::NotEqual => BinaryOperator::NotEqual,
-            Token::GreaterThan => BinaryOperator::GreaterThan,
-            Token::LessThan => BinaryOperator::LessThan,
-            Token::GreaterThanOrEqual => BinaryOperator::GreaterThanOrEqual,
-            Token::LessThanOrEqual => BinaryOperator::LessThanOrEqual,
-            _ => return Err("could not parse binary operator".to_string()),
-        };
-
-        trace!("Parsed <binop>: {binop:?}");
-
-        Ok(binop)
+        match token {
+            Token::Add => Ok(BinaryOperator::Add),
+            Token::Multiply => Ok(BinaryOperator::Multiply),
+            Token::Divide => Ok(BinaryOperator::Divide),
+            Token::Remainder => Ok(BinaryOperator::Remainder),
+            Token::Negate => Ok(BinaryOperator::Subtract),
+            Token::BitwiseAnd => Ok(BinaryOperator::BitwiseAnd),
+            Token::BitwiseOr => Ok(BinaryOperator::BitwiseOr),
+            Token::BitwiseXor => Ok(BinaryOperator::BitwiseXor),
+            Token::LeftShift => Ok(BinaryOperator::LeftShift),
+            Token::RightShift => Ok(BinaryOperator::RightShift),
+            Token::And => Ok(BinaryOperator::And),
+            Token::Or => Ok(BinaryOperator::Or),
+            Token::Equal => Ok(BinaryOperator::Equal),
+            Token::NotEqual => Ok(BinaryOperator::NotEqual),
+            Token::GreaterThan => Ok(BinaryOperator::GreaterThan),
+            Token::LessThan => Ok(BinaryOperator::LessThan),
+            Token::GreaterThanOrEqual => Ok(BinaryOperator::GreaterThanOrEqual),
+            Token::LessThanOrEqual => Ok(BinaryOperator::LessThanOrEqual),
+            _ => {
+                error!("[parser] invalid <binop>: {token:?}");
+                Err("could not parse binary operator".to_string())
+            }
+        }
     }
 }
 
 impl UnaryOperator {
     fn parse_un(tokens: &mut Peekable<Iter<Token>>) -> ParseResult<Self> {
         let Some(token) = tokens.next() else {
+            error!("[parser] expected <unop>");
             return Err("could not parse unary operator".to_string());
         };
-
-        let unop = match token {
-            Token::Complement => UnaryOperator::Complement,
-            Token::Negate => UnaryOperator::Negate,
-            Token::Not => UnaryOperator::Not,
-            _ => return Err("could not parse unary operator".to_string()),
-        };
-
-        trace!("Parsed <unop>: {unop:?}");
-
-        Ok(unop)
+        match token {
+            Token::Complement => Ok(UnaryOperator::Complement),
+            Token::Negate => Ok(UnaryOperator::Negate),
+            Token::Not => Ok(UnaryOperator::Not),
+            _ => {
+                error!("[parser] invalid <unop>: {token:?}");
+                Err("could not parse unary operator".to_string())
+            }
+        }
     }
 }
 
 impl Identifier {
     fn parse_id(tokens: &mut Peekable<Iter<Token>>) -> ParseResult<Self> {
         let Some(Token::Identifier(n)) = tokens.next() else {
-            debug!("Expected <identifier> but found none");
+            error!("[parser] expected <identifier>");
             return Err("could not parse identifier".to_string());
         };
-        trace!("Parsing <identifier>: {n}");
         Ok(Identifier::new(n.clone()))
     }
 }
 
 fn token_assert(expected: Token, tokens: &mut Peekable<Iter<Token>>) -> Result<(), String> {
     let Some(t) = tokens.next() else {
-        debug!("No more tokens available when expecting: {expected:?}");
+        error!("[parser] unexpected end of tokens, expected {expected:?}");
         return Err(String::from("empty tokens"));
     };
-
     if *t != expected {
-        debug!("Token mismatch - expected: {expected:?}, got: {t:?}");
+        error!("[parser] expected {expected:?}, got {t:?}");
         return Err(format!("expected {expected:?}, got {t:?}"));
     }
-
-    trace!("token_assert successfully matched token: {expected:?}");
-
     Ok(())
 }

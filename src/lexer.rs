@@ -1,4 +1,4 @@
-use log::{debug, trace};
+use log::{debug, error, info};
 use regex::Regex;
 
 #[derive(Clone, Debug, PartialEq)]
@@ -72,15 +72,12 @@ pub enum Token {
 }
 
 pub fn lex(mut code: &str) -> Result<Vec<Token>, String> {
-    debug!("lexing code");
-
     if code.is_empty() {
         return Ok(vec![]);
     }
-
     code = code.trim_start();
-
     let mut tokens = vec![];
+
     while !code.is_empty() {
         let mut longest_match: TokenMatch = None;
         for matcher in token_matchers().iter() {
@@ -88,22 +85,17 @@ pub fn lex(mut code: &str) -> Result<Vec<Token>, String> {
                 longest_match = Some((matcher.token_builder, String::from(new_match.as_str())));
             }
         }
-
         let Some((constructor, value)) = longest_match else {
+            error!("[lexer] no match for: {}", &code[..code.len().min(20)]);
             return Err(String::from("couldn't find any match"));
         };
-
-        let new_token = constructor(value.clone());
-
-        trace!("token: {new_token:?}");
-
-        tokens.push(new_token);
-
+        tokens.push(constructor(value.clone()));
         if let Some(c) = code.strip_prefix(value.as_str()) {
             code = c.trim_start();
         }
     }
-
+    info!("[lexer] {} tokens", tokens.len());
+    debug!("[lexer] tokens: {tokens:?}");
     Ok(tokens)
 }
 
@@ -192,29 +184,16 @@ impl TokenMatcher {
         longest_match: &TokenMatch,
     ) -> Result<Option<regex::Match<'a>>, String> {
         let Ok(regex) = Regex::new(self.regex) else {
+            error!("[lexer] invalid regex: {}", self.regex);
             return Err(String::from("couldn't create regex"));
         };
-        let m = regex.find(code);
-
-        let Some(m) = m else {
+        let Some(m) = regex.find(code) else {
             return Ok(None);
         };
-
-        debug!("match: {m:?}");
-
-        let Some(longest_match_value) = longest_match else {
-            return Ok(Some(m));
-        };
-        let longest_match_value = &longest_match_value.1;
-
-        debug!("match_value: {longest_match_value:?}");
-
-        // match if longer than longest match
-        if m.len() > longest_match_value.len() {
-            return Ok(Some(m));
+        match longest_match {
+            Some((_, v)) if m.len() <= v.len() => Ok(None),
+            _ => Ok(Some(m)),
         }
-
-        Ok(None)
     }
 }
 

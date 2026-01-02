@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use log::{debug, trace};
+use log::{debug, error, info};
 
 use crate::{
     codegen::x64::ast::{AsmFunctionDefinition, AsmInstruction, AsmOperand},
@@ -31,77 +31,42 @@ impl FolderAsm for PseudoRegisterReplacer {
         }
     }
 
-    fn fold_fun_def(
-        &mut self,
-        function: AsmFunctionDefinition,
-    ) -> Result<AsmFunctionDefinition, String> {
+    fn fold_fun_def(&mut self, function: AsmFunctionDefinition) -> Result<AsmFunctionDefinition, String> {
         let (pseudo_reg_map, last_offset) = ids_offset_map(&function);
-
         self.last_offset = Some(last_offset);
         self.offset_map = Some(pseudo_reg_map.clone());
+        info!("[codegen] {} pseudo registers, stack size {}", pseudo_reg_map.len(), -last_offset);
+        debug!("[codegen] pseudo register map: {pseudo_reg_map:?}");
 
-        debug!("Pseudo registers map: {pseudo_reg_map:?}");
-
-        let instructions: Result<Vec<_>, String> = function
-            .instructions
+        let instructions: Result<Vec<_>, String> = function.instructions
             .into_iter()
             .map(|i| self.fold_ins(i))
             .collect::<Result<Vec<_>, String>>()
             .map(|v| v.into_iter().flatten().collect());
 
-        Ok(AsmFunctionDefinition::new(
-            function.name,
-            instructions?,
-        ))
+        Ok(AsmFunctionDefinition::new(function.name, instructions?))
     }
 
     fn fold_ins(&mut self, instruction: AsmInstruction) -> Result<Vec<AsmInstruction>, String> {
         use AsmInstruction::*;
         let res = match instruction {
-            Mov(src, dst) => {
-                trace!("Replace pseudoregisters for Mov({src:?}, {dst:?})");
-                Mov(self.fold_op(src)?, self.fold_op(dst)?)
-            }
-            Unary(unary_op, op) => {
-                trace!("Replace pseudoregisters for Unary({unary_op:?}, {op:?})");
-                Unary(unary_op, self.fold_op(op)?)
-            }
-            Binary(bin_op, src, dst) => {
-                trace!("Replace pseudoregisters for Binary({bin_op:?}, {src:?}, {dst:?})");
-                Binary(
-                    bin_op,
-                    self.fold_op(src)?,
-                    self.fold_op(dst)?,
-                )
-            }
-            Idiv(op) => {
-                trace!("Replace pseudoregisters for Idiv({op:?})");
-                Idiv(self.fold_op(op)?)
-            }
-            SetCC(cond_code, op) => {
-                trace!("Replace pseudoregisters for SetCC({cond_code:?}, {op:?})");
-                SetCC(cond_code, self.fold_op(op)?)
-            }
-            Cmp(op_1, op_2) => {
-                trace!("Replace pseudoregisters for Cmp({op_1:?}, {op_2:?})");
-                Cmp(self.fold_op(op_1)?, self.fold_op(op_2)?)
-            }
-            JmpCC(_, _) | Label(_) | AllocateStack(_) | Comment(_) | Jmp(_) | Ret | Cdq => {
-                debug!("Not replacing registers {:?}", &instruction);
-                instruction
-            }
+            Mov(src, dst) => Mov(self.fold_op(src)?, self.fold_op(dst)?),
+            Unary(op, operand) => Unary(op, self.fold_op(operand)?),
+            Binary(op, src, dst) => Binary(op, self.fold_op(src)?, self.fold_op(dst)?),
+            Idiv(op) => Idiv(self.fold_op(op)?),
+            SetCC(cc, op) => SetCC(cc, self.fold_op(op)?),
+            Cmp(op1, op2) => Cmp(self.fold_op(op1)?, self.fold_op(op2)?),
+            JmpCC(_, _) | Label(_) | AllocateStack(_) | Comment(_) | Jmp(_) | Ret | Cdq => instruction,
         };
         Ok(vec![res])
     }
 
     fn fold_op(&mut self, operand: AsmOperand) -> Result<AsmOperand, String> {
         let Some(offset_map) = &self.offset_map else {
+            error!("[codegen] offset_map not initialized");
             return Err("offset_map not initialized".to_string());
         };
-
-        Ok(offset_map
-            .get(&operand)
-            .map_or(operand, |i| AsmOperand::Stack(*i)))
+        Ok(offset_map.get(&operand).map_or(operand, |i| AsmOperand::Stack(*i)))
     }
 }
 
