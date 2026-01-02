@@ -2,8 +2,8 @@ use std::fmt;
 
 use crate::{
     c_ast::ast::{
-        BinaryOperator, Block, BlockItem, Declaration, Expression, FunctionDefinition, Identifier,
-        Program, Statement, UnaryOperator,
+        BinaryOperator, Block, BlockItem, Declaration, Expression, ForInit, FunctionDefinition,
+        Identifier, Program, Statement, UnaryOperator,
     },
     common::util::indent,
 };
@@ -51,6 +51,18 @@ impl fmt::Display for FunctionDefinition {
             )
         )?;
         Ok(())
+    }
+}
+
+impl fmt::Display for ForInit {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            ForInit::InitDecl(d) => write!(f, "InitDecl({d})"),
+            ForInit::InitExp(e) => match e.as_ref() {
+                Some(exp) => write!(f, "InitExp({exp})"),
+                None => write!(f, "InitExp()"),
+            },
+        }
     }
 }
 
@@ -115,7 +127,10 @@ impl fmt::Display for Statement {
             Statement::While(cond, body, id) => write!(f, "While({cond}, {body}, {id})"),
             Statement::DoWhile(body, cond, id) => write!(f, "DoWhile({body}, {cond}, {id})"),
             Statement::For(init, cond, post, body, id) => {
-                todo!("to be implemented")
+                let cond_str = cond.as_ref().map_or("None".to_string(), |c| c.to_string());
+                let post_str = post.as_ref().map_or("None".to_string(), |p| p.to_string());
+
+                write!(f, "For({init}, {cond_str}, {post_str}, {body}, {id})")
             }
             Statement::Null => writeln!(f, "Null"),
         }

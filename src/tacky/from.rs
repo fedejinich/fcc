@@ -225,7 +225,6 @@ impl TackyInstruction {
                 let false_label = TackyIdentifier::new("false_label");
                 let end_label = TackyIdentifier::new("end");
 
-                // TODO: extract this to a function
                 let v1 = TackyInstruction::from_expr(*left, instructions);
                 instructions.push(TackyInstruction::JumpIfZero(v1, false_label.clone()));
 
@@ -251,7 +250,6 @@ impl TackyInstruction {
                 let true_label = TackyIdentifier::new("true_label");
                 let end_label = TackyIdentifier::new("end");
 
-                // TODO: extract this to a function
                 let v1 = TackyInstruction::from_expr(*left, instructions);
                 instructions.push(TackyInstruction::JumpIfNotZero(v1, true_label.clone()));
 
