@@ -2,16 +2,26 @@ use std::fmt;
 
 use crate::{
     c_ast::ast::{
-        BinaryOperator, Block, BlockItem, Declaration, Expression, FunctionDefinition, Program,
-        Statement, UnaryOperator,
+        BinaryOperator, Block, BlockItem, Declaration, Expression, ForInit, FunctionDefinition,
+        Identifier, Program, Statement, UnaryOperator,
     },
     common::util::indent,
 };
 
+impl fmt::Display for Identifier {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.value())
+    }
+}
+
 impl fmt::Display for Program {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         writeln!(f, "Program(")?;
-        write!(f, "{}\n)", indent(&self.function_definition.to_string(), 4))
+        write!(
+            f,
+            "{}\n)",
+            indent(&self.function_definition().to_string(), 4)
+        )
     }
 }
 
@@ -21,7 +31,7 @@ impl fmt::Display for FunctionDefinition {
         writeln!(
             f,
             "{}",
-            indent(&format!("name=\"{}\",", self.name.value), 4)
+            indent(&format!("name=\"{}\",", self.name().value()), 4)
         )?;
         write!(
             f,
@@ -29,9 +39,9 @@ impl fmt::Display for FunctionDefinition {
             indent(
                 &format!(
                     "body={}",
-                    self.body
+                    self.body()
+                        .block_items()
                         .clone()
-                        .0
                         .into_iter()
                         .map(|s| s.to_string())
                         .collect::<Vec<_>>()
@@ -41,6 +51,18 @@ impl fmt::Display for FunctionDefinition {
             )
         )?;
         Ok(())
+    }
+}
+
+impl fmt::Display for ForInit {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            ForInit::InitDecl(d) => write!(f, "InitDecl({d})"),
+            ForInit::InitExp(e) => match e.as_ref() {
+                Some(exp) => write!(f, "InitExp({exp})"),
+                None => write!(f, "InitExp()"),
+            },
+        }
     }
 }
 
@@ -66,9 +88,9 @@ impl fmt::Display for Declaration {
         writeln!(
             f,
             "{}",
-            indent(&format!("name=\"{}\",", self.name.value), 4)
+            indent(&format!("name=\"{}\",", self.name().value()), 4)
         )?;
-        if let Some(v) = &self.initializer {
+        if let Some(v) = self.initializer() {
             writeln!(f, "{}", indent(&format!("value=\"{}\",", v.clone()), 4))?;
         }
         Ok(())
@@ -100,6 +122,16 @@ impl fmt::Display for Statement {
                 writeln!(f, ")")
             }
             Statement::Compound(b) => write!(f, "Compound(\n{b}\n)"),
+            Statement::Break(id) => writeln!(f, "Break({id})"),
+            Statement::Continue(id) => writeln!(f, "Continue({id})"),
+            Statement::While(cond, body, id) => write!(f, "While({cond}, {body}, {id})"),
+            Statement::DoWhile(body, cond, id) => write!(f, "DoWhile({body}, {cond}, {id})"),
+            Statement::For(init, cond, post, body, id) => {
+                let cond_str = cond.as_ref().map_or("None".to_string(), |c| c.to_string());
+                let post_str = post.as_ref().map_or("None".to_string(), |p| p.to_string());
+
+                write!(f, "For({init}, {cond_str}, {post_str}, {body}, {id})")
+            }
             Statement::Null => writeln!(f, "Null"),
         }
     }
@@ -114,7 +146,7 @@ impl fmt::Display for Expression {
                 write!(f, "Binary({op}, {exp_1}, {exp_2})")
             }
             Expression::Assignment(left, right) => write!(f, "Assignment({left}, {right})"),
-            Expression::Var(id) => write!(f, "Var({})", id.value),
+            Expression::Var(id) => write!(f, "Var({})", id.value()),
             Expression::Conditional(cond, then, el) => {
                 write!(f, "Conditional({cond}, {then}, {el})")
             }

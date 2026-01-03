@@ -1,14 +1,15 @@
 use std::{fs, path::Path, process::Command};
 
 use clap::Parser;
-use log::{debug, info, trace};
+use log::{debug, error, info};
 
 use crate::c_ast::ast::Program;
-use crate::c_ast::semantic::validate::validate_semantics;
+use crate::c_ast::semantic::loop_lab::LoopLabeler;
+use crate::c_ast::semantic::var_res::VariableResolver;
 use crate::codegen::x64::ast::AsmProgram;
-use crate::codegen::x64::fixer::reg_replace::PseudoRegisterReplacer;
 use crate::codegen::x64::fixer::instruction_fix::InstructionFixer;
-use crate::common::folder::FolderAsm;
+use crate::codegen::x64::fixer::reg_replace::PseudoRegisterReplacer;
+use crate::common::folder::{FolderAsm, FolderC};
 use crate::common::util::replace_c_with_i;
 use crate::lexer::lex;
 use crate::tacky::ast::TackyProgram;
@@ -68,153 +69,185 @@ impl CompilerDriver {
     }
 
     pub fn build_program(&self) -> Result<(), String> {
-        info!("building program");
+        info!("[driver] building {}", self.program_path);
 
         let preprocessed_file = self.preprocess(&self.program_path)?;
         let assembly_file = self.compile(preprocessed_file.as_str())?;
         let exit_code = self.assemble_and_link(assembly_file)?;
 
-        info!("exit code: {exit_code}");
+        info!("[driver] completed with exit code {exit_code}");
 
         std::process::exit(exit_code);
     }
 
     pub fn preprocess(&self, source_file: &str) -> Result<String, String> {
-        info!("preprocessing {source_file}");
+        info!("[driver] preprocessing");
 
-        // TODO: this should be validated in another place
         if !source_file.ends_with(".c") {
+            error!("[driver] source file must have .c extension");
+
             return Err(String::from("SOURCE_FILE should have a .c file extension"));
         }
 
-        // TODO: this should be tested and is not necesary here\
         let preprocessed_file = replace_c_with_i(source_file);
         if !preprocessed_file.ends_with(".i") {
+            error!("[driver] preprocessed file must have .i extension");
+
             return Err(String::from(
                 "PREPROCESSED_FILE should have a .i file extension",
             ));
         }
 
         if !Path::new(source_file).exists() {
+            error!("[driver] source file does not exist: {source_file}");
+
             return Err(String::from("source file does not exist"));
         }
 
-        let Ok(_) = Command::new("gcc")
+        if Command::new("gcc")
             .arg("-E")
             .arg("-P")
             .arg(source_file)
             .arg("-o")
             .arg(&preprocessed_file)
             .output()
-        else {
-            return Err(String::from("failed to execute preprocessor"));
-        };
+            .is_err()
+        {
+            error!("[driver] preprocessor failed");
 
-        Ok(preprocessed_file.to_string())
+            return Err(String::from("failed to execute preprocessor"));
+        }
+
+        Ok(preprocessed_file)
     }
 
     fn compile(&self, preprocessed_file_name: &str) -> Result<String, String> {
-        info!("compiling {preprocessed_file_name}");
+        info!("[driver] compiling");
 
         let preprocessed_file_path = Path::new(preprocessed_file_name);
         if !preprocessed_file_path.exists() {
+            error!("[driver] preprocessed file does not exist");
+
             return Err(String::from(
                 "couldn't compile, preprocessed file does not exist",
             ));
         }
 
         let Ok(code) = fs::read_to_string(preprocessed_file_path) else {
+            error!("[driver] couldn't read preprocessed file");
+
             return Err(String::from("couldn't read preprocessed file"));
         };
 
-        let tokens = lex(code.as_str())?;
+        info!("[driver] lexing");
 
+        let tokens = lex(code.as_str())?;
         if self.lex {
             std::process::exit(0);
         }
 
-        trace!("Token stream: {tokens:?}");
+        info!("[driver] parsing");
+
         let mut c_program = Program::try_from(tokens)?;
         if self.print_ast {
             println!("{c_program}");
         }
-
         if self.parse {
             std::process::exit(0);
         }
 
-        c_program = validate_semantics(c_program)?;
+        info!("[driver] validating");
 
+        c_program = validate_semantics(c_program)?;
         if self.validate {
             std::process::exit(0);
         }
 
-        let tacky_program = TackyProgram::from(c_program);
+        info!("[driver] generating tacky");
 
+        let tacky_program = TackyProgram::from(c_program);
         if self.print_tacky {
             println!("{}", tacky_program.pretty_print());
         }
-
         if self.tacky {
             std::process::exit(0);
         }
 
+        info!("[driver] generating assembly");
+
         let mut assembly_program = AsmProgram::from(tacky_program);
-
         assembly_program = self.do_asm_passes(assembly_program)?;
-
         if self.codegen {
             std::process::exit(0);
         }
 
+        info!("[driver] emitting");
+
         let Ok(code) = assembly_program.to_string_asm() else {
+            error!("[driver] couldn't convert to assembly string");
+
             return Err(String::from("couldn't convert to assembly string"));
         };
+
         let assembly_file_name = preprocessed_file_name.replace(".i", ".asm");
-        let Ok(_) = fs::write(&assembly_file_name, &code) else {
+        if fs::write(&assembly_file_name, &code).is_err() {
+            error!("[driver] couldn't write assembly file");
+
             return Err(String::from("couldn't write assembly file"));
-        };
+        }
 
-        debug!("\n{code}");
+        debug!("[driver] assembly:\n{code}");
 
-        let Ok(_) = fs::remove_file(preprocessed_file_name) else {
+        if fs::remove_file(preprocessed_file_name).is_err() {
+            error!("[driver] couldn't remove preprocessed file");
+
             return Err(String::from("couldn't remove preprocessed file"));
-        };
-
-        debug!("file removed");
+        }
 
         Ok(assembly_file_name)
     }
 
     fn do_asm_passes(&self, program: AsmProgram) -> Result<AsmProgram, String> {
         let mut replacer = PseudoRegisterReplacer::create();
-        let assembly_program = replacer.fold_program(program)?;
+        let assembly_program = replacer.fold_prog(program)?;
 
         let last_offset = replacer.last_offset();
         let mut fixer = InstructionFixer::create().with(last_offset);
-        fixer.fold_program(assembly_program)
+
+        fixer.fold_prog(assembly_program)
     }
 
     fn assemble_and_link(&self, assembly_file: String) -> Result<i32, String> {
-        info!("assemblying and linking {assembly_file}");
+        info!("[driver] assembling and linking");
 
         if !Path::new(&assembly_file).exists() {
+            error!("[driver] assembly file does not exist");
+
             return Err(String::from("asm file does not exist"));
         }
 
         let output_file = assembly_file.replace(".asm", "");
         let Ok(result) = Command::new("gcc")
-            .arg(assembly_file)
+            .arg(&assembly_file)
             .arg("-o")
-            .arg(output_file)
+            .arg(&output_file)
             .output()
         else {
+            error!("[driver] failed to assemble and link");
+
             return Err(String::from("failed to assemble and link"));
         };
 
-        result
-            .status
-            .code()
-            .ok_or(String::from("failed to get status code"))
+        result.status.code().ok_or_else(|| {
+            error!("[driver] failed to get exit code");
+
+            String::from("failed to get status code")
+        })
     }
+}
+
+pub fn validate_semantics(program: Program) -> Result<Program, String> {
+    let program = VariableResolver::new().fold_prog(program)?;
+    let program = LoopLabeler::default().fold_prog(program);
+    program
 }

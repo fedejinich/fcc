@@ -1,5 +1,4 @@
-use fcc::common::util::{indent, replace_c_with_i};
-
+use fcc::common::util::{indent, opt_box, replace_c_with_i};
 
 #[test]
 fn test_replace_c_with_i_valid_c_file() {
@@ -94,4 +93,28 @@ fn test_indent_complex_multiline() {
     let input = "int main() {\n    return 0;\n}";
     let expected = "  int main() {\n      return 0;\n  }";
     assert_eq!(indent(input, 2), expected);
+}
+
+// =============================================================================
+// OPT_BOX
+// =============================================================================
+
+#[test]
+fn test_opt_box_some() {
+    let result = opt_box(Some(42));
+    assert!(result.is_some());
+    assert_eq!(*result.unwrap(), 42);
+}
+
+#[test]
+fn test_opt_box_none() {
+    let result: Option<Box<i32>> = opt_box(None);
+    assert!(result.is_none());
+}
+
+#[test]
+fn test_opt_box_string() {
+    let result = opt_box(Some("hello".to_string()));
+    assert!(result.is_some());
+    assert_eq!(*result.unwrap(), "hello".to_string());
 }

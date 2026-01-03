@@ -1,7 +1,5 @@
 use std::fmt::{self};
 
-use log::debug;
-
 use crate::codegen::x64::ast::{
     AsmBinaryOperator, AsmCondCode, AsmFunctionDefinition, AsmInstruction, AsmOperand, AsmProgram,
     AsmUnaryOperator, Reg,
@@ -173,10 +171,7 @@ impl AsmOperand {
     pub fn byte_fmt(&self) -> &str {
         match self {
             AsmOperand::Register(reg) => reg.fmt_8bit(),
-            _ => {
-                debug!("AsmOperand: {self:?}");
-                panic!("byte_fmt() called on non-register operand")
-            }
+            _ => panic!("byte_fmt() called on non-register operand: {self:?}"),
         }
     }
 }
@@ -199,10 +194,7 @@ impl Reg {
             Reg::DX => "%dl",
             Reg::R10 => "%r10b",
             Reg::R11 => "%r11b",
-            _ => {
-                debug!("Reg: {self:?}");
-                panic!("fmt_8bit() called on non-byte register")
-            }
+            _ => panic!("fmt_8bit() called on non-byte register: {self:?}"),
         }
     }
 }

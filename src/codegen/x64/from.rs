@@ -1,6 +1,13 @@
-use log::debug;
-
-use crate::{codegen::x64::ast::{AsmBinaryOperator, AsmCondCode, AsmFunctionDefinition, AsmIdetifier, AsmInstruction, AsmOperand, AsmProgram, AsmUnaryOperator, Reg}, tacky::ast::{TackyBinaryOperator, TackyFunctionDefinition, TackyIdentifier, TackyInstruction, TackyProgram, TackyUnaryOperator, TackyValue}};
+use crate::{
+    codegen::x64::ast::{
+        AsmBinaryOperator, AsmCondCode, AsmFunctionDefinition, AsmIdetifier, AsmInstruction,
+        AsmOperand, AsmProgram, AsmUnaryOperator, Reg,
+    },
+    tacky::ast::{
+        TackyBinaryOperator, TackyFunctionDefinition, TackyIdentifier, TackyInstruction,
+        TackyProgram, TackyUnaryOperator, TackyValue,
+    },
+};
 
 impl From<TackyProgram> for AsmProgram {
     fn from(tacky_program: TackyProgram) -> Self {
@@ -64,9 +71,11 @@ impl AsmInstruction {
                         ),
                     ],
                     // relational operators
-                    TackyBinaryOperator::Equal 
-                    | TackyBinaryOperator::NotEqual | TackyBinaryOperator::GreaterThan
-                    | TackyBinaryOperator::LessThan | TackyBinaryOperator::LessThanOrEqual 
+                    TackyBinaryOperator::Equal
+                    | TackyBinaryOperator::NotEqual
+                    | TackyBinaryOperator::GreaterThan
+                    | TackyBinaryOperator::LessThan
+                    | TackyBinaryOperator::LessThanOrEqual
                     | TackyBinaryOperator::GreaterThanOrEqual => vec![
                         AsmInstruction::Comment(format!("relational operator: {:?}", op.clone())),
                         AsmInstruction::Cmp(AsmOperand::from(src_2), AsmOperand::from(src_1)),
@@ -74,14 +83,7 @@ impl AsmInstruction {
                         AsmInstruction::SetCC(AsmCondCode::from(op), AsmOperand::from(dst)),
                     ],
                     TackyBinaryOperator::Divide | TackyBinaryOperator::Remainder => {
-                        let reg = if is_div {
-                            debug!("is div");
-                            AsmOperand::Register(Reg::AX)
-                        } else {
-                            debug!("is rem");
-                            AsmOperand::Register(Reg::DX)
-                        };
-
+                        let reg = if is_div { AsmOperand::Register(Reg::AX) } else { AsmOperand::Register(Reg::DX) };
                         vec![
                             AsmInstruction::Comment(format!("div/rem operator: {:?}", op.clone())),
                             AsmInstruction::Mov(
@@ -105,9 +107,10 @@ impl AsmInstruction {
                 AsmInstruction::Cmp(AsmOperand::Imm(0), AsmOperand::from(condition)),
                 AsmInstruction::JmpCC(AsmCondCode::NE, AsmIdetifier::from(target)),
             ],
-            TackyInstruction::Copy(src, dst) => vec![
-                AsmInstruction::Mov(AsmOperand::from(src), AsmOperand::from(dst)),
-            ],
+            TackyInstruction::Copy(src, dst) => vec![AsmInstruction::Mov(
+                AsmOperand::from(src),
+                AsmOperand::from(dst),
+            )],
             TackyInstruction::Label(id) => vec![AsmInstruction::Label(AsmIdetifier::from(id))],
         }
     }
@@ -142,8 +145,8 @@ impl From<TackyUnaryOperator> for AsmUnaryOperator {
 }
 
 impl From<TackyBinaryOperator> for AsmBinaryOperator {
-    fn from(tacky_binary_operator: TackyBinaryOperator) -> Self {
-        match tacky_binary_operator {
+    fn from(op: TackyBinaryOperator) -> Self {
+        match op {
             TackyBinaryOperator::Add => AsmBinaryOperator::Add,
             TackyBinaryOperator::Subtract => AsmBinaryOperator::Sub,
             TackyBinaryOperator::Multiply => AsmBinaryOperator::Mult,
@@ -152,10 +155,7 @@ impl From<TackyBinaryOperator> for AsmBinaryOperator {
             TackyBinaryOperator::BitwiseXor => AsmBinaryOperator::BitwiseXor,
             TackyBinaryOperator::LeftShift => AsmBinaryOperator::LeftShift,
             TackyBinaryOperator::RightShift => AsmBinaryOperator::RightShift,
-            _ => {
-                debug!("{tacky_binary_operator:?}");
-                panic!("this should never happen")
-            }
+            _ => panic!("invalid binary operator for asm: {op:?}"),
         }
     }
 }
@@ -169,10 +169,7 @@ impl From<TackyBinaryOperator> for AsmCondCode {
             TackyBinaryOperator::LessThan => AsmCondCode::L,
             TackyBinaryOperator::GreaterThanOrEqual => AsmCondCode::GE,
             TackyBinaryOperator::LessThanOrEqual => AsmCondCode::LE,
-            _ => {
-                debug!("{op:?}");
-                panic!("this should never happen")
-            }
+            _ => panic!("invalid relational operator for cond code: {op:?}"),
         }
     }
 }

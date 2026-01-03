@@ -1,4 +1,9 @@
-use crate::{codegen::x64::ast::{AsmBinaryOperator, AsmFunctionDefinition, AsmInstruction, AsmOperand, Reg}, common::folder::FolderAsm};
+use crate::{
+    codegen::x64::ast::{
+        AsmBinaryOperator, AsmFunctionDefinition, AsmInstruction, AsmOperand, Reg,
+    },
+    common::folder::FolderAsm,
+};
 
 /// This pass fixes some instructions that are not supported by the x64 architecture.
 #[derive(Default)]
@@ -15,11 +20,15 @@ impl InstructionFixer {
 }
 
 impl FolderAsm for InstructionFixer {
+    fn name(&self) -> &'static str {
+        "ins_fix"
+    }
+
     fn create() -> Self {
         Self::default()
     }
 
-    fn fold_function_definition(
+    fn fold_fun_def(
         &mut self,
         function_definition: AsmFunctionDefinition,
     ) -> Result<AsmFunctionDefinition, String> {
@@ -32,17 +41,20 @@ impl FolderAsm for InstructionFixer {
         let fixed_instructions: Result<Vec<_>, String> = function_definition
             .instructions
             .into_iter()
-            .map(|i| self.fold_instruction(i))
+            .map(|i| self.fold_ins(i))
             .collect::<Result<Vec<_>, String>>()
             .map(|v| v.into_iter().flatten().collect());
 
         let mut fixed_instructions = fixed_instructions?;
         instructions.append(&mut fixed_instructions);
 
-        Ok(AsmFunctionDefinition::new(function_definition.name, instructions))
+        Ok(AsmFunctionDefinition::new(
+            function_definition.name,
+            instructions,
+        ))
     }
 
-    fn fold_instruction(&mut self, instruction: AsmInstruction) -> Result<Vec<AsmInstruction>, String> {
+    fn fold_ins(&mut self, instruction: AsmInstruction) -> Result<Vec<AsmInstruction>, String> {
         use AsmBinaryOperator::*;
         use AsmInstruction::*;
         use AsmOperand::*;

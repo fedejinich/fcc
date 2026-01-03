@@ -21,3 +21,9 @@ pub fn temporary_name(name: &str, counter: &AtomicUsize) -> String {
     format!("{name}.{id}")
 }
 
+pub fn opt_box<T>(opt: Option<T>) -> Option<Box<T>> {
+    if let Some(t) = opt {
+        return Some(Box::new(t));
+    }
+    None
+}

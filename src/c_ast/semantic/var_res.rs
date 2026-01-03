@@ -1,9 +1,6 @@
-use std::{
-    collections::HashMap,
-    sync::atomic::AtomicUsize,
-};
+use std::{collections::HashMap, sync::atomic::AtomicUsize};
 
-use log::{debug, trace};
+use log::{debug, error, trace};
 
 use crate::{
     c_ast::ast::{Declaration, Expression, Identifier, Statement},
@@ -47,11 +44,12 @@ impl VariableResolver {
     }
 
     pub fn get_var(&self, var_name: &Identifier) -> Option<VarValue> {
-        self.0.get(&var_name.value).cloned()
+        self.0.get(var_name.value()).cloned()
     }
 
     fn track_variable(&mut self, var_name: Identifier, unique_name: String) {
-        self.0.insert(var_name.value, (unique_name, true));
+        self.0
+            .insert(var_name.value().to_string(), (unique_name, true));
     }
 
     /// returns a copy of the variables map with all the variables marked as undeclared for the current block
@@ -70,84 +68,96 @@ impl VariableResolver {
 }
 
 impl FolderC for VariableResolver {
-    fn fold_declaration(&mut self, declaration: Declaration) -> Result<Declaration, String> {
-        trace!("resolving declaration: {declaration:?}");
+    fn name(&self) -> &'static str {
+        "var_res"
+    }
 
-        if self.is_var_named(&declaration.name) && self.is_var_declred(&declaration.name) {
-            debug!("variable: {declaration}");
+    fn fold_decl(&mut self, declaration: Declaration) -> Result<Declaration, String> {
+        trace!("[semantic] <declaration> {}", declaration.name().value());
+
+        if self.is_var_named(declaration.name()) && self.is_var_declred(declaration.name()) {
+            error!(
+                "[semantic] duplicate variable: {}",
+                declaration.name().value()
+            );
+
             return Err("duplicate variable declaration".to_string());
         }
 
-        let unique_name: String = temporary_name(&declaration.name.value, &VAR_RES_COUNT);
+        let unique_name = temporary_name(declaration.name().value(), &VAR_RES_COUNT);
 
-        self.track_variable(declaration.name.clone(), unique_name.clone());
+        debug!(
+            "[semantic] {} -> {}",
+            declaration.name().value(),
+            unique_name
+        );
 
+        self.track_variable(declaration.name().clone(), unique_name.clone());
         let init = declaration
-            .initializer
-            .map(|e| self.fold_expression(e))
+            .initializer()
+            .cloned()
+            .map(|e| self.fold_expr(e))
             .transpose()?;
 
         Ok(Declaration::new(Identifier::new(unique_name), init))
     }
 
-    fn fold_statement(&mut self, statement: Statement) -> Result<Statement, String> {
-        match statement {
+    fn fold_st(&mut self, statement: Statement) -> Result<Statement, String> {
+        let res = match statement {
             Statement::Compound(block) => {
-                trace!("resolving compound statement");
+                trace!("[semantic] <statement> compound (new scope)");
 
-                let new_variable_map = self.copy_variable_map();
-                let mut new_var_resolver = Self::new_with(new_variable_map);
-                let resolved_block = new_var_resolver.fold_block(*block)?;
+                let new_var_map = self.copy_variable_map();
+                let mut new_resolver = Self::new_with(new_var_map);
 
-                return Ok(Statement::Compound(Box::new(resolved_block)));
+                Statement::Compound(Box::new(new_resolver.fold_block(*block)?))
             }
-            _ => {
-                trace!("resolving statement");
+            Statement::For(for_init, cond, post, body, id) => {
+                let new_var_map = self.copy_variable_map();
+                let mut new_resolver = Self::new_with(new_var_map);
 
-                self.default_fold_statement(statement)
+                new_resolver.default_fold_st_for(for_init, cond, post, body, id)?
             }
-        }
-    }
-
-    fn fold_expression(&mut self, expr: Expression) -> Result<Expression, String> {
-        trace!("resolving expression: {expr:?}");
-
-        let res = match expr {
-            Expression::Assignment(left, right) => match *left {
-                Expression::Var(_) => Expression::Assignment(
-                    Box::new(self.fold_expression(*left)?),
-                    Box::new(self.fold_expression(*right)?),
-                ),
-                _ => {
-                    return Err("invalid lvalue".to_string());
-                }
-            },
-            Expression::Var(ref id) => {
-                if let Some((var_unique_name, _)) = self.get_var(&id) {
-                    Expression::Var(Identifier::new(var_unique_name))
-                } else {
-                    debug!("undeclared variable: {expr}");
-
-                    return Err("undeclared variable".to_string());
-                }
-            }
-            Expression::Unary(op, expr) => {
-                Expression::Unary(op, Box::new(self.fold_expression(*expr)?))
-            }
-            Expression::Binary(op, left, right) => Expression::Binary(
-                op,
-                Box::new(self.fold_expression(*left)?),
-                Box::new(self.fold_expression(*right)?),
-            ),
-            Expression::Constant(c) => Expression::Constant(c),
-            Expression::Conditional(cond, then, el) => Expression::Conditional(
-                Box::new(self.fold_expression(*cond)?),
-                Box::new(self.fold_expression(*then)?),
-                Box::new(self.fold_expression(*el)?),
-            ),
+            _ => self.default_fold_st(statement)?,
         };
 
         Ok(res)
     }
-}
 
+    fn fold_expr(&mut self, expr: Expression) -> Result<Expression, String> {
+        match expr {
+            Expression::Assignment(left, right) => match *left {
+                Expression::Var(_) => Ok(Expression::Assignment(
+                    Box::new(self.fold_expr(*left)?),
+                    Box::new(self.fold_expr(*right)?),
+                )),
+                _ => {
+                    error!("[semantic] invalid lvalue in assignment");
+
+                    Err("invalid lvalue".to_string())
+                }
+            },
+            Expression::Var(ref id) => {
+                let Some((unique_name, _)) = self.get_var(id) else {
+                    error!("[semantic] undeclared variable: {}", id.value());
+
+                    return Err("undeclared variable".to_string());
+                };
+
+                Ok(Expression::Var(Identifier::new(unique_name)))
+            }
+            Expression::Unary(op, e) => Ok(Expression::Unary(op, Box::new(self.fold_expr(*e)?))),
+            Expression::Binary(op, l, r) => Ok(Expression::Binary(
+                op,
+                Box::new(self.fold_expr(*l)?),
+                Box::new(self.fold_expr(*r)?),
+            )),
+            Expression::Constant(c) => Ok(Expression::Constant(c)),
+            Expression::Conditional(c, t, e) => Ok(Expression::Conditional(
+                Box::new(self.fold_expr(*c)?),
+                Box::new(self.fold_expr(*t)?),
+                Box::new(self.fold_expr(*e)?),
+            )),
+        }
+    }
+}

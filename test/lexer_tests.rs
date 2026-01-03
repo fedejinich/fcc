@@ -87,7 +87,7 @@ fn test_binary_operators() {
         assert_eq!(
             tokens,
             vec![
-                Token::Plus,
+                Token::Add,
                 Token::Negate,
                 Token::Multiply,
                 Token::Divide,
@@ -186,7 +186,7 @@ fn test_complex_expression() {
                 Token::Assignment,
                 Token::OpenParen,
                 Token::Identifier("a".to_string()),
-                Token::Plus,
+                Token::Add,
                 Token::Identifier("b".to_string()),
                 Token::CloseParen,
                 Token::Multiply,
@@ -226,7 +226,7 @@ fn test_operator_precedence_tokens() {
                 Token::Identifier("a".to_string()),
                 Token::LeftShift,
                 Token::Identifier("b".to_string()),
-                Token::Plus,
+                Token::Add,
                 Token::Identifier("c".to_string()),
                 Token::BitwiseAnd,
                 Token::Identifier("d".to_string())
@@ -511,9 +511,9 @@ fn test_triple_plus() {
             tokens,
             vec![
                 Token::Identifier("a".to_string()),
-                Token::Plus,
-                Token::Plus,
-                Token::Plus,
+                Token::Add,
+                Token::Add,
+                Token::Add,
                 Token::Identifier("b".to_string())
             ]
         );
@@ -529,7 +529,7 @@ fn test_complex_no_spaces() {
             tokens,
             vec![
                 Token::Identifier("a".to_string()),
-                Token::Plus,
+                Token::Add,
                 Token::Identifier("b".to_string()),
                 Token::Multiply,
                 Token::Identifier("c".to_string()),
@@ -562,3 +562,171 @@ fn test_ternary_no_spaces() {
     }
 }
 
+// =============================================================================
+// LOOP KEYWORDS
+// =============================================================================
+
+#[test]
+fn test_while_keyword() {
+    let result = lex("while");
+    assert!(result.is_ok());
+    if let Ok(tokens) = result {
+        assert_eq!(tokens, vec![Token::While]);
+    }
+}
+
+#[test]
+fn test_do_keyword() {
+    let result = lex("do");
+    assert!(result.is_ok());
+    if let Ok(tokens) = result {
+        assert_eq!(tokens, vec![Token::Do]);
+    }
+}
+
+#[test]
+fn test_for_keyword() {
+    let result = lex("for");
+    assert!(result.is_ok());
+    if let Ok(tokens) = result {
+        assert_eq!(tokens, vec![Token::For]);
+    }
+}
+
+#[test]
+fn test_break_keyword() {
+    let result = lex("break");
+    assert!(result.is_ok());
+    if let Ok(tokens) = result {
+        assert_eq!(tokens, vec![Token::Break]);
+    }
+}
+
+#[test]
+fn test_continue_keyword() {
+    let result = lex("continue");
+    assert!(result.is_ok());
+    if let Ok(tokens) = result {
+        assert_eq!(tokens, vec![Token::Continue]);
+    }
+}
+
+#[test]
+fn test_while_statement() {
+    let result = lex("while (x) { x = x - 1; }");
+    assert!(result.is_ok());
+    if let Ok(tokens) = result {
+        assert_eq!(
+            tokens,
+            vec![
+                Token::While,
+                Token::OpenParen,
+                Token::Identifier("x".to_string()),
+                Token::CloseParen,
+                Token::OpenBrace,
+                Token::Identifier("x".to_string()),
+                Token::Assignment,
+                Token::Identifier("x".to_string()),
+                Token::Negate,
+                Token::Constant("1".to_string()),
+                Token::Semicolon,
+                Token::CloseBrace
+            ]
+        );
+    }
+}
+
+#[test]
+fn test_do_while_statement() {
+    let result = lex("do { x = 1; } while (x);");
+    assert!(result.is_ok());
+    if let Ok(tokens) = result {
+        assert_eq!(
+            tokens,
+            vec![
+                Token::Do,
+                Token::OpenBrace,
+                Token::Identifier("x".to_string()),
+                Token::Assignment,
+                Token::Constant("1".to_string()),
+                Token::Semicolon,
+                Token::CloseBrace,
+                Token::While,
+                Token::OpenParen,
+                Token::Identifier("x".to_string()),
+                Token::CloseParen,
+                Token::Semicolon
+            ]
+        );
+    }
+}
+
+#[test]
+fn test_for_statement() {
+    let result = lex("for (int i = 0; i < 10; i = i + 1) { }");
+    assert!(result.is_ok());
+    if let Ok(tokens) = result {
+        assert_eq!(
+            tokens,
+            vec![
+                Token::For,
+                Token::OpenParen,
+                Token::Int,
+                Token::Identifier("i".to_string()),
+                Token::Assignment,
+                Token::Constant("0".to_string()),
+                Token::Semicolon,
+                Token::Identifier("i".to_string()),
+                Token::LessThan,
+                Token::Constant("10".to_string()),
+                Token::Semicolon,
+                Token::Identifier("i".to_string()),
+                Token::Assignment,
+                Token::Identifier("i".to_string()),
+                Token::Add,
+                Token::Constant("1".to_string()),
+                Token::CloseParen,
+                Token::OpenBrace,
+                Token::CloseBrace
+            ]
+        );
+    }
+}
+
+#[test]
+fn test_break_statement() {
+    let result = lex("break;");
+    assert!(result.is_ok());
+    if let Ok(tokens) = result {
+        assert_eq!(tokens, vec![Token::Break, Token::Semicolon]);
+    }
+}
+
+#[test]
+fn test_continue_statement() {
+    let result = lex("continue;");
+    assert!(result.is_ok());
+    if let Ok(tokens) = result {
+        assert_eq!(tokens, vec![Token::Continue, Token::Semicolon]);
+    }
+}
+
+#[test]
+fn test_loop_keyword_not_identifier() {
+    // 'whileloop' should be identifier, not 'while' + 'loop'
+    let result = lex("whileloop");
+    assert!(result.is_ok());
+    if let Ok(tokens) = result {
+        assert_eq!(tokens, vec![Token::Identifier("whileloop".to_string())]);
+    }
+}
+
+#[test]
+fn test_for_identifier_not_keyword() {
+    // 'format' should be identifier, not 'for' + 'mat'
+    let result = lex("format");
+    assert!(result.is_ok());
+    if let Ok(tokens) = result {
+        assert_eq!(tokens, vec![Token::Identifier("format".to_string())]);
+    }
+}
