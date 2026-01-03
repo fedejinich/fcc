@@ -1,6 +1,7 @@
 /*!
 This file covers: Lowering C AST to Tacky IR (tacky/from.rs).
-Tests control flow generation for if/else, ternary, short-circuit AND/OR.
+Tests control flow generation for if/else, ternary, short-circuit AND/OR,
+while, do-while, for loops, break, and continue statements.
 Does NOT cover: exact instruction sequences (too fragile), optimization passes.
 Suggestions: add property tests for instruction count bounds.
 */
@@ -475,4 +476,304 @@ fn test_tacky_gen_declaration_without_init() {
     // Should still work and have copies for assignment
     assert!(has_copy(instructions), "Assignment should generate Copy");
     assert!(has_return(instructions), "Should have return");
+}
+
+// =============================================================================
+// WHILE LOOPS
+// =============================================================================
+
+#[test]
+fn test_tacky_gen_while_loop_basic() {
+    let src = "int main(void){ int x = 0; while (x) x = 1; return x; }";
+    let tacky = lower_to_tacky(src).expect("should lower");
+
+    let instructions = &tacky.function_definition.instructions;
+
+    // While should generate: Label (continue), JumpIfZero (to break), body, Jump (to continue), Label (break)
+    assert!(has_label(instructions), "While should generate labels");
+    assert!(
+        has_jump_if_zero(instructions),
+        "While should use JumpIfZero for condition"
+    );
+    assert!(
+        has_jump(instructions),
+        "While should have unconditional jump back to start"
+    );
+
+    // Should have at least 2 labels (continue and break)
+    let label_count = instructions
+        .iter()
+        .filter(|i| matches!(i, TackyInstruction::Label(_)))
+        .count();
+    assert!(
+        label_count >= 2,
+        "While should have at least 2 labels (continue, break), found {}",
+        label_count
+    );
+}
+
+#[test]
+fn test_tacky_gen_while_with_break() {
+    let src = "int main(void){ while (1) break; return 0; }";
+    let tacky = lower_to_tacky(src).expect("should lower");
+
+    let instructions = &tacky.function_definition.instructions;
+
+    // Break generates a Jump instruction
+    let jump_count = instructions
+        .iter()
+        .filter(|i| matches!(i, TackyInstruction::Jump(_)))
+        .count();
+    assert!(
+        jump_count >= 2,
+        "While with break should have at least 2 jumps (loop back + break)"
+    );
+}
+
+#[test]
+fn test_tacky_gen_while_with_continue() {
+    let src = "int main(void){ int x = 0; while (x) { continue; x = 1; } return 0; }";
+    let tacky = lower_to_tacky(src).expect("should lower");
+
+    let instructions = &tacky.function_definition.instructions;
+
+    // Continue generates a Jump instruction to continue label
+    let jump_count = instructions
+        .iter()
+        .filter(|i| matches!(i, TackyInstruction::Jump(_)))
+        .count();
+    assert!(
+        jump_count >= 2,
+        "While with continue should have at least 2 jumps"
+    );
+}
+
+// =============================================================================
+// DO-WHILE LOOPS
+// =============================================================================
+
+#[test]
+fn test_tacky_gen_do_while_basic() {
+    let src = "int main(void){ int x = 0; do x = 1; while (x); return x; }";
+    let tacky = lower_to_tacky(src).expect("should lower");
+
+    let instructions = &tacky.function_definition.instructions;
+
+    // Do-while should generate: Label (start), body, Label (continue), JumpIfNotZero (to start), Label (break)
+    assert!(has_label(instructions), "Do-while should generate labels");
+    assert!(
+        has_jump_if_not_zero(instructions),
+        "Do-while should use JumpIfNotZero for condition"
+    );
+
+    // Should have at least 3 labels (start, continue, break)
+    let label_count = instructions
+        .iter()
+        .filter(|i| matches!(i, TackyInstruction::Label(_)))
+        .count();
+    assert!(
+        label_count >= 3,
+        "Do-while should have at least 3 labels, found {}",
+        label_count
+    );
+}
+
+#[test]
+fn test_tacky_gen_do_while_with_break() {
+    let src = "int main(void){ do break; while (1); return 0; }";
+    let tacky = lower_to_tacky(src).expect("should lower");
+
+    let instructions = &tacky.function_definition.instructions;
+
+    assert!(
+        has_jump(instructions),
+        "Do-while with break should have jump"
+    );
+    assert!(has_label(instructions), "Do-while should have labels");
+}
+
+#[test]
+fn test_tacky_gen_do_while_with_continue() {
+    let src = "int main(void){ int x = 1; do { continue; x = 0; } while (x); return 0; }";
+    let tacky = lower_to_tacky(src).expect("should lower");
+
+    let instructions = &tacky.function_definition.instructions;
+
+    // Continue in do-while jumps to the continue label (before condition check)
+    assert!(
+        has_jump(instructions),
+        "Do-while with continue should have jumps"
+    );
+}
+
+// =============================================================================
+// FOR LOOPS
+// =============================================================================
+
+#[test]
+fn test_tacky_gen_for_loop_full() {
+    let src = "int main(void){ for (int i = 0; i; i) return i; return 0; }";
+    let tacky = lower_to_tacky(src).expect("should lower");
+
+    let instructions = &tacky.function_definition.instructions;
+
+    // For should generate: init, Label (start), cond check, JumpIfZero (to break), body, Label (continue), post, Jump (to start), Label (break)
+    assert!(has_label(instructions), "For should generate labels");
+    assert!(
+        has_jump_if_zero(instructions),
+        "For should use JumpIfZero for condition"
+    );
+    assert!(has_jump(instructions), "For should have unconditional jump");
+    assert!(has_copy(instructions), "For should have copies for init");
+}
+
+#[test]
+fn test_tacky_gen_for_loop_empty_init() {
+    let src = "int main(void){ int i = 0; for (; i; i) return i; return 0; }";
+    let tacky = lower_to_tacky(src).expect("should lower");
+
+    let instructions = &tacky.function_definition.instructions;
+
+    assert!(has_label(instructions), "For should generate labels");
+    assert!(has_jump_if_zero(instructions), "For should check condition");
+}
+
+#[test]
+fn test_tacky_gen_for_loop_empty_cond() {
+    let src = "int main(void){ for (int i = 0;; i) { break; } return 0; }";
+    let tacky = lower_to_tacky(src).expect("should lower");
+
+    let instructions = &tacky.function_definition.instructions;
+
+    // Without condition, there's no JumpIfZero for the condition itself
+    assert!(has_label(instructions), "For should generate labels");
+    assert!(has_jump(instructions), "For should have jumps");
+}
+
+#[test]
+fn test_tacky_gen_for_loop_empty_post() {
+    let src = "int main(void){ for (int i = 0; i;) { break; } return 0; }";
+    let tacky = lower_to_tacky(src).expect("should lower");
+
+    let instructions = &tacky.function_definition.instructions;
+
+    assert!(has_label(instructions), "For should generate labels");
+}
+
+#[test]
+fn test_tacky_gen_for_loop_infinite() {
+    let src = "int main(void){ for (;;) break; return 0; }";
+    let tacky = lower_to_tacky(src).expect("should lower");
+
+    let instructions = &tacky.function_definition.instructions;
+
+    // Infinite for loop still has labels and jump structure
+    assert!(has_label(instructions), "Infinite for should have labels");
+    assert!(has_jump(instructions), "Infinite for should have jumps");
+}
+
+#[test]
+fn test_tacky_gen_for_with_break() {
+    let src = "int main(void){ for (int i = 0; i; i) break; return 0; }";
+    let tacky = lower_to_tacky(src).expect("should lower");
+
+    let instructions = &tacky.function_definition.instructions;
+
+    // Break in for jumps to break label
+    let jump_count = instructions
+        .iter()
+        .filter(|i| matches!(i, TackyInstruction::Jump(_)))
+        .count();
+    assert!(jump_count >= 2, "For with break should have multiple jumps");
+}
+
+#[test]
+fn test_tacky_gen_for_with_continue() {
+    let src = "int main(void){ for (int i = 0; i; i) continue; return 0; }";
+    let tacky = lower_to_tacky(src).expect("should lower");
+
+    let instructions = &tacky.function_definition.instructions;
+
+    // Continue in for jumps to continue label (before post expression)
+    let jump_count = instructions
+        .iter()
+        .filter(|i| matches!(i, TackyInstruction::Jump(_)))
+        .count();
+    assert!(
+        jump_count >= 2,
+        "For with continue should have multiple jumps"
+    );
+}
+
+#[test]
+fn test_tacky_gen_for_init_with_expression() {
+    let src = "int main(void){ int i; for (i = 0; i; i) break; return 0; }";
+    let tacky = lower_to_tacky(src).expect("should lower");
+
+    let instructions = &tacky.function_definition.instructions;
+
+    // For with expression init should generate copy
+    assert!(
+        has_copy(instructions),
+        "For with expression init should generate copy"
+    );
+}
+
+// =============================================================================
+// NESTED LOOPS
+// =============================================================================
+
+#[test]
+fn test_tacky_gen_nested_while_loops() {
+    let src = "int main(void){ while (1) while (1) break; return 0; }";
+    let tacky = lower_to_tacky(src).expect("should lower");
+
+    let instructions = &tacky.function_definition.instructions;
+
+    // Nested loops should have multiple sets of labels
+    let label_count = instructions
+        .iter()
+        .filter(|i| matches!(i, TackyInstruction::Label(_)))
+        .count();
+    assert!(
+        label_count >= 4,
+        "Nested while loops should have at least 4 labels, found {}",
+        label_count
+    );
+}
+
+#[test]
+fn test_tacky_gen_nested_for_loops() {
+    let src = "int main(void){ for (int i = 0; i; i) for (int j = 0; j; j) break; return 0; }";
+    let tacky = lower_to_tacky(src).expect("should lower");
+
+    let instructions = &tacky.function_definition.instructions;
+
+    let label_count = instructions
+        .iter()
+        .filter(|i| matches!(i, TackyInstruction::Label(_)))
+        .count();
+    assert!(
+        label_count >= 4,
+        "Nested for loops should have multiple labels, found {}",
+        label_count
+    );
+}
+
+#[test]
+fn test_tacky_gen_break_in_inner_loop() {
+    let src = "int main(void){ while (1) { while (1) break; break; } return 0; }";
+    let tacky = lower_to_tacky(src).expect("should lower");
+
+    let instructions = &tacky.function_definition.instructions;
+
+    // Each break should jump to its own loop's break label
+    let jump_count = instructions
+        .iter()
+        .filter(|i| matches!(i, TackyInstruction::Jump(_)))
+        .count();
+    assert!(
+        jump_count >= 4,
+        "Nested loops with breaks should have multiple jumps"
+    );
 }
