@@ -23,9 +23,8 @@ impl From<TackyFunctionDefinition> for AsmFunctionDefinition {
             name: AsmIdentifier::from(tacky_function_definition.name),
             instructions: tacky_function_definition
                 .instructions
-                .iter()
-                // TODO: remove clone
-                .flat_map(|i| AsmInstruction::from(i.clone()))
+                .into_iter()
+                .flat_map(AsmInstruction::from)
                 .collect::<Vec<AsmInstruction>>(),
         }
     }

@@ -96,50 +96,41 @@ impl FolderAsm for InstructionFixer {
         use AsmOperand::*;
 
         let result = match instruction {
-            // x86_64: mov cannot have both operands in memory
-            Mov(Stack(src), Stack(dst)) => {
-                vec![
-                    Comment("fix: mov mem,mem -> mov mem,R10 + mov R10,mem".to_string()),
-                    Mov(Stack(src), Register(Reg::R10)),
-                    Mov(Register(Reg::R10), Stack(dst)),
-                ]
+            // Generic mem-mem patterns (use helpers)
+            Mov(Stack(src), Stack(dst)) => fix_mov_mem_mem(src, dst),
+            Binary(bin_op @ (Add | Sub), Stack(src), Stack(dst)) => {
+                fix_binary_mem_mem(bin_op, src, dst)
             }
-            // x86_64: idiv cannot take an immediate operand
+            Binary(bin_op @ (BitwiseAnd | BitwiseOr | BitwiseXor), Stack(src), Stack(dst)) => {
+                fix_binary_mem_mem(bin_op, src, dst)
+            }
+            Cmp(Stack(op_1), Stack(op_2)) => fix_cmp_mem_mem(op_1, op_2),
+
+            // Special case: idiv cannot take an immediate operand
             Idiv(Imm(num)) => vec![
                 Comment("fix: idiv imm -> mov imm,R10 + idiv R10".to_string()),
                 Mov(Imm(num), Register(Reg::R10)),
                 Idiv(Register(Reg::R10)),
             ],
-            // x86_64: add/sub cannot have both operands in memory
-            Binary(bin_op @ (Add | Sub), Stack(src), Stack(dst)) => vec![
-                Comment("fix: add/sub mem,mem -> mov mem,R10 + op R10,mem".to_string()),
-                Mov(Stack(src), Register(Reg::R10)),
-                Binary(bin_op, Register(Reg::R10), Stack(dst)),
-            ],
-            // x86_64: imul destination must be a register
+
+            // Special case: imul destination must be a register (uses R11)
             Binary(Mult, src, Stack(dst)) => {
                 vec![
-                    Comment("fix: imul src,mem -> mov mem,R11 + imul src,R11 + mov R11,mem".to_string()),
+                    Comment(
+                        "fix: imul src,mem -> mov mem,R11 + imul src,R11 + mov R11,mem".to_string(),
+                    ),
                     Mov(Stack(dst), Register(Reg::R11)),
                     Binary(Mult, src, Register(Reg::R11)),
                     Mov(Register(Reg::R11), Stack(dst)),
                 ]
             }
-            // x86_64: bitwise ops cannot have both operands in memory
-            Binary(bin_op @ (BitwiseAnd | BitwiseOr | BitwiseXor), Stack(src), Stack(dst)) => {
-                vec![
-                    Comment("fix: and/or/xor mem,mem -> mov mem,R10 + op R10,mem".to_string()),
-                    Mov(Stack(src), Register(Reg::R10)),
-                    Binary(bin_op, Register(Reg::R10), Stack(dst)),
-                ]
-            }
-            // x86_64: shift count must be in CL register
+
+            // Special case: shift count must be in CL register
             Binary(bin_op @ (LeftShift | RightShift), Register(Reg::R10), Stack(dst)) => vec![
                 Comment("fix: shl/shr R10,mem -> mov R10,CX + op CL,mem".to_string()),
                 Mov(Register(Reg::R10), Register(Reg::CX)),
                 Binary(bin_op, Register(Reg::CL), Stack(dst)),
             ],
-            // x86_64: shift count must be in CL register
             Binary(bin_op @ (LeftShift | RightShift), Stack(src), Stack(dst)) => {
                 vec![
                     Comment("fix: shl/shr mem,mem -> mov mem,CX + op CL,mem".to_string()),
@@ -147,13 +138,8 @@ impl FolderAsm for InstructionFixer {
                     Binary(bin_op, Register(Reg::CL), Stack(dst)),
                 ]
             }
-            // x86_64: cmp cannot have both operands in memory
-            Cmp(Stack(op_1), Stack(op_2)) => vec![
-                Comment("fix: cmp mem,mem -> mov mem,R10 + cmp R10,mem".to_string()),
-                Mov(Stack(op_1), Register(Reg::R10)),
-                Cmp(Register(Reg::R10), Stack(op_2)),
-            ],
-            // x86_64: cmp second operand cannot be an immediate
+
+            // Special case: cmp second operand cannot be an immediate (uses R11)
             Cmp(op_1, Imm(constant)) => {
                 vec![
                     Comment("fix: cmp op,imm -> mov imm,R11 + cmp op,R11".to_string()),
@@ -161,9 +147,43 @@ impl FolderAsm for InstructionFixer {
                     Cmp(op_1, Register(Reg::R11)),
                 ]
             }
+
             other => vec![other],
         };
 
         Ok(result)
     }
 }
+
+/// Splits a memory-to-memory mov into two instructions using R10 as scratch.
+/// Pattern: `mov mem, mem` → `mov mem, R10` + `mov R10, mem`
+fn fix_mov_mem_mem(src: i32, dst: i32) -> Vec<AsmInstruction> {
+    vec![
+        AsmInstruction::Comment("fix: mov mem,mem -> mov mem,R10 + mov R10,mem".to_string()),
+        AsmInstruction::Mov(AsmOperand::Stack(src), AsmOperand::Register(Reg::R10)),
+        AsmInstruction::Mov(AsmOperand::Register(Reg::R10), AsmOperand::Stack(dst)),
+    ]
+}
+
+/// Splits a memory-to-memory binary op into two instructions using R10 as scratch.
+/// Pattern: `op mem, mem` → `mov mem, R10` + `op R10, mem`
+/// Used for: add, sub, and, or, xor
+fn fix_binary_mem_mem(op: AsmBinaryOperator, src: i32, dst: i32) -> Vec<AsmInstruction> {
+    vec![
+        AsmInstruction::Comment("fix: op mem,mem -> mov mem,R10 + op R10,mem".to_string()),
+        AsmInstruction::Mov(AsmOperand::Stack(src), AsmOperand::Register(Reg::R10)),
+        AsmInstruction::Binary(op, AsmOperand::Register(Reg::R10), AsmOperand::Stack(dst)),
+    ]
+}
+
+/// Splits a memory-to-memory cmp into two instructions using R10 as scratch.
+/// Pattern: `cmp mem, mem` → `mov mem, R10` + `cmp R10, mem`
+fn fix_cmp_mem_mem(op_1: i32, op_2: i32) -> Vec<AsmInstruction> {
+    vec![
+        AsmInstruction::Comment("fix: cmp mem,mem -> mov mem,R10 + cmp R10,mem".to_string()),
+        AsmInstruction::Mov(AsmOperand::Stack(op_1), AsmOperand::Register(Reg::R10)),
+        AsmInstruction::Cmp(AsmOperand::Register(Reg::R10), AsmOperand::Stack(op_2)),
+    ]
+}
+
+
