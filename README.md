@@ -36,11 +36,11 @@ bash scripts/tests.sh --unit # runs unit tests
 # or
 bash scripts/tests.sh --compliance # runs compliance tests
 # or
-bash scripts/tests.sh --compliance --chapter 7 # runs compliance tests starting from chapter 7
+bash scripts/tests.sh --compliance --chapter 8 # runs compliance tests starting from chapter 8
 
 ```
 
 ## Progress
 
-- [x] Chapter 1-7: Compound statements
-- [ ] Chapter 8: Loops
+- [x] Chapter 1-8: Loops
+- [ ] Chapter 9: Functions
