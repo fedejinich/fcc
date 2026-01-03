@@ -21,7 +21,7 @@ impl From<Program> for TackyProgram {
         trace!("[tacky] <program>");
 
         TackyProgram::new(TackyFunctionDefinition::from(
-            program.function_definition().clone(),
+            program.into_function_definition(),
         ))
     }
 }
@@ -30,8 +30,10 @@ impl From<FunctionDefinition> for TackyFunctionDefinition {
     fn from(fd: FunctionDefinition) -> Self {
         trace!("[tacky] <function> {}", fd.name().value());
 
+        let (name, body) = fd.into_parts();
+
         let mut builder = TackyBuilder::new();
-        emit_block(fd.body().clone(), &mut builder);
+        emit_block(body, &mut builder);
 
         // add return 0 as last instruction (it's gonna be fixed in Part III)
         builder.emit_return(TackyValue::Constant(0));
@@ -39,14 +41,14 @@ impl From<FunctionDefinition> for TackyFunctionDefinition {
         let instructions = builder.finish();
         info!("[tacky] {} instructions", instructions.len());
 
-        TackyFunctionDefinition::new(TackyIdentifier::from(fd.name().clone()), instructions)
+        TackyFunctionDefinition::new(TackyIdentifier::from(name), instructions)
     }
 }
 
 impl From<Identifier> for TackyIdentifier {
     fn from(value: Identifier) -> Self {
         TackyIdentifier {
-            value: value.value().to_string(),
+            value: value.into_value(),
         }
     }
 }
@@ -56,7 +58,7 @@ impl From<Identifier> for TackyIdentifier {
 // ============================================================================
 
 fn emit_block(block: Block, builder: &mut TackyBuilder) {
-    for item in block.block_items().clone() {
+    for item in block.into_block_items() {
         emit_block_item(item, builder);
     }
 }
@@ -191,12 +193,14 @@ fn emit_statement(statement: Statement, builder: &mut TackyBuilder) {
 }
 
 fn emit_declaration(declaration: Declaration, builder: &mut TackyBuilder) {
-    let Some(initializer) = declaration.initializer().cloned() else {
+    let (name, initializer) = declaration.into_parts();
+
+    let Some(initializer) = initializer else {
         return;
     };
 
     let v = emit_expr(initializer, builder);
-    let dst = TackyValue::Var(TackyIdentifier::from(declaration.name().clone()));
+    let dst = TackyValue::Var(TackyIdentifier::from(name));
     builder.emit_copy(v, dst);
 }
 
