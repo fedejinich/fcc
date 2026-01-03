@@ -7,12 +7,12 @@ pub struct AsmProgram {
 
 #[derive(Clone)]
 pub struct AsmFunctionDefinition {
-    pub name: AsmIdetifier,
+    pub name: AsmIdentifier,
     pub instructions: Vec<AsmInstruction>,
 }
 
 #[derive(Clone, Hash, Eq, PartialEq, Debug)]
-pub struct AsmIdetifier {
+pub struct AsmIdentifier {
     pub value: String,
 }
 
@@ -25,10 +25,10 @@ pub enum AsmInstruction {
     Cmp(AsmOperand, AsmOperand),
     Idiv(AsmOperand),
     Cdq,
-    Jmp(AsmIdetifier),
-    JmpCC(AsmCondCode, AsmIdetifier),
+    Jmp(AsmIdentifier),
+    JmpCC(AsmCondCode, AsmIdentifier),
     SetCC(AsmCondCode, AsmOperand),
-    Label(AsmIdetifier),
+    Label(AsmIdentifier),
     AllocateStack(i32),
     Ret,
 }
@@ -57,7 +57,7 @@ pub enum AsmBinaryOperator {
 pub enum AsmOperand {
     Imm(i32),
     Register(Reg),
-    Pseudo(AsmIdetifier),
+    Pseudo(AsmIdentifier),
     Stack(i32),
 }
 
@@ -90,7 +90,7 @@ impl AsmProgram {
 }
 
 impl AsmFunctionDefinition {
-    pub fn new(name: AsmIdetifier, instructions: Vec<AsmInstruction>) -> Self {
+    pub fn new(name: AsmIdentifier, instructions: Vec<AsmInstruction>) -> Self {
         AsmFunctionDefinition { name, instructions }
     }
 }

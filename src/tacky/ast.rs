@@ -1,9 +1,4 @@
-//! This module contains  tacky AST which is an intermediate
-//! representation of the source code.
-
-use std::sync::atomic::AtomicUsize;
-
-use crate::{c_ast::ast::Identifier, common::util::temporary_name};
+//! This module contains the TACKY AST, an intermediate representation of the source code.
 
 pub struct TackyProgram {
     pub function_definition: TackyFunctionDefinition,
@@ -70,25 +65,6 @@ pub enum TackyBinaryOperator {
     LessThanOrEqual,
 }
 
-static COUNTER: AtomicUsize = AtomicUsize::new(0);
-
-impl TackyIdentifier {
-    /// Creates a new identifier with the given value
-    /// note: it increments the counter
-    pub fn new(value: &str) -> TackyIdentifier {
-        TackyIdentifier {
-            value: temporary_name(value, &COUNTER),
-        }
-    }
-
-    /// Creates a new identifier with the given prefix and the label's value
-    /// note: it does not increment the counter
-    pub fn with_prefix(prefix: &str, label: Identifier) -> TackyIdentifier {
-        let id = prefix.to_string() + &label.value();
-        TackyIdentifier { value: id }
-        // Self::new(&id)
-    }
-}
 
 impl TackyProgram {
     pub fn new(function_definition: TackyFunctionDefinition) -> Self {
@@ -101,5 +77,15 @@ impl TackyProgram {
 impl TackyFunctionDefinition {
     pub fn new(name: TackyIdentifier, instructions: Vec<TackyInstruction>) -> Self {
         TackyFunctionDefinition { name, instructions }
+    }
+}
+
+impl TackyIdentifier {
+    /// Creates a new identifier with the given value.
+    /// Note: For unique names in lowering, use `TackyBuilder::fresh_temp` or `fresh_label` instead.
+    pub fn new(value: &str) -> Self {
+        TackyIdentifier {
+            value: value.to_string(),
+        }
     }
 }

@@ -110,6 +110,11 @@ impl Program {
     pub fn function_definition(&self) -> &FunctionDefinition {
         &self.0
     }
+
+    /// Consumes the program and returns the function definition.
+    pub fn into_function_definition(self) -> FunctionDefinition {
+        self.0
+    }
 }
 
 impl Block {
@@ -126,6 +131,11 @@ impl Block {
     pub fn block_items(&self) -> &Vec<BlockItem> {
         &self.0
     }
+
+    /// Consumes the block and returns the block items.
+    pub fn into_block_items(self) -> Vec<BlockItem> {
+        self.0
+    }
 }
 
 impl FunctionDefinition {
@@ -140,6 +150,11 @@ impl FunctionDefinition {
     pub fn body(&self) -> &Block {
         &self.1
     }
+
+    /// Consumes the function definition and returns (name, body).
+    pub fn into_parts(self) -> (Identifier, Block) {
+        (self.0, self.1)
+    }
 }
 
 impl Identifier {
@@ -149,6 +164,11 @@ impl Identifier {
 
     pub fn value(&self) -> &str {
         &self.0
+    }
+
+    /// Consumes the identifier and returns the inner string.
+    pub fn into_value(self) -> String {
+        self.0
     }
 
     /// Returns true if the identifier is a dummy label
@@ -174,6 +194,11 @@ impl Declaration {
 
     pub fn initializer(&self) -> Option<&Expression> {
         self.1.as_ref()
+    }
+
+    /// Consumes the declaration and returns (name, initializer).
+    pub fn into_parts(self) -> (Identifier, Option<Expression>) {
+        (self.0, self.1)
     }
 
     pub fn is_declaration(token: Option<&&Token>) -> bool {

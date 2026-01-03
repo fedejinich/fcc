@@ -1,5 +1,5 @@
 use fcc::codegen::x64::ast::{
-    AsmBinaryOperator, AsmCondCode, AsmFunctionDefinition, AsmIdetifier, AsmInstruction,
+    AsmBinaryOperator, AsmCondCode, AsmFunctionDefinition, AsmIdentifier, AsmInstruction,
     AsmOperand, AsmProgram, AsmUnaryOperator, Reg,
 };
 use fcc::codegen::x64::fixer::instruction_fix::InstructionFixer;
@@ -20,7 +20,7 @@ fn test_basic_folder_trait() {
     }
 
     let folder = BasicFolder::create();
-    let identifier = AsmIdetifier {
+    let identifier = AsmIdentifier {
         value: "test".to_string(),
     };
     let instructions = vec![AsmInstruction::Ret];
@@ -65,17 +65,17 @@ fn test_folder_preserves_all_instruction_types() {
         AsmInstruction::Cmp(AsmOperand::Register(Reg::AX), AsmOperand::Imm(0)),
         AsmInstruction::Idiv(AsmOperand::Register(Reg::DX)),
         AsmInstruction::Cdq,
-        AsmInstruction::Jmp(AsmIdetifier {
+        AsmInstruction::Jmp(AsmIdentifier {
             value: "label1".to_string(),
         }),
         AsmInstruction::JmpCC(
             AsmCondCode::E,
-            AsmIdetifier {
+            AsmIdentifier {
                 value: "label2".to_string(),
             },
         ),
         AsmInstruction::SetCC(AsmCondCode::NE, AsmOperand::Register(Reg::CL)),
-        AsmInstruction::Label(AsmIdetifier {
+        AsmInstruction::Label(AsmIdentifier {
             value: "label1".to_string(),
         }),
         AsmInstruction::AllocateStack(16),
@@ -85,7 +85,7 @@ fn test_folder_preserves_all_instruction_types() {
     let instructions_clone = instructions.clone();
 
     let function = AsmFunctionDefinition::new(
-        AsmIdetifier {
+        AsmIdentifier {
             value: "main".to_string(),
         },
         instructions,
@@ -163,7 +163,7 @@ fn test_folder_with_all_operand_types() {
         AsmOperand::Register(Reg::CL),
         AsmOperand::Register(Reg::R10),
         AsmOperand::Register(Reg::R11),
-        AsmOperand::Pseudo(AsmIdetifier {
+        AsmOperand::Pseudo(AsmIdentifier {
             value: "var1".to_string(),
         }),
         AsmOperand::Stack(-4),
@@ -305,7 +305,7 @@ fn test_instruction_fixer_basic_functionality() {
     ];
 
     let function = AsmFunctionDefinition::new(
-        AsmIdetifier {
+        AsmIdentifier {
             value: "main".to_string(),
         },
         instructions,
@@ -323,7 +323,7 @@ fn test_instruction_fixer_basic_functionality() {
 
         match &fixed_function.instructions[1] {
             AsmInstruction::Comment(comment) => {
-                assert!(comment.contains("splited mov"));
+                assert!(comment.contains("fix: mov mem,mem"));
             }
             _ => panic!("Expected Comment instruction"),
         }
@@ -335,7 +335,7 @@ fn test_instruction_fixer_idiv_immediate() {
     let instructions = vec![AsmInstruction::Idiv(AsmOperand::Imm(42))];
 
     let function = AsmFunctionDefinition::new(
-        AsmIdetifier {
+        AsmIdentifier {
             value: "main".to_string(),
         },
         instructions,
@@ -348,7 +348,7 @@ fn test_instruction_fixer_idiv_immediate() {
 
         match &fixed_function.instructions[1] {
             AsmInstruction::Comment(comment) => {
-                assert!(comment.contains("splited idiv"));
+                assert!(comment.contains("fix: idiv imm"));
             }
             _ => panic!("Expected Comment instruction"),
         }
@@ -370,12 +370,12 @@ fn test_pseudo_register_replacer_basic_functionality() {
     let instructions = vec![
         AsmInstruction::Mov(
             AsmOperand::Imm(42),
-            AsmOperand::Pseudo(AsmIdetifier {
+            AsmOperand::Pseudo(AsmIdentifier {
                 value: "var1".to_string(),
             }),
         ),
         AsmInstruction::Mov(
-            AsmOperand::Pseudo(AsmIdetifier {
+            AsmOperand::Pseudo(AsmIdentifier {
                 value: "var1".to_string(),
             }),
             AsmOperand::Register(Reg::AX),
@@ -384,7 +384,7 @@ fn test_pseudo_register_replacer_basic_functionality() {
     ];
 
     let function = AsmFunctionDefinition::new(
-        AsmIdetifier {
+        AsmIdentifier {
             value: "main".to_string(),
         },
         instructions,
@@ -411,22 +411,22 @@ fn test_pseudo_register_replacer_multiple_variables() {
     let instructions = vec![
         AsmInstruction::Mov(
             AsmOperand::Imm(1),
-            AsmOperand::Pseudo(AsmIdetifier {
+            AsmOperand::Pseudo(AsmIdentifier {
                 value: "var1".to_string(),
             }),
         ),
         AsmInstruction::Mov(
             AsmOperand::Imm(2),
-            AsmOperand::Pseudo(AsmIdetifier {
+            AsmOperand::Pseudo(AsmIdentifier {
                 value: "var2".to_string(),
             }),
         ),
         AsmInstruction::Binary(
             AsmBinaryOperator::Add,
-            AsmOperand::Pseudo(AsmIdetifier {
+            AsmOperand::Pseudo(AsmIdentifier {
                 value: "var1".to_string(),
             }),
-            AsmOperand::Pseudo(AsmIdetifier {
+            AsmOperand::Pseudo(AsmIdentifier {
                 value: "var2".to_string(),
             }),
         ),
@@ -434,7 +434,7 @@ fn test_pseudo_register_replacer_multiple_variables() {
     ];
 
     let function = AsmFunctionDefinition::new(
-        AsmIdetifier {
+        AsmIdentifier {
             value: "main".to_string(),
         },
         instructions,
@@ -479,7 +479,7 @@ fn test_folder_preserves_identifiers() {
     }
 
     let mut folder = IdentityFolder::create();
-    let original_id = AsmIdetifier {
+    let original_id = AsmIdentifier {
         value: "test_identifier_123".to_string(),
     };
 

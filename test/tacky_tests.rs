@@ -5,15 +5,18 @@ use fcc::tacky::ast::{
 
 #[test]
 fn test_tacky_identifier_creation() {
+    // TackyIdentifier::new is now a simple constructor (no counter)
+    // For unique names, use TackyBuilder::fresh_temp/fresh_label
     let id1 = TackyIdentifier::new("test");
     let id2 = TackyIdentifier::new("test");
 
-    assert!(id1.value.starts_with("test."));
-    assert!(id2.value.starts_with("test."));
-    assert_ne!(id1.value, id2.value);
+    assert_eq!(id1.value, "test");
+    assert_eq!(id2.value, "test");
+    // Same name is fine for direct construction
+    assert_eq!(id1.value, id2.value);
 
     let id3 = TackyIdentifier::new("main");
-    assert!(id3.value.starts_with("main."));
+    assert_eq!(id3.value, "main");
 }
 
 #[test]
@@ -46,7 +49,7 @@ fn test_tacky_program_creation() {
     let function_def = TackyFunctionDefinition::new(name, instructions);
     let program = TackyProgram::new(function_def);
 
-    assert!(program.function_definition.name.value.starts_with("main."));
+    assert_eq!(program.function_definition.name.value, "main");
     assert_eq!(program.function_definition.instructions.len(), 1);
 
     if let TackyInstruction::Return(TackyValue::Constant(val)) =
@@ -64,7 +67,7 @@ fn test_tacky_function_definition_creation() {
     let instructions = vec![TackyInstruction::Return(TackyValue::Constant(42))];
     let func_def = TackyFunctionDefinition::new(name, instructions);
 
-    assert!(func_def.name.value.starts_with("func."));
+    assert_eq!(func_def.name.value, "func");
     assert_eq!(func_def.instructions.len(), 1);
 }
 
@@ -165,7 +168,7 @@ fn test_tacky_instruction_jump() {
     let jump_inst = TackyInstruction::Jump(label);
 
     if let TackyInstruction::Jump(lbl) = jump_inst {
-        assert!(lbl.value.starts_with("label1."));
+        assert_eq!(lbl.value, "label1");
     } else {
         panic!("Expected jump instruction");
     }
@@ -183,8 +186,7 @@ fn test_tacky_instruction_jump_if_zero() {
         } else {
             panic!("Expected variable value");
         }
-        println!("{}", lbl.value);
-        assert!(lbl.value.starts_with("zero_label."));
+        assert_eq!(lbl.value, "zero_label");
     } else {
         panic!("Expected jump if zero instruction");
     }
@@ -202,7 +204,7 @@ fn test_tacky_instruction_jump_if_not_zero() {
         } else {
             panic!("Expected constant value");
         }
-        assert!(lbl.value.starts_with("nonzero_label."));
+        assert_eq!(lbl.value, "nonzero_label");
     } else {
         panic!("Expected jump if not zero instruction");
     }
@@ -214,7 +216,7 @@ fn test_tacky_instruction_label() {
     let label_inst = TackyInstruction::Label(label);
 
     if let TackyInstruction::Label(lbl) = label_inst {
-        assert!(lbl.value.starts_with("my_label."));
+        assert_eq!(lbl.value, "my_label");
     } else {
         panic!("Expected label instruction");
     }
