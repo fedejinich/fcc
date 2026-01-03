@@ -34,7 +34,7 @@ cd writing-a-c-compiler-tests/
 
 # Default chapter if not provided
 if [[ -z "$CHAPTER" ]]; then
-  CHAPTER=7
+  CHAPTER=8
 fi
 
 echo ""
