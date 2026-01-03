@@ -7,7 +7,50 @@ use crate::{
     common::folder::FolderAsm,
 };
 
-/// This pass replaces pseudoregisters with stack offsets
+/// This pass replaces pseudo-registers with stack offsets.
+///
+/// # Overview
+///
+/// After lowering TACKY to ASM, the code uses "pseudo-registers" (`AsmOperand::Pseudo`)
+/// to represent variables and temporaries. x86_64 has a limited number of registers,
+/// so this pass allocates stack slots for each pseudo-register.
+///
+/// # Stack Layout
+///
+/// Each pseudo-register gets a unique 4-byte slot on the stack. The stack grows
+/// downward (toward lower addresses), so offsets are negative relative to RBP:
+///
+/// ```text
+///     ┌─────────────────┐  Higher addresses
+///     │  Return addr    │
+///     ├─────────────────┤  ← RBP (frame pointer)
+///     │  var_1          │  -4(%rbp)
+///     ├─────────────────┤
+///     │  var_2          │  -8(%rbp)
+///     ├─────────────────┤
+///     │  tmp.0          │  -12(%rbp)
+///     ├─────────────────┤
+///     │  ...            │
+///     └─────────────────┘  ← RSP (stack pointer)
+/// ```
+///
+/// # Pipeline Contract
+///
+/// This pass produces two outputs:
+/// 1. **Transformed instructions**: All `Pseudo(id)` operands replaced with `Stack(offset)`
+/// 2. **`last_offset`**: The total stack space needed (used by `InstructionFixer` to emit `AllocateStack`)
+///
+/// The `InstructionFixer` pass **must** run after this pass and use `last_offset`
+/// to allocate the correct amount of stack space.
+///
+/// # Allocation Strategy
+///
+/// - First pseudo-register seen → offset -4
+/// - Second pseudo-register → offset -8
+/// - And so on...
+/// - `last_offset` is the next available offset (e.g., -16 if 3 variables allocated)
+///
+/// Note: Currently allocates 4 bytes per variable regardless of type (int = 4 bytes)
 #[derive(Default)]
 pub struct PseudoRegisterReplacer {
     pub offset_map: Option<HashMap<AsmOperand, i32>>,
@@ -92,8 +135,11 @@ impl FolderAsm for PseudoRegisterReplacer {
     }
 }
 
-// returns a map that maps each pseudoregister to its offset on the stack
-// and the last offset on the stack
+/// Builds a map from pseudo-registers to stack offsets.
+///
+/// Returns:
+/// - `HashMap<AsmOperand, i32>`: Maps each `Pseudo(id)` to its stack offset
+/// - `i32`: The next available offset (used to calculate total stack size)
 fn ids_offset_map(function_definition: &AsmFunctionDefinition) -> (HashMap<AsmOperand, i32>, i32) {
     let (map, last_offset) = function_definition
         .instructions
@@ -114,7 +160,8 @@ fn ids_offset_map(function_definition: &AsmFunctionDefinition) -> (HashMap<AsmOp
     (map, last_offset)
 }
 
-// retrieves all operands of an instruction
+/// Extracts all operands from an instruction for pseudo-register discovery.
+/// Returns `None` for instructions that don't have operands (jumps, labels, etc.)
 fn operands(instruction: &AsmInstruction) -> Option<Vec<AsmOperand>> {
     use AsmInstruction::*;
     let ops = match instruction {
