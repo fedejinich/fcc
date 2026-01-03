@@ -1,4 +1,7 @@
-//! This module defines the structure of the x64 assembly code as an AST
+//! x86_64 assembly AST.
+//!
+//! This module defines the AST representing x86_64 assembly instructions,
+//! used as the final IR before emitting textual assembly.
 
 #[derive(Clone)]
 pub struct AsmProgram {

@@ -48,11 +48,7 @@ impl TackyBuilder {
     ///
     /// Example: `fresh_temp("tmp")` → `TackyValue::Var("tmp.0")`, then `"tmp.1"`, etc.
     pub fn fresh_temp(&mut self, name: &str) -> TackyValue {
-        let id = self.counter;
-        self.counter += 1;
-        TackyValue::Var(TackyIdentifier {
-            value: format!("{name}.{id}"),
-        })
+        TackyValue::Var(self.fresh_label(name))
     }
 
     /// Generates a fresh label identifier with a unique suffix.

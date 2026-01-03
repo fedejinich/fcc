@@ -1,4 +1,7 @@
-//! This module contains the TACKY AST, an intermediate representation of the source code.
+//! TACKY intermediate representation.
+//!
+//! This module defines the TACKY IR, a three-address code representation
+//! that sits between the C AST and the final x86_64 assembly.
 
 pub struct TackyProgram {
     pub function_definition: TackyFunctionDefinition,

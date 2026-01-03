@@ -1,3 +1,8 @@
+//! C abstract syntax tree.
+//!
+//! This module defines the AST produced by the parser, representing the structure
+//! of a C program before any lowering or code generation.
+
 use crate::lexer::Token;
 
 #[derive(Clone, Debug)]
