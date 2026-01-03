@@ -1,6 +1,6 @@
 use crate::{
     codegen::x64::ast::{
-        AsmBinaryOperator, AsmCondCode, AsmFunctionDefinition, AsmIdetifier, AsmInstruction,
+        AsmBinaryOperator, AsmCondCode, AsmFunctionDefinition, AsmIdentifier, AsmInstruction,
         AsmOperand, AsmProgram, AsmUnaryOperator, Reg,
     },
     tacky::ast::{
@@ -20,7 +20,7 @@ impl From<TackyProgram> for AsmProgram {
 impl From<TackyFunctionDefinition> for AsmFunctionDefinition {
     fn from(tacky_function_definition: TackyFunctionDefinition) -> Self {
         AsmFunctionDefinition {
-            name: AsmIdetifier::from(tacky_function_definition.name),
+            name: AsmIdentifier::from(tacky_function_definition.name),
             instructions: tacky_function_definition
                 .instructions
                 .iter()
@@ -97,21 +97,21 @@ impl AsmInstruction {
                     }
                 }
             }
-            TackyInstruction::Jump(id) => vec![AsmInstruction::Jmp(AsmIdetifier::from(id))],
+            TackyInstruction::Jump(id) => vec![AsmInstruction::Jmp(AsmIdentifier::from(id))],
             // TODO: this is almost same as JumpIfNotZero
             TackyInstruction::JumpIfZero(condition, target) => vec![
                 AsmInstruction::Cmp(AsmOperand::Imm(0), AsmOperand::from(condition)),
-                AsmInstruction::JmpCC(AsmCondCode::E, AsmIdetifier::from(target)),
+                AsmInstruction::JmpCC(AsmCondCode::E, AsmIdentifier::from(target)),
             ],
             TackyInstruction::JumpIfNotZero(condition, target) => vec![
                 AsmInstruction::Cmp(AsmOperand::Imm(0), AsmOperand::from(condition)),
-                AsmInstruction::JmpCC(AsmCondCode::NE, AsmIdetifier::from(target)),
+                AsmInstruction::JmpCC(AsmCondCode::NE, AsmIdentifier::from(target)),
             ],
             TackyInstruction::Copy(src, dst) => vec![AsmInstruction::Mov(
                 AsmOperand::from(src),
                 AsmOperand::from(dst),
             )],
-            TackyInstruction::Label(id) => vec![AsmInstruction::Label(AsmIdetifier::from(id))],
+            TackyInstruction::Label(id) => vec![AsmInstruction::Label(AsmIdentifier::from(id))],
         }
     }
 }
@@ -120,14 +120,14 @@ impl From<TackyValue> for AsmOperand {
     fn from(tacky_value: TackyValue) -> Self {
         match tacky_value {
             TackyValue::Constant(c) => AsmOperand::Imm(c),
-            TackyValue::Var(id) => AsmOperand::Pseudo(AsmIdetifier::from(id)),
+            TackyValue::Var(id) => AsmOperand::Pseudo(AsmIdentifier::from(id)),
         }
     }
 }
 
-impl From<TackyIdentifier> for AsmIdetifier {
+impl From<TackyIdentifier> for AsmIdentifier {
     fn from(tacky_identifier: TackyIdentifier) -> Self {
-        AsmIdetifier {
+        AsmIdentifier {
             value: tacky_identifier.value,
         }
     }

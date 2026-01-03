@@ -5,7 +5,7 @@ use crate::c_ast::ast::{
     Identifier, Program, Statement, UnaryOperator,
 };
 use crate::codegen::x64::ast::{
-    AsmBinaryOperator, AsmCondCode, AsmFunctionDefinition, AsmIdetifier, AsmInstruction,
+    AsmBinaryOperator, AsmCondCode, AsmFunctionDefinition, AsmIdentifier, AsmInstruction,
     AsmOperand, AsmProgram, AsmUnaryOperator, Reg,
 };
 use crate::tacky::ast::{
@@ -378,7 +378,7 @@ pub trait FolderAsm {
         }
     }
 
-    fn fold_id(&mut self, identifier: AsmIdetifier) -> Result<AsmIdetifier, String> {
+    fn fold_id(&mut self, identifier: AsmIdentifier) -> Result<AsmIdentifier, String> {
         Ok(identifier)
     }
 
