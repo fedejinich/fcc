@@ -230,7 +230,7 @@ pub fn binary_operators() -> Vec<Token> {
         Token::LessThan,
         Token::GreaterThanOrEqual,
         Token::LessThanOrEqual,
-        // Assignment
+        // assignment
         Token::Assignment,
         // conditional operators
         // this is not a binary oeprator but is useful for parsing

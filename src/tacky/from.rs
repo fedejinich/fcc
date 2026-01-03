@@ -53,10 +53,6 @@ impl From<Identifier> for TackyIdentifier {
     }
 }
 
-// ============================================================================
-// Lowering functions using TackyBuilder
-// ============================================================================
-
 fn emit_block(block: Block, builder: &mut TackyBuilder) {
     for item in block.into_block_items() {
         emit_block_item(item, builder);
@@ -292,7 +288,7 @@ fn emit_binary_op(
     builder: &mut TackyBuilder,
 ) -> TackyValue {
     match op {
-        // Short-circuit AND
+        // short-circuit AND
         BinaryOperator::And => {
             let result = builder.fresh_temp("and_result");
             let false_label = builder.fresh_label("and_false");
@@ -314,7 +310,7 @@ fn emit_binary_op(
 
             result
         }
-        // Short-circuit OR
+        // short-circuit OR
         BinaryOperator::Or => {
             let result = builder.fresh_temp("or_result");
             let true_label = builder.fresh_label("or_true");
@@ -336,7 +332,7 @@ fn emit_binary_op(
 
             result
         }
-        // Regular binary operators
+        // regular binary operators
         _ => {
             let v1 = emit_expr(left, builder);
             let v2 = emit_expr(right, builder);

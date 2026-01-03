@@ -52,7 +52,7 @@ impl VariableResolver {
             .insert(var_name.value().to_string(), (unique_name, true));
     }
 
-    /// returns a copy of the variables map with all the variables marked as undeclared for the current block
+    /// Returns a copy of the variables map with all the variables marked as undeclared for the current block.
     fn copy_variable_map(&self) -> HashMap<VarName, VarValue> {
         self.0
             .clone() // copy variables map

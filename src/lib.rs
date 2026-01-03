@@ -1,6 +1,6 @@
-// Library crate for the fcc compiler
+// library crate for the fcc compiler
 //
-// This file exposes the public API of the fcc compiler for use in tests
+// this file exposes the public API of the fcc compiler for use in tests
 // and other external crates. It makes all the main modules available
 // for unit testing and integration.
 

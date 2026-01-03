@@ -76,10 +76,6 @@ impl TackyBuilder {
         }
     }
 
-    // ========================================================================
-    // Basic emit methods
-    // ========================================================================
-
     /// Emits a single instruction.
     pub fn emit(&mut self, instruction: TackyInstruction) {
         self.instructions.push(instruction);
@@ -119,10 +115,6 @@ impl TackyBuilder {
     pub fn emit_return(&mut self, value: TackyValue) {
         self.emit(TackyInstruction::Return(value));
     }
-
-    // ========================================================================
-    // Finalization
-    // ========================================================================
 
     /// Consumes the builder and returns the accumulated instructions.
     pub fn finish(self) -> Vec<TackyInstruction> {

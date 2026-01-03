@@ -96,7 +96,7 @@ impl FolderAsm for InstructionFixer {
         use AsmOperand::*;
 
         let result = match instruction {
-            // Generic mem-mem patterns (use helpers)
+            // generic mem-mem patterns (use helpers)
             Mov(Stack(src), Stack(dst)) => fix_mov_mem_mem(src, dst),
             Binary(bin_op @ (Add | Sub), Stack(src), Stack(dst)) => {
                 fix_binary_mem_mem(bin_op, src, dst)
@@ -106,14 +106,14 @@ impl FolderAsm for InstructionFixer {
             }
             Cmp(Stack(op_1), Stack(op_2)) => fix_cmp_mem_mem(op_1, op_2),
 
-            // Special case: idiv cannot take an immediate operand
+            // special case: idiv cannot take an immediate operand
             Idiv(Imm(num)) => vec![
                 Comment("fix: idiv imm -> mov imm,R10 + idiv R10".to_string()),
                 Mov(Imm(num), Register(Reg::R10)),
                 Idiv(Register(Reg::R10)),
             ],
 
-            // Special case: imul destination must be a register (uses R11)
+            // special case: imul destination must be a register (uses R11)
             Binary(Mult, src, Stack(dst)) => {
                 vec![
                     Comment(
@@ -125,7 +125,7 @@ impl FolderAsm for InstructionFixer {
                 ]
             }
 
-            // Special case: shift count must be in CL register
+            // special case: shift count must be in CL register
             Binary(bin_op @ (LeftShift | RightShift), Register(Reg::R10), Stack(dst)) => vec![
                 Comment("fix: shl/shr R10,mem -> mov R10,CX + op CL,mem".to_string()),
                 Mov(Register(Reg::R10), Register(Reg::CX)),
@@ -139,7 +139,7 @@ impl FolderAsm for InstructionFixer {
                 ]
             }
 
-            // Special case: cmp second operand cannot be an immediate (uses R11)
+            // special case: cmp second operand cannot be an immediate (uses R11)
             Cmp(op_1, Imm(constant)) => {
                 vec![
                     Comment("fix: cmp op,imm -> mov imm,R11 + cmp op,R11".to_string()),
