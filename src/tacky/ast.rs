@@ -15,6 +15,7 @@ pub struct TackyFunctionDefinition {
     pub instructions: Vec<TackyInstruction>,
 }
 
+#[allow(dead_code)]
 #[derive(Clone, Debug)]
 pub enum TackyInstruction {
     Comment(String),
@@ -85,6 +86,7 @@ impl TackyIdentifier {
     pub fn with_prefix(prefix: &str, label: Identifier) -> TackyIdentifier {
         let id = prefix.to_string() + &label.value();
         TackyIdentifier { value: id }
+        // Self::new(&id)
     }
 }
 

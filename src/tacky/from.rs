@@ -4,8 +4,8 @@ use log::{debug, info, trace};
 
 use crate::{
     c_ast::ast::{
-        BinaryOperator, Block, BlockItem, Declaration, Expression, FunctionDefinition, Identifier,
-        Program, Statement, UnaryOperator,
+        BinaryOperator, Block, BlockItem, Declaration, Expression, ForInit, FunctionDefinition,
+        Identifier, Program, Statement, UnaryOperator,
     },
     tacky::ast::{
         TackyBinaryOperator, TackyFunctionDefinition, TackyIdentifier, TackyInstruction,
@@ -129,11 +129,31 @@ impl TackyInstruction {
                 trace!("[tacky] <statement> continue");
 
                 let continue_label = TackyIdentifier::with_prefix("continue_", label);
-                instructions.push(TackyInstruction::Jump(continue_label));
 
+                instructions.push(TackyInstruction::Jump(continue_label));
                 instructions
             }
-            Statement::While(_cond, _body, _id) => todo!("to be implemented"),
+            Statement::While(cond, body, label) => {
+                trace!("[tacky] <statement> while");
+
+                let continue_label = TackyIdentifier::with_prefix("continue_", label.clone());
+                let break_label = TackyIdentifier::with_prefix("break_", label.clone());
+                let v = TackyIdentifier::new("v");
+
+                instructions.push(TackyInstruction::Label(continue_label.clone()));
+
+                let res = TackyInstruction::from_expr(*cond, &mut instructions);
+
+                instructions.push(TackyInstruction::Copy(res, TackyValue::Var(v.clone())));
+                instructions.push(TackyInstruction::JumpIfZero(
+                    TackyValue::Var(v),
+                    break_label.clone(),
+                ));
+                instructions.extend(TackyInstruction::from_st(*body));
+                instructions.push(TackyInstruction::Jump(continue_label));
+                instructions.push(TackyInstruction::Label(break_label));
+                instructions
+            }
             Statement::DoWhile(body, cond, label) => {
                 trace!("[tacky] <statement> do-while");
 
@@ -156,7 +176,45 @@ impl TackyInstruction {
                 instructions.push(TackyInstruction::Label(break_label));
                 instructions
             }
-            Statement::For(_init, _cond, _post, _body, _id) => todo!("to be implemented"),
+            Statement::For(for_init, cond, post, body, label) => {
+                trace!("[tacky] <statement> for");
+
+                let start_label = TackyIdentifier::with_prefix("start_", label.clone());
+                let continue_label = TackyIdentifier::with_prefix("continue_", label.clone());
+                let break_label = TackyIdentifier::with_prefix("break_", label);
+                let v = TackyIdentifier::new("v");
+
+                trace!("[tacky] for init");
+
+                TackyInstruction::from_for_init(for_init, &mut instructions);
+
+                instructions.push(TackyInstruction::Label(start_label.clone()));
+
+                if let Some(cond) = cond {
+                    trace!("[tacky] for cond");
+
+                    let res = TackyInstruction::from_expr(*cond, &mut instructions);
+
+                    instructions.push(TackyInstruction::Copy(res, TackyValue::Var(v.clone())));
+                    instructions.push(TackyInstruction::JumpIfZero(
+                        TackyValue::Var(v.clone()),
+                        break_label.clone(),
+                    ));
+                }
+
+                instructions.extend(TackyInstruction::from_st(*body));
+                instructions.push(TackyInstruction::Label(continue_label.clone()));
+
+                if let Some(post) = post {
+                    trace!("[tacky] for post");
+
+                    let _ = TackyInstruction::from_expr(*post, &mut instructions);
+                }
+
+                instructions.push(TackyInstruction::Jump(start_label));
+                instructions.push(TackyInstruction::Label(break_label));
+                instructions
+            }
             Statement::Null => vec![],
         }
     }
@@ -358,5 +416,24 @@ impl From<BinaryOperator> for TackyBinaryOperator {
                 panic!("short-circuit ops handled separately")
             }
         }
+    }
+}
+
+impl TackyInstruction {
+    pub fn from_for_init(for_init: Box<ForInit>, instructions: &mut Vec<TackyInstruction>) {
+        match *for_init {
+            ForInit::InitDecl(declaration) => {
+                trace!("[tacky] for init with declaration");
+                instructions.extend(TackyInstruction::from_decl(*declaration));
+            }
+            ForInit::InitExp(expression) => {
+                let Some(expression) = expression else {
+                    trace!("[tacky] for init with no expression");
+                    return;
+                };
+                trace!("[tacky] for init with expression");
+                let _ = TackyInstruction::from_expr(*expression, instructions);
+            }
+        };
     }
 }
