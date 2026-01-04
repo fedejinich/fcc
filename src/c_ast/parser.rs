@@ -97,7 +97,7 @@ impl Declaration {
         let name = Identifier::parse_id(tokens)?;
         let mut initializer = None;
         if let Some(Token::Assignment) = tokens.peek() {
-            let _ = tokens.next(); // consume '='
+            token_assert(Token::Assignment, tokens)?;
             initializer = Expression::parse_opt_exp(tokens, Token::Semicolon)?;
         }
         token_assert(Token::Semicolon, tokens)?;
@@ -136,7 +136,7 @@ impl Statement {
             Token::Semicolon => {
                 trace!("[parser] <statement> null");
 
-                let _ = tokens.next();
+                token_assert(Token::Semicolon, tokens)?;
                 Statement::Null
             }
             Token::Return => {
@@ -152,7 +152,7 @@ impl Statement {
             Token::If => {
                 trace!("[parser] <statement> if");
 
-                let _ = tokens.next(); // consume 'if'
+                token_assert(Token::If, tokens)?;
                 token_assert(Token::OpenParen, tokens)?;
                 let expr = Expression::parse_exp(tokens, Token::CloseParen)?;
                 token_assert(Token::CloseParen, tokens)?;
@@ -160,7 +160,7 @@ impl Statement {
                 let el = if let Some(Token::Else) = tokens.peek() {
                     debug!("[parser] found else branch");
 
-                    let _ = tokens.next(); // consume 'else'
+                    token_assert(Token::Else, tokens)?;
                     Some(Box::new(Statement::parse_st(tokens)?))
                 } else {
                     None
@@ -176,7 +176,7 @@ impl Statement {
             Token::Break => {
                 trace!("[parser] <statement> break");
 
-                let _ = tokens.next(); // consume 'break'
+                token_assert(Token::Break, tokens)?;
                 token_assert(Token::Semicolon, tokens)?;
                 Statement::Break(Identifier::new("dummy".to_string()))
             }
@@ -328,7 +328,7 @@ impl Expression {
         match next_token {
             Token::Constant(n) => {
                 let n = n.clone();
-                let _ = tokens.next();
+                token_assert(Token::Constant(n.clone()), tokens)?;
                 n.parse::<i32>().map(Expression::Constant).map_err(|_| {
                     error!("[parser] invalid constant: {n}");
 
@@ -342,7 +342,7 @@ impl Expression {
                 Ok(Expression::Unary(unary, Box::new(exp)))
             }
             Token::OpenParen => {
-                let _ = tokens.next();
+                token_assert(Token::OpenParen, tokens)?;
                 let exp = Expression::parse_exp(tokens, Token::CloseParen)?;
                 token_assert(Token::CloseParen, tokens)?;
 
