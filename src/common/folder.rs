@@ -1,3 +1,29 @@
+//! AST folder traits for recursive tree transformations.
+//!
+//! This module provides the "folder" pattern for traversing and transforming ASTs.
+//! Each folder trait provides default implementations that recursively visit all nodes,
+//! allowing passes to override only the specific node types they care about.
+//!
+//! # Available Folders
+//!
+//! - **FolderC**: Transforms C AST → C AST (used by semantic passes)
+//! - **FolderTacky**: Transforms TACKY IR → TACKY IR
+//! - **FolderAsm**: Transforms ASM IR → ASM IR (used by codegen fix-up passes)
+//!
+//! # Usage
+//!
+//! ```ignore
+//! struct MyPass;
+//!
+//! impl FolderC for MyPass {
+//!     fn name(&self) -> &'static str { "my_pass" }
+//!
+//!     fn fold_expr(&mut self, expr: Expression) -> Result<Expression, String> {
+//!         // custom logic here
+//!     }
+//! }
+//! ```
+
 use log::{info, trace};
 
 use crate::c_ast::ast::{
@@ -5,7 +31,7 @@ use crate::c_ast::ast::{
     Identifier, Program, Statement, UnaryOperator,
 };
 use crate::codegen::x64::ast::{
-    AsmBinaryOperator, AsmCondCode, AsmFunctionDefinition, AsmIdetifier, AsmInstruction,
+    AsmBinaryOperator, AsmCondCode, AsmFunctionDefinition, AsmIdentifier, AsmInstruction,
     AsmOperand, AsmProgram, AsmUnaryOperator, Reg,
 };
 use crate::tacky::ast::{
@@ -18,7 +44,7 @@ use crate::tacky::ast::{
 /// another AST. This is useful when we want to traverse the AST and perform some operation on a
 /// specific node type.
 pub trait FolderC {
-    /// name of the pass for logging
+    /// Name of the pass for logging.
     fn name(&self) -> &'static str;
 
     fn fold_prog(&mut self, program: Program) -> Result<Program, String> {
@@ -201,7 +227,7 @@ pub trait FolderC {
 /// Another folder trait that can be used to fold Tacky AST into another Tacky AST.
 #[allow(unused)]
 pub trait FolderTacky {
-    /// name of the pass for logging
+    /// Name of the pass for logging.
     fn name(&self) -> &'static str;
 
     fn create() -> Self
@@ -301,7 +327,7 @@ pub trait FolderTacky {
 
 /// Another folder trait that can be used to fold Asm AST into another Asm AST.
 pub trait FolderAsm {
-    /// name of the pass for logging
+    /// Name of the pass for logging.
     fn name(&self) -> &'static str;
 
     fn create() -> Self
@@ -378,7 +404,7 @@ pub trait FolderAsm {
         }
     }
 
-    fn fold_id(&mut self, identifier: AsmIdetifier) -> Result<AsmIdetifier, String> {
+    fn fold_id(&mut self, identifier: AsmIdentifier) -> Result<AsmIdentifier, String> {
         Ok(identifier)
     }
 

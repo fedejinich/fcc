@@ -1,3 +1,19 @@
+//! Compiler driver.
+//!
+//! Orchestrates the full compilation pipeline from C source to executable.
+//!
+//! # Pipeline Stages
+//!
+//! 1. **Preprocessing**: Invokes `gcc -E` to expand macros and includes
+//! 2. **Lexing**: Tokenizes the preprocessed source
+//! 3. **Parsing**: Builds the C AST from tokens
+//! 4. **Semantic analysis**: Variable resolution and loop labeling
+//! 5. **TACKY generation**: Lowers C AST to three-address code IR
+//! 6. **Codegen**: Converts TACKY to x86_64 assembly AST
+//! 7. **Fix-up passes**: Replaces pseudo-registers and fixes instruction constraints
+//! 8. **Emission**: Writes assembly to `.asm` file
+//! 9. **Assemble & link**: Invokes `gcc` to produce the final executable
+
 use std::{fs, path::Path, process::Command};
 
 use clap::Parser;

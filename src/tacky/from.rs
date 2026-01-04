@@ -1,4 +1,4 @@
-//! This module contains the logic to lower the AST to tacky IR
+//! This module contains the logic to lower the AST to TACKY IR.
 
 use log::{debug, info, trace};
 
@@ -7,9 +7,12 @@ use crate::{
         BinaryOperator, Block, BlockItem, Declaration, Expression, ForInit, FunctionDefinition,
         Identifier, Program, Statement, UnaryOperator,
     },
-    tacky::ast::{
-        TackyBinaryOperator, TackyFunctionDefinition, TackyIdentifier, TackyInstruction,
-        TackyProgram, TackyUnaryOperator, TackyValue,
+    tacky::{
+        ast::{
+            TackyBinaryOperator, TackyFunctionDefinition, TackyIdentifier, TackyInstruction,
+            TackyProgram, TackyUnaryOperator, TackyValue,
+        },
+        builder::TackyBuilder,
     },
 };
 
@@ -18,7 +21,7 @@ impl From<Program> for TackyProgram {
         trace!("[tacky] <program>");
 
         TackyProgram::new(TackyFunctionDefinition::from(
-            program.function_definition().clone(),
+            program.into_function_definition(),
         ))
     }
 }
@@ -27,357 +30,322 @@ impl From<FunctionDefinition> for TackyFunctionDefinition {
     fn from(fd: FunctionDefinition) -> Self {
         trace!("[tacky] <function> {}", fd.name().value());
 
-        let mut instructions = TackyInstruction::from_block(fd.body().clone());
+        let (name, body) = fd.into_parts();
+
+        let mut builder = TackyBuilder::new();
+        emit_block(body, &mut builder);
 
         // add return 0 as last instruction (it's gonna be fixed in Part III)
-        instructions.push(TackyInstruction::Return(TackyValue::Constant(0)));
+        builder.emit_return(TackyValue::Constant(0));
 
+        let instructions = builder.finish();
         info!("[tacky] {} instructions", instructions.len());
 
-        TackyFunctionDefinition::new(TackyIdentifier::from(fd.name().clone()), instructions)
+        TackyFunctionDefinition::new(TackyIdentifier::from(name), instructions)
     }
 }
 
 impl From<Identifier> for TackyIdentifier {
     fn from(value: Identifier) -> Self {
         TackyIdentifier {
-            value: value.value().to_string(),
+            value: value.into_value(),
         }
     }
 }
 
-impl TackyInstruction {
-    fn from_block(block: Block) -> Vec<TackyInstruction> {
-        block
-            .block_items()
-            .clone()
-            .into_iter()
-            .flat_map(TackyInstruction::from_block_item)
-            .collect()
+fn emit_block(block: Block, builder: &mut TackyBuilder) {
+    for item in block.into_block_items() {
+        emit_block_item(item, builder);
     }
+}
 
-    fn from_block_item(block_item: BlockItem) -> Vec<TackyInstruction> {
-        match block_item {
-            BlockItem::S(s) => TackyInstruction::from_st(s),
-            BlockItem::D(d) => TackyInstruction::from_decl(d),
+fn emit_block_item(block_item: BlockItem, builder: &mut TackyBuilder) {
+    match block_item {
+        BlockItem::S(s) => emit_statement(s, builder),
+        BlockItem::D(d) => emit_declaration(d, builder),
+    }
+}
+
+fn emit_statement(statement: Statement, builder: &mut TackyBuilder) {
+    match statement {
+        Statement::Return(expr) => {
+            trace!("[tacky] <statement> return");
+            let v = emit_expr(expr, builder);
+            builder.emit_return(v);
+        }
+        Statement::Expression(expr) => {
+            trace!("[tacky] <statement> expression");
+            let _ = emit_expr(expr, builder);
+        }
+        Statement::If(cond, then, el) => {
+            trace!("[tacky] <statement> if");
+
+            let else_label = builder.fresh_label("else");
+            let end_label = builder.fresh_label("end");
+
+            // emit condition
+            let cond_result = emit_expr(*cond, builder);
+            let c = builder.fresh_temp("cond");
+            builder.emit_copy(cond_result, c.clone());
+            builder.emit_jump_if_zero(c, else_label.clone());
+
+            // emit then branch
+            emit_statement(*then, builder);
+            builder.emit_jump(end_label.clone());
+
+            // emit else branch
+            builder.emit_label(else_label);
+            if let Some(e) = el {
+                debug!("[tacky] else branch");
+                emit_statement(*e, builder);
+            }
+            builder.emit_label(end_label);
+        }
+        Statement::Compound(block) => {
+            trace!("[tacky] <statement> compound");
+            emit_block(*block, builder);
+        }
+        Statement::Break(label) => {
+            trace!("[tacky] <statement> break");
+            let break_label = builder.label_with_prefix("break_", &label);
+            builder.emit_jump(break_label);
+        }
+        Statement::Continue(label) => {
+            trace!("[tacky] <statement> continue");
+            let continue_label = builder.label_with_prefix("continue_", &label);
+            builder.emit_jump(continue_label);
+        }
+        Statement::While(cond, body, label) => {
+            trace!("[tacky] <statement> while");
+
+            let continue_label = builder.label_with_prefix("continue_", &label);
+            let break_label = builder.label_with_prefix("break_", &label);
+
+            builder.emit_label(continue_label.clone());
+
+            let res = emit_expr(*cond, builder);
+            let v = builder.fresh_temp("while_cond");
+            builder.emit_copy(res, v.clone());
+            builder.emit_jump_if_zero(v, break_label.clone());
+
+            emit_statement(*body, builder);
+            builder.emit_jump(continue_label);
+            builder.emit_label(break_label);
+        }
+        Statement::DoWhile(body, cond, label) => {
+            trace!("[tacky] <statement> do-while");
+
+            let start_label = builder.label_with_prefix("start_", &label);
+            let continue_label = builder.label_with_prefix("continue_", &label);
+            let break_label = builder.label_with_prefix("break_", &label);
+
+            builder.emit_label(start_label.clone());
+            emit_statement(*body, builder);
+            builder.emit_label(continue_label);
+
+            let res = emit_expr(*cond, builder);
+            let v = builder.fresh_temp("dowhile_cond");
+            builder.emit_copy(res, v.clone());
+            builder.emit_jump_if_not_zero(v, start_label);
+            builder.emit_label(break_label);
+        }
+        Statement::For(for_init, cond, post, body, label) => {
+            trace!("[tacky] <statement> for");
+
+            let start_label = builder.label_with_prefix("start_", &label);
+            let continue_label = builder.label_with_prefix("continue_", &label);
+            let break_label = builder.label_with_prefix("break_", &label);
+
+            // emit init
+            trace!("[tacky] for init");
+            emit_for_init(*for_init, builder);
+
+            builder.emit_label(start_label.clone());
+
+            // emit condition (if present)
+            if let Some(cond) = cond {
+                trace!("[tacky] for cond");
+                let res = emit_expr(*cond, builder);
+                let v = builder.fresh_temp("for_cond");
+                builder.emit_copy(res, v.clone());
+                builder.emit_jump_if_zero(v, break_label.clone());
+            }
+
+            // emit body
+            emit_statement(*body, builder);
+            builder.emit_label(continue_label);
+
+            // emit post (if present)
+            if let Some(post) = post {
+                trace!("[tacky] for post");
+                let _ = emit_expr(*post, builder);
+            }
+
+            builder.emit_jump(start_label);
+            builder.emit_label(break_label);
+        }
+        Statement::Null => {}
+    }
+}
+
+fn emit_declaration(declaration: Declaration, builder: &mut TackyBuilder) {
+    let (name, initializer) = declaration.into_parts();
+
+    let Some(initializer) = initializer else {
+        return;
+    };
+
+    let v = emit_expr(initializer, builder);
+    let dst = TackyValue::Var(TackyIdentifier::from(name));
+    builder.emit_copy(v, dst);
+}
+
+fn emit_for_init(for_init: ForInit, builder: &mut TackyBuilder) {
+    match for_init {
+        ForInit::InitDecl(declaration) => {
+            trace!("[tacky] for init with declaration");
+            emit_declaration(*declaration, builder);
+        }
+        ForInit::InitExp(expression) => {
+            let Some(expression) = expression else {
+                trace!("[tacky] for init with no expression");
+                return;
+            };
+            trace!("[tacky] for init with expression");
+            let _ = emit_expr(*expression, builder);
         }
     }
+}
 
-    fn from_st(statement: Statement) -> Vec<TackyInstruction> {
-        let mut instructions = vec![];
+/// Lowers an Expression to TACKY.
+/// Emits instructions via builder and returns a `TackyValue` identifying the result.
+fn emit_expr(expr: Expression, builder: &mut TackyBuilder) -> TackyValue {
+    match expr {
+        Expression::Conditional(cond, then, el) => {
+            trace!("[tacky] <exp> conditional");
 
-        match statement {
-            Statement::Return(expr) => {
-                trace!("[tacky] <statement> return");
+            let result = builder.fresh_temp("ternary_result");
+            let else_label = builder.fresh_label("ternary_else");
+            let end_label = builder.fresh_label("ternary_end");
 
-                let v = TackyInstruction::from_expr(expr, &mut instructions);
-                instructions.push(TackyInstruction::Return(v));
+            // emit condition
+            let cond_val = emit_expr(*cond, builder);
+            let c_result = builder.fresh_temp("ternary_cond");
+            builder.emit_copy(cond_val, c_result.clone());
+            builder.emit_jump_if_zero(c_result, else_label.clone());
 
-                instructions
-            }
-            Statement::Expression(expr) => {
-                trace!("[tacky] <statement> expression");
+            // emit then expression
+            let e1 = emit_expr(*then, builder);
+            builder.emit_copy(e1, result.clone());
+            builder.emit_jump(end_label.clone());
 
-                let _ = TackyInstruction::from_expr(expr, &mut instructions);
+            // emit else expression
+            builder.emit_label(else_label);
+            let e2 = emit_expr(*el, builder);
+            builder.emit_copy(e2, result.clone());
+            builder.emit_label(end_label);
 
-                instructions
-            }
-            Statement::If(cond, then, el) => {
-                trace!("[tacky] <statement> if");
+            result
+        }
+        Expression::Assignment(left, right) => {
+            trace!("[tacky] <exp> assignment");
 
-                let else_label = TackyIdentifier::new("else_label");
-                let end_label = TackyIdentifier::new("end");
+            let res = emit_expr(*right, builder);
+            let left_var = match *left {
+                Expression::Var(id) => TackyValue::Var(TackyIdentifier::from(id)),
+                _ => panic!("invalid lvalue in assignment"),
+            };
+            builder.emit_copy(res, left_var.clone());
 
-                // instructions for condition
-                let cond_result = TackyInstruction::from_expr(*cond, &mut instructions);
-                let c = TackyValue::Var(TackyIdentifier::new("c"));
-                instructions.push(TackyInstruction::Copy(cond_result, c.clone()));
-                instructions.push(TackyInstruction::JumpIfZero(c, else_label.clone()));
+            left_var
+        }
+        Expression::Var(id) => TackyValue::Var(TackyIdentifier::from(id)),
+        Expression::Constant(c) => TackyValue::Constant(c),
+        Expression::Unary(op, inner) => {
+            trace!("[tacky] <exp> unary {op:?}");
 
-                // instructions for then branch
-                instructions.extend(TackyInstruction::from_st(*then));
-                instructions.push(TackyInstruction::Jump(end_label.clone()));
+            let src = emit_expr(*inner, builder);
+            let dst = builder.fresh_temp("unary");
+            builder.emit(TackyInstruction::Unary(
+                TackyUnaryOperator::from(op),
+                src,
+                dst.clone(),
+            ));
 
-                instructions.push(TackyInstruction::Label(else_label));
-                if let Some(e) = el {
-                    debug!("[tacky] else branch");
-
-                    // instructions for else branch
-                    instructions.extend(TackyInstruction::from_st(*e));
-                }
-                instructions.push(TackyInstruction::Label(end_label));
-
-                instructions
-            }
-            Statement::Compound(block) => {
-                trace!("[tacky] <statement> compound");
-
-                instructions.extend(TackyInstruction::from_block(*block));
-
-                instructions
-            }
-            Statement::Break(label) => {
-                trace!("[tacky] <statement> break");
-
-                let break_label = TackyIdentifier::with_prefix("break_", label);
-                instructions.push(TackyInstruction::Jump(break_label));
-
-                instructions
-            }
-
-            Statement::Continue(label) => {
-                trace!("[tacky] <statement> continue");
-
-                let continue_label = TackyIdentifier::with_prefix("continue_", label);
-
-                instructions.push(TackyInstruction::Jump(continue_label));
-                instructions
-            }
-            Statement::While(cond, body, label) => {
-                trace!("[tacky] <statement> while");
-
-                let continue_label = TackyIdentifier::with_prefix("continue_", label.clone());
-                let break_label = TackyIdentifier::with_prefix("break_", label.clone());
-                let v = TackyIdentifier::new("v");
-
-                instructions.push(TackyInstruction::Label(continue_label.clone()));
-
-                let res = TackyInstruction::from_expr(*cond, &mut instructions);
-
-                instructions.push(TackyInstruction::Copy(res, TackyValue::Var(v.clone())));
-                instructions.push(TackyInstruction::JumpIfZero(
-                    TackyValue::Var(v),
-                    break_label.clone(),
-                ));
-                instructions.extend(TackyInstruction::from_st(*body));
-                instructions.push(TackyInstruction::Jump(continue_label));
-                instructions.push(TackyInstruction::Label(break_label));
-                instructions
-            }
-            Statement::DoWhile(body, cond, label) => {
-                trace!("[tacky] <statement> do-while");
-
-                let start_label = TackyIdentifier::with_prefix("start_", label.clone());
-                let continue_label = TackyIdentifier::with_prefix("continue_", label.clone());
-                let break_label = TackyIdentifier::with_prefix("break_", label);
-                let v = TackyIdentifier::new("v");
-
-                instructions.push(TackyInstruction::Label(start_label.clone()));
-                instructions.extend(TackyInstruction::from_st(*body));
-                instructions.push(TackyInstruction::Label(continue_label));
-
-                let res = TackyInstruction::from_expr(*cond, &mut instructions);
-
-                instructions.push(TackyInstruction::Copy(res, TackyValue::Var(v.clone())));
-                instructions.push(TackyInstruction::JumpIfNotZero(
-                    TackyValue::Var(v),
-                    start_label,
-                ));
-                instructions.push(TackyInstruction::Label(break_label));
-                instructions
-            }
-            Statement::For(for_init, cond, post, body, label) => {
-                trace!("[tacky] <statement> for");
-
-                let start_label = TackyIdentifier::with_prefix("start_", label.clone());
-                let continue_label = TackyIdentifier::with_prefix("continue_", label.clone());
-                let break_label = TackyIdentifier::with_prefix("break_", label);
-                let v = TackyIdentifier::new("v");
-
-                trace!("[tacky] for init");
-
-                TackyInstruction::from_for_init(for_init, &mut instructions);
-
-                instructions.push(TackyInstruction::Label(start_label.clone()));
-
-                if let Some(cond) = cond {
-                    trace!("[tacky] for cond");
-
-                    let res = TackyInstruction::from_expr(*cond, &mut instructions);
-
-                    instructions.push(TackyInstruction::Copy(res, TackyValue::Var(v.clone())));
-                    instructions.push(TackyInstruction::JumpIfZero(
-                        TackyValue::Var(v.clone()),
-                        break_label.clone(),
-                    ));
-                }
-
-                instructions.extend(TackyInstruction::from_st(*body));
-                instructions.push(TackyInstruction::Label(continue_label.clone()));
-
-                if let Some(post) = post {
-                    trace!("[tacky] for post");
-
-                    let _ = TackyInstruction::from_expr(*post, &mut instructions);
-                }
-
-                instructions.push(TackyInstruction::Jump(start_label));
-                instructions.push(TackyInstruction::Label(break_label));
-                instructions
-            }
-            Statement::Null => vec![],
+            dst
+        }
+        Expression::Binary(op, left, right) => {
+            trace!("[tacky] <exp> binary {op:?}");
+            emit_binary_op(op, *left, *right, builder)
         }
     }
+}
 
-    fn from_decl(declaration: Declaration) -> Vec<TackyInstruction> {
-        let mut instructions = vec![];
+fn emit_binary_op(
+    op: BinaryOperator,
+    left: Expression,
+    right: Expression,
+    builder: &mut TackyBuilder,
+) -> TackyValue {
+    match op {
+        // short-circuit AND
+        BinaryOperator::And => {
+            let result = builder.fresh_temp("and_result");
+            let false_label = builder.fresh_label("and_false");
+            let end_label = builder.fresh_label("and_end");
 
-        let Some(initializer) = declaration.initializer().cloned() else {
-            return instructions;
-        };
+            let v1 = emit_expr(left, builder);
+            builder.emit_jump_if_zero(v1, false_label.clone());
 
-        let v = TackyInstruction::from_expr(initializer, &mut instructions);
-        instructions.push(TackyInstruction::Copy(
-            v,
-            TackyValue::Var(TackyIdentifier::from(declaration.name().clone())),
-        ));
+            let v2 = emit_expr(right, builder);
+            builder.emit_jump_if_zero(v2, false_label.clone());
 
-        instructions
-    }
+            builder.emit_copy(TackyValue::Constant(1), result.clone());
+            builder.emit_jump(end_label.clone());
 
-    /// Lowers an Expression to TACKY.
-    /// Appends the emitted instructions to `instructions` and returns
-    /// a `TackyValue` that identifies where the expression's result
-    /// now lives (a constant or a temporary/pseudo variable).
-    fn from_expr(expr: Expression, instructions: &mut Vec<TackyInstruction>) -> TackyValue {
-        match expr {
-            Expression::Conditional(cond, then, el) => {
-                trace!("[tacky] <exp> conditional");
+            builder.emit_label(false_label);
+            builder.emit_copy(TackyValue::Constant(0), result.clone());
 
-                let result = TackyValue::Var(TackyIdentifier::new("result"));
-                let c_result = TackyValue::Var(TackyIdentifier::new("c_result"));
-                let e2_label = TackyIdentifier::new("e2_label");
-                let end_label = TackyIdentifier::new("end");
+            builder.emit_label(end_label);
 
-                // instructions for condition
-                let cond_val = TackyInstruction::from_expr(*cond, instructions);
-                instructions.push(TackyInstruction::Copy(cond_val, c_result.clone()));
-                instructions.push(TackyInstruction::JumpIfZero(c_result, e2_label.clone()));
-
-                // instructions to calculate e1
-                let e1 = TackyInstruction::from_expr(*then, instructions);
-                let v1 = TackyValue::Var(TackyIdentifier::new("v1"));
-                instructions.push(TackyInstruction::Copy(e1, v1.clone()));
-                instructions.push(TackyInstruction::Copy(v1, result.clone()));
-                instructions.push(TackyInstruction::Jump(end_label.clone()));
-
-                // instructions to calculate e2
-                instructions.push(TackyInstruction::Label(e2_label));
-                let e2 = TackyInstruction::from_expr(*el, instructions);
-                let v2 = TackyValue::Var(TackyIdentifier::new("v2"));
-                instructions.push(TackyInstruction::Copy(e2, v2.clone()));
-                instructions.push(TackyInstruction::Copy(v2, result.clone()));
-                instructions.push(TackyInstruction::Label(end_label));
-
-                result
-            }
-            Expression::Assignment(left, right) => {
-                trace!("[tacky] <exp> assignment");
-
-                let res = TackyInstruction::from_expr(*right, instructions);
-                let left_var = match *left {
-                    Expression::Var(id) => TackyValue::Var(TackyIdentifier::from(id)),
-                    _ => panic!("invalid lvalue in assignment"),
-                };
-                instructions.push(TackyInstruction::Copy(res, left_var.clone()));
-
-                left_var
-            }
-            Expression::Var(id) => TackyValue::Var(TackyIdentifier::from(id)),
-            Expression::Constant(c) => TackyValue::Constant(c),
-            Expression::Unary(op, inner) => {
-                trace!("[tacky] <exp> unary {op:?}");
-
-                let src = TackyInstruction::from_expr(*inner, instructions);
-                // TODO: provide a more descriptive name
-                let dst = TackyValue::Var(TackyIdentifier::new("unary_op"));
-                instructions.push(TackyInstruction::Unary(
-                    TackyUnaryOperator::from(op),
-                    src,
-                    dst.clone(),
-                ));
-
-                dst
-            }
-            Expression::Binary(op, left, right) => {
-                trace!("[tacky] <exp> binary {op:?}");
-
-                TackyInstruction::from_bin_op(instructions, op, left, right)
-            }
+            result
         }
-    }
+        // short-circuit OR
+        BinaryOperator::Or => {
+            let result = builder.fresh_temp("or_result");
+            let true_label = builder.fresh_label("or_true");
+            let end_label = builder.fresh_label("or_end");
 
-    fn from_bin_op(
-        instructions: &mut Vec<TackyInstruction>,
-        op: BinaryOperator,
-        left: Box<Expression>,
-        right: Box<Expression>,
-    ) -> TackyValue {
-        match op {
-            BinaryOperator::And => {
-                let result = TackyValue::Var(TackyIdentifier::new("and_result"));
-                let false_label = TackyIdentifier::new("false_label");
-                let end_label = TackyIdentifier::new("end");
+            let v1 = emit_expr(left, builder);
+            builder.emit_jump_if_not_zero(v1, true_label.clone());
 
-                let v1 = TackyInstruction::from_expr(*left, instructions);
-                instructions.push(TackyInstruction::JumpIfZero(v1, false_label.clone()));
+            let v2 = emit_expr(right, builder);
+            builder.emit_jump_if_not_zero(v2, true_label.clone());
 
-                let v2 = TackyInstruction::from_expr(*right, instructions);
-                instructions.push(TackyInstruction::JumpIfZero(v2, false_label.clone()));
+            builder.emit_copy(TackyValue::Constant(0), result.clone());
+            builder.emit_jump(end_label.clone());
 
-                instructions.push(TackyInstruction::Copy(
-                    TackyValue::Constant(1),
-                    result.clone(),
-                ));
-                instructions.push(TackyInstruction::Jump(end_label.clone()));
-                instructions.push(TackyInstruction::Label(false_label));
-                instructions.push(TackyInstruction::Copy(
-                    TackyValue::Constant(0),
-                    result.clone(),
-                ));
-                instructions.push(TackyInstruction::Label(end_label));
+            builder.emit_label(true_label);
+            builder.emit_copy(TackyValue::Constant(1), result.clone());
 
-                result
-            }
-            BinaryOperator::Or => {
-                let result = TackyValue::Var(TackyIdentifier::new("or_result"));
-                let true_label = TackyIdentifier::new("true_label");
-                let end_label = TackyIdentifier::new("end");
+            builder.emit_label(end_label);
 
-                let v1 = TackyInstruction::from_expr(*left, instructions);
-                instructions.push(TackyInstruction::JumpIfNotZero(v1, true_label.clone()));
+            result
+        }
+        // regular binary operators
+        _ => {
+            let v1 = emit_expr(left, builder);
+            let v2 = emit_expr(right, builder);
+            let dst = builder.fresh_temp("binop");
 
-                let v2 = TackyInstruction::from_expr(*right, instructions);
-                instructions.push(TackyInstruction::JumpIfNotZero(v2, true_label.clone()));
+            builder.emit(TackyInstruction::Binary(
+                TackyBinaryOperator::from(op),
+                v1,
+                v2,
+                dst.clone(),
+            ));
 
-                instructions.push(TackyInstruction::Copy(
-                    TackyValue::Constant(0),
-                    result.clone(),
-                ));
-                instructions.push(TackyInstruction::Jump(end_label.clone()));
-                instructions.push(TackyInstruction::Label(true_label));
-                instructions.push(TackyInstruction::Copy(
-                    TackyValue::Constant(1),
-                    result.clone(),
-                ));
-                instructions.push(TackyInstruction::Label(end_label));
-
-                result
-            }
-            _ => {
-                let v1 = TackyInstruction::from_expr(*left, instructions);
-                let v2 = TackyInstruction::from_expr(*right, instructions);
-                let dst = TackyValue::Var(TackyIdentifier::new("binary_op"));
-
-                instructions.push(TackyInstruction::Binary(
-                    TackyBinaryOperator::from(op),
-                    v1,
-                    v2,
-                    dst.clone(),
-                ));
-
-                dst
-            }
+            dst
         }
     }
 }
@@ -419,21 +387,3 @@ impl From<BinaryOperator> for TackyBinaryOperator {
     }
 }
 
-impl TackyInstruction {
-    pub fn from_for_init(for_init: Box<ForInit>, instructions: &mut Vec<TackyInstruction>) {
-        match *for_init {
-            ForInit::InitDecl(declaration) => {
-                trace!("[tacky] for init with declaration");
-                instructions.extend(TackyInstruction::from_decl(*declaration));
-            }
-            ForInit::InitExp(expression) => {
-                let Some(expression) = expression else {
-                    trace!("[tacky] for init with no expression");
-                    return;
-                };
-                trace!("[tacky] for init with expression");
-                let _ = TackyInstruction::from_expr(*expression, instructions);
-            }
-        };
-    }
-}
