@@ -7,6 +7,7 @@ Suggestions: add property tests for instruction count bounds.
 */
 
 use fcc::c_ast::ast::Program;
+use fcc::debug::capture::SnapshotCapture;
 use fcc::driver::validate_semantics;
 use fcc::lexer::lex;
 use fcc::tacky::ast::{
@@ -17,7 +18,8 @@ use fcc::tacky::ast::{
 fn lower_to_tacky(src: &str) -> Result<TackyProgram, String> {
     let tokens = lex(src)?;
     let program = Program::try_from(tokens)?;
-    let validated = validate_semantics(program)?;
+    let mut snapshots = SnapshotCapture::disabled();
+    let validated = validate_semantics(program, &mut snapshots)?;
     Ok(TackyProgram::from(validated))
 }
 

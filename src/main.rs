@@ -76,6 +76,7 @@ use clap::Parser;
 mod c_ast;
 mod codegen;
 mod common;
+mod debug;
 mod driver;
 mod lexer;
 mod tacky;

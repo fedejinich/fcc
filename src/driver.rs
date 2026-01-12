@@ -27,6 +27,8 @@ use crate::codegen::x64::fixer::instruction_fix::InstructionFixer;
 use crate::codegen::x64::fixer::reg_replace::PseudoRegisterReplacer;
 use crate::common::folder::{FolderAsm, FolderC};
 use crate::common::util::replace_c_with_i;
+use crate::debug::capture::SnapshotCapture;
+use crate::debug::snapshot::{IRType, Stage};
 use crate::lexer::lex;
 use crate::tacky::ast::TackyProgram;
 
@@ -64,6 +66,9 @@ pub struct CompilerDriver {
 
     #[arg(long, help = "Prints TACKY AST")]
     print_tacky: bool,
+
+    #[arg(long, help = "Save compilation snapshots to JSON for debugging")]
+    save_snapshots: bool,
 }
 
 impl CompilerDriver {
@@ -155,6 +160,13 @@ impl CompilerDriver {
             return Err(String::from("couldn't read preprocessed file"));
         };
 
+        // Initialize snapshot capture
+        let mut snapshots = if self.save_snapshots {
+            SnapshotCapture::enabled(self.program_path.clone())
+        } else {
+            SnapshotCapture::disabled()
+        };
+
         info!("[driver] lexing");
 
         let tokens = lex(code.as_str())?;
@@ -165,6 +177,10 @@ impl CompilerDriver {
         info!("[driver] parsing");
 
         let mut c_program = Program::try_from(tokens)?;
+
+        // Snapshot 0: After parsing
+        snapshots.capture(Stage::Parse, "initial_ast", IRType::Cast, &c_program);
+
         if self.print_ast {
             println!("{c_program}");
         }
@@ -174,7 +190,8 @@ impl CompilerDriver {
 
         info!("[driver] validating");
 
-        c_program = validate_semantics(c_program)?;
+        // Snapshots 1-2: After semantic passes
+        c_program = validate_semantics(c_program, &mut snapshots)?;
         if self.validate {
             std::process::exit(0);
         }
@@ -182,6 +199,15 @@ impl CompilerDriver {
         info!("[driver] generating tacky");
 
         let tacky_program = TackyProgram::from(c_program);
+
+        // Snapshot 3: After TACKY generation
+        snapshots.capture(
+            Stage::TackyGeneration,
+            "tacky_from_ast",
+            IRType::Tacky,
+            &tacky_program,
+        );
+
         if self.print_tacky {
             println!("{}", tacky_program.pretty_print());
         }
@@ -191,8 +217,18 @@ impl CompilerDriver {
 
         info!("[driver] generating assembly");
 
-        let mut assembly_program = AsmProgram::from(tacky_program);
-        assembly_program = self.do_asm_passes(assembly_program)?;
+        let assembly_program = AsmProgram::from(tacky_program);
+
+        // Snapshot 4: After assembly generation
+        snapshots.capture(
+            Stage::AssemblyGeneration,
+            "tacky_to_asm",
+            IRType::Assembly,
+            &assembly_program,
+        );
+
+        // Snapshots 5-6: After fixer passes
+        let assembly_program = self.do_asm_passes(assembly_program, &mut snapshots)?;
         if self.codegen {
             std::process::exit(0);
         }
@@ -220,17 +256,46 @@ impl CompilerDriver {
             return Err(String::from("couldn't remove preprocessed file"));
         }
 
+        // Save snapshots to file
+        if snapshots.is_enabled() {
+            let snapshot_file = self.program_path.replace(".c", ".snapshots.json");
+            snapshots.save_to_file(&snapshot_file)?;
+            info!("[driver] snapshots saved to {}", snapshot_file);
+        }
+
         Ok(assembly_file_name)
     }
 
-    fn do_asm_passes(&self, program: AsmProgram) -> Result<AsmProgram, String> {
+    fn do_asm_passes(
+        &self,
+        program: AsmProgram,
+        snapshots: &mut SnapshotCapture,
+    ) -> Result<AsmProgram, String> {
         let mut replacer = PseudoRegisterReplacer::create();
         let assembly_program = replacer.fold_prog(program)?;
+
+        // Snapshot 5: After pseudo-register replacement
+        snapshots.capture(
+            Stage::AssemblyFixup,
+            "pseudo_register_replacer",
+            IRType::Assembly,
+            &assembly_program,
+        );
 
         let last_offset = replacer.last_offset();
         let mut fixer = InstructionFixer::create().with(last_offset);
 
-        fixer.fold_prog(assembly_program)
+        let assembly_program = fixer.fold_prog(assembly_program)?;
+
+        // Snapshot 6: After instruction fixing
+        snapshots.capture(
+            Stage::AssemblyFixup,
+            "instruction_fixer",
+            IRType::Assembly,
+            &assembly_program,
+        );
+
+        Ok(assembly_program)
     }
 
     fn assemble_and_link(&self, assembly_file: String) -> Result<i32, String> {
@@ -262,8 +327,29 @@ impl CompilerDriver {
     }
 }
 
-pub fn validate_semantics(program: Program) -> Result<Program, String> {
+pub fn validate_semantics(
+    program: Program,
+    snapshots: &mut SnapshotCapture,
+) -> Result<Program, String> {
     let program = VariableResolver::new().fold_prog(program)?;
-    let program = LoopLabeler::default().fold_prog(program);
-    program
+
+    // Snapshot 1: After variable resolution
+    snapshots.capture(
+        Stage::SemanticAnalysis,
+        "variable_resolver",
+        IRType::Cast,
+        &program,
+    );
+
+    let program = LoopLabeler::default().fold_prog(program)?;
+
+    // Snapshot 2: After loop labeling
+    snapshots.capture(
+        Stage::SemanticAnalysis,
+        "loop_labeler",
+        IRType::Cast,
+        &program,
+    );
+
+    Ok(program)
 }

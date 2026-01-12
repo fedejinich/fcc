@@ -9,6 +9,7 @@ Suggestions: add tests for future semantic features (type checking, etc).
 use fcc::c_ast::ast::{BlockItem, Expression, Identifier, Program, Statement};
 use fcc::c_ast::semantic::loop_lab::LoopLabeler;
 use fcc::common::folder::FolderC;
+use fcc::debug::capture::SnapshotCapture;
 use fcc::driver::validate_semantics;
 use fcc::lexer::lex;
 
@@ -16,7 +17,8 @@ use fcc::lexer::lex;
 fn validate_program(src: &str) -> Result<Program, String> {
     let tokens = lex(src)?;
     let program = Program::try_from(tokens)?;
-    validate_semantics(program)
+    let mut snapshots = SnapshotCapture::disabled();
+    validate_semantics(program, &mut snapshots)
 }
 
 // Helper: lex, parse, and apply loop labeling

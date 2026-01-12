@@ -66,10 +66,13 @@ impl fmt::Display for ForInit {
     }
 }
 
-#[allow(unused)]
 impl fmt::Display for Block {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        todo!("to be implemented");
+        writeln!(f, "Block(")?;
+        for item in self.block_items().iter() {
+            writeln!(f, "{}", indent(&format!("{}", item), 4))?;
+        }
+        write!(f, ")")
     }
 }
 
