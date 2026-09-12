@@ -1,0 +1,427 @@
+{
+  "version": "1.0.0",
+  "compilation_metadata": {
+    "source_file": "null_for_header.c",
+    "timestamp": "2026-01-12T03:14:36.669748+00:00",
+    "total_duration_ms": 229,
+    "compiler_version": "0.1.0"
+  },
+  "snapshots": [
+    {
+      "id": 0,
+      "stage": "parse",
+      "pass": "initial_ast",
+      "ir_type": "C_AST",
+      "timestamp_ms": 228,
+      "duration_ms": 228,
+      "content": "Program(\n    Function(\n        name=\"main\",\n        body=D(Declaration(\n            name=\"a\",\n            value=\"Constant(0)\",\n        )\n        S(For(InitExp(), None, None, Compound(\n        Block(\n            S(Expression(\n                Assignment(Var(a), Binary(Add, Var(a), Constant(1)))\n            ))\n            S(If(\n                cond=Binary(GreaterThan, Var(a), Constant(3)), then=Break(dummy)\n            ))\n            )\n        )\n        ), dummy))\n        S(Return(\n            Var(a)\n        ))\n)",
+      "diff": null
+    },
+    {
+      "id": 1,
+      "stage": "semantic_analysis",
+      "pass": "variable_resolver",
+      "ir_type": "C_AST",
+      "timestamp_ms": 228,
+      "duration_ms": 0,
+      "content": "Program(\n    Function(\n        name=\"main\",\n        body=D(Declaration(\n            name=\"a.0\",\n            value=\"Constant(0)\",\n        )\n        S(For(InitExp(), None, None, Compound(\n        Block(\n            S(Expression(\n                Assignment(Var(a.0), Binary(Add, Var(a.0), Constant(1)))\n            ))\n            S(If(\n                cond=Binary(GreaterThan, Var(a.0), Constant(3)), then=Break(dummy)\n            ))\n            )\n        )\n        ), dummy))\n        S(Return(\n            Var(a.0)\n        ))\n)",
+      "diff": {
+        "type": "line_diff",
+        "changes": [
+          {
+            "line": 5,
+            "type": "modified",
+            "before": "            name=\"a\",",
+            "after": "            name=\"a.0\","
+          },
+          {
+            "line": 11,
+            "type": "modified",
+            "before": "                Assignment(Var(a), Binary(Add, Var(a), Constant(1)))",
+            "after": "                Assignment(Var(a.0), Binary(Add, Var(a.0), Constant(1)))"
+          },
+          {
+            "line": 14,
+            "type": "modified",
+            "before": "                cond=Binary(GreaterThan, Var(a), Constant(3)), then=Break(dummy)",
+            "after": "                cond=Binary(GreaterThan, Var(a.0), Constant(3)), then=Break(dummy)"
+          },
+          {
+            "line": 20,
+            "type": "modified",
+            "before": "            Var(a)",
+            "after": "            Var(a.0)"
+          }
+        ]
+      }
+    },
+    {
+      "id": 2,
+      "stage": "semantic_analysis",
+      "pass": "loop_labeler",
+      "ir_type": "C_AST",
+      "timestamp_ms": 228,
+      "duration_ms": 0,
+      "content": "Program(\n    Function(\n        name=\"main\",\n        body=D(Declaration(\n            name=\"a.0\",\n            value=\"Constant(0)\",\n        )\n        S(For(InitExp(), None, None, Compound(\n        Block(\n            S(Expression(\n                Assignment(Var(a.0), Binary(Add, Var(a.0), Constant(1)))\n            ))\n            S(If(\n                cond=Binary(GreaterThan, Var(a.0), Constant(3)), then=Break(loop_st.0)\n            ))\n            )\n        )\n        ), loop_st.0))\n        S(Return(\n            Var(a.0)\n        ))\n)",
+      "diff": {
+        "type": "line_diff",
+        "changes": [
+          {
+            "line": 14,
+            "type": "modified",
+            "before": "                cond=Binary(GreaterThan, Var(a.0), Constant(3)), then=Break(dummy)",
+            "after": "                cond=Binary(GreaterThan, Var(a.0), Constant(3)), then=Break(loop_st.0)"
+          },
+          {
+            "line": 18,
+            "type": "modified",
+            "before": "        ), dummy))",
+            "after": "        ), loop_st.0))"
+          }
+        ]
+      }
+    },
+    {
+      "id": 3,
+      "stage": "tacky_generation",
+      "pass": "tacky_from_ast",
+      "ir_type": "TACKY",
+      "timestamp_ms": 228,
+      "duration_ms": 0,
+      "content": "TackyProgram(\n    TackyFunction(\n        name=\"main\",\n        instructions=[\n            Copy(Constant(0), Var(\"a.0\"))\n            Label(start_loop_st.0)\n            Binary(Add, Var(\"a.0\"), Constant(1), Var(\"binop.0\"))\n            Copy(Var(\"binop.0\"), Var(\"a.0\"))\n            Binary(GreaterThan, Var(\"a.0\"), Constant(3), Var(\"binop.3\"))\n            Copy(Var(\"binop.3\"), Var(\"cond.4\"))\n            JumpIfZero(Var(\"cond.4\"), else.1)\n            Jump(break_loop_st.0)\n            Jump(end.2)\n            Label(else.1)\n            Label(end.2)\n            Label(continue_loop_st.0)\n            Jump(start_loop_st.0)\n            Label(break_loop_st.0)\n            Return(\n                Var(\"a.0\")\n            )\n            Return(\n                Constant(0)\n            )\n        ]\n    )\n)",
+      "diff": {
+        "type": "ir_transition",
+        "changes": []
+      }
+    },
+    {
+      "id": 4,
+      "stage": "assembly_generation",
+      "pass": "tacky_to_asm",
+      "ir_type": "ASM",
+      "timestamp_ms": 228,
+      "duration_ms": 0,
+      "content": "AsmProgram(\n    AsmFunction(\n        name = \"main\",\n        instructions = [\n            Mov(Imm(0), Pseudo(\"a.0\")),\n            Label(start_loop_st.0),\n            Mov(Pseudo(\"a.0\"), Pseudo(\"binop.0\")),\n            Binary(Add, Imm(1), Pseudo(\"binop.0\")),\n            Mov(Pseudo(\"binop.0\"), Pseudo(\"a.0\")),\n            Cmp(Imm(3), Pseudo(\"a.0\")),\n            Mov(Imm(0), Pseudo(\"binop.3\")),\n            SetCC(G, Pseudo(\"binop.3\")),\n            Mov(Pseudo(\"binop.3\"), Pseudo(\"cond.4\")),\n            Cmp(Imm(0), Pseudo(\"cond.4\")),\n            JmpCC(E, else.1),\n            Jmp(break_loop_st.0),\n            Jmp(end.2),\n            Label(else.1),\n            Label(end.2),\n            Label(continue_loop_st.0),\n            Jmp(start_loop_st.0),\n            Label(break_loop_st.0),\n            Mov(Pseudo(\"a.0\"), Reg(AX)),\n            Ret,\n            Mov(Imm(0), Reg(AX)),\n            Ret\n        ]\n    )\n)",
+      "diff": {
+        "type": "ir_transition",
+        "changes": []
+      }
+    },
+    {
+      "id": 5,
+      "stage": "assembly_fixup",
+      "pass": "pseudo_register_replacer",
+      "ir_type": "ASM",
+      "timestamp_ms": 228,
+      "duration_ms": 0,
+      "content": "AsmProgram(\n    AsmFunction(\n        name = \"main\",\n        instructions = [\n            Mov(Imm(0), Stack(-4)),\n            Label(start_loop_st.0),\n            Mov(Stack(-4), Stack(-8)),\n            Binary(Add, Imm(1), Stack(-8)),\n            Mov(Stack(-8), Stack(-4)),\n            Cmp(Imm(3), Stack(-4)),\n            Mov(Imm(0), Stack(-12)),\n            SetCC(G, Stack(-12)),\n            Mov(Stack(-12), Stack(-16)),\n            Cmp(Imm(0), Stack(-16)),\n            JmpCC(E, else.1),\n            Jmp(break_loop_st.0),\n            Jmp(end.2),\n            Label(else.1),\n            Label(end.2),\n            Label(continue_loop_st.0),\n            Jmp(start_loop_st.0),\n            Label(break_loop_st.0),\n            Mov(Stack(-4), Reg(AX)),\n            Ret,\n            Mov(Imm(0), Reg(AX)),\n            Ret\n        ]\n    )\n)",
+      "diff": {
+        "type": "line_diff",
+        "changes": [
+          {
+            "line": 5,
+            "type": "modified",
+            "before": "            Mov(Imm(0), Pseudo(\"a.0\")),",
+            "after": "            Mov(Imm(0), Stack(-4)),"
+          },
+          {
+            "line": 7,
+            "type": "modified",
+            "before": "            Mov(Pseudo(\"a.0\"), Pseudo(\"binop.0\")),",
+            "after": "            Mov(Stack(-4), Stack(-8)),"
+          },
+          {
+            "line": 8,
+            "type": "modified",
+            "before": "            Binary(Add, Imm(1), Pseudo(\"binop.0\")),",
+            "after": "            Binary(Add, Imm(1), Stack(-8)),"
+          },
+          {
+            "line": 9,
+            "type": "modified",
+            "before": "            Mov(Pseudo(\"binop.0\"), Pseudo(\"a.0\")),",
+            "after": "            Mov(Stack(-8), Stack(-4)),"
+          },
+          {
+            "line": 10,
+            "type": "modified",
+            "before": "            Cmp(Imm(3), Pseudo(\"a.0\")),",
+            "after": "            Cmp(Imm(3), Stack(-4)),"
+          },
+          {
+            "line": 11,
+            "type": "modified",
+            "before": "            Mov(Imm(0), Pseudo(\"binop.3\")),",
+            "after": "            Mov(Imm(0), Stack(-12)),"
+          },
+          {
+            "line": 12,
+            "type": "modified",
+            "before": "            SetCC(G, Pseudo(\"binop.3\")),",
+            "after": "            SetCC(G, Stack(-12)),"
+          },
+          {
+            "line": 13,
+            "type": "modified",
+            "before": "            Mov(Pseudo(\"binop.3\"), Pseudo(\"cond.4\")),",
+            "after": "            Mov(Stack(-12), Stack(-16)),"
+          },
+          {
+            "line": 14,
+            "type": "modified",
+            "before": "            Cmp(Imm(0), Pseudo(\"cond.4\")),",
+            "after": "            Cmp(Imm(0), Stack(-16)),"
+          },
+          {
+            "line": 23,
+            "type": "modified",
+            "before": "            Mov(Pseudo(\"a.0\"), Reg(AX)),",
+            "after": "            Mov(Stack(-4), Reg(AX)),"
+          }
+        ]
+      }
+    },
+    {
+      "id": 6,
+      "stage": "assembly_fixup",
+      "pass": "instruction_fixer",
+      "ir_type": "ASM",
+      "timestamp_ms": 228,
+      "duration_ms": 0,
+      "content": "AsmProgram(\n    AsmFunction(\n        name = \"main\",\n        instructions = [\n            AllocateStack(20),\n            Mov(Imm(0), Stack(-4)),\n            Label(start_loop_st.0),\n            Comment(\"fix: mov mem,mem -> mov mem,R10 + mov R10,mem\"),\n            Mov(Stack(-4), Reg(R10)),\n            Mov(Reg(R10), Stack(-8)),\n            Binary(Add, Imm(1), Stack(-8)),\n            Comment(\"fix: mov mem,mem -> mov mem,R10 + mov R10,mem\"),\n            Mov(Stack(-8), Reg(R10)),\n            Mov(Reg(R10), Stack(-4)),\n            Cmp(Imm(3), Stack(-4)),\n            Mov(Imm(0), Stack(-12)),\n            SetCC(G, Stack(-12)),\n            Comment(\"fix: mov mem,mem -> mov mem,R10 + mov R10,mem\"),\n            Mov(Stack(-12), Reg(R10)),\n            Mov(Reg(R10), Stack(-16)),\n            Cmp(Imm(0), Stack(-16)),\n            JmpCC(E, else.1),\n            Jmp(break_loop_st.0),\n            Jmp(end.2),\n            Label(else.1),\n            Label(end.2),\n            Label(continue_loop_st.0),\n            Jmp(start_loop_st.0),\n            Label(break_loop_st.0),\n            Mov(Stack(-4), Reg(AX)),\n            Ret,\n            Mov(Imm(0), Reg(AX)),\n            Ret\n        ]\n    )\n)",
+      "diff": {
+        "type": "line_diff",
+        "changes": [
+          {
+            "line": 5,
+            "type": "modified",
+            "before": "            Mov(Imm(0), Stack(-4)),",
+            "after": "            AllocateStack(20),"
+          },
+          {
+            "line": 6,
+            "type": "modified",
+            "before": "            Label(start_loop_st.0),",
+            "after": "            Mov(Imm(0), Stack(-4)),"
+          },
+          {
+            "line": 7,
+            "type": "modified",
+            "before": "            Mov(Stack(-4), Stack(-8)),",
+            "after": "            Label(start_loop_st.0),"
+          },
+          {
+            "line": 8,
+            "type": "modified",
+            "before": "            Binary(Add, Imm(1), Stack(-8)),",
+            "after": "            Comment(\"fix: mov mem,mem -> mov mem,R10 + mov R10,mem\"),"
+          },
+          {
+            "line": 9,
+            "type": "modified",
+            "before": "            Mov(Stack(-8), Stack(-4)),",
+            "after": "            Mov(Stack(-4), Reg(R10)),"
+          },
+          {
+            "line": 10,
+            "type": "modified",
+            "before": "            Cmp(Imm(3), Stack(-4)),",
+            "after": "            Mov(Reg(R10), Stack(-8)),"
+          },
+          {
+            "line": 11,
+            "type": "modified",
+            "before": "            Mov(Imm(0), Stack(-12)),",
+            "after": "            Binary(Add, Imm(1), Stack(-8)),"
+          },
+          {
+            "line": 12,
+            "type": "modified",
+            "before": "            SetCC(G, Stack(-12)),",
+            "after": "            Comment(\"fix: mov mem,mem -> mov mem,R10 + mov R10,mem\"),"
+          },
+          {
+            "line": 13,
+            "type": "modified",
+            "before": "            Mov(Stack(-12), Stack(-16)),",
+            "after": "            Mov(Stack(-8), Reg(R10)),"
+          },
+          {
+            "line": 14,
+            "type": "modified",
+            "before": "            Cmp(Imm(0), Stack(-16)),",
+            "after": "            Mov(Reg(R10), Stack(-4)),"
+          },
+          {
+            "line": 15,
+            "type": "modified",
+            "before": "            JmpCC(E, else.1),",
+            "after": "            Cmp(Imm(3), Stack(-4)),"
+          },
+          {
+            "line": 16,
+            "type": "modified",
+            "before": "            Jmp(break_loop_st.0),",
+            "after": "            Mov(Imm(0), Stack(-12)),"
+          },
+          {
+            "line": 17,
+            "type": "modified",
+            "before": "            Jmp(end.2),",
+            "after": "            SetCC(G, Stack(-12)),"
+          },
+          {
+            "line": 18,
+            "type": "modified",
+            "before": "            Label(else.1),",
+            "after": "            Comment(\"fix: mov mem,mem -> mov mem,R10 + mov R10,mem\"),"
+          },
+          {
+            "line": 19,
+            "type": "modified",
+            "before": "            Label(end.2),",
+            "after": "            Mov(Stack(-12), Reg(R10)),"
+          },
+          {
+            "line": 20,
+            "type": "modified",
+            "before": "            Label(continue_loop_st.0),",
+            "after": "            Mov(Reg(R10), Stack(-16)),"
+          },
+          {
+            "line": 21,
+            "type": "modified",
+            "before": "            Jmp(start_loop_st.0),",
+            "after": "            Cmp(Imm(0), Stack(-16)),"
+          },
+          {
+            "line": 22,
+            "type": "modified",
+            "before": "            Label(break_loop_st.0),",
+            "after": "            JmpCC(E, else.1),"
+          },
+          {
+            "line": 23,
+            "type": "modified",
+            "before": "            Mov(Stack(-4), Reg(AX)),",
+            "after": "            Jmp(break_loop_st.0),"
+          },
+          {
+            "line": 24,
+            "type": "modified",
+            "before": "            Ret,",
+            "after": "            Jmp(end.2),"
+          },
+          {
+            "line": 25,
+            "type": "modified",
+            "before": "            Mov(Imm(0), Reg(AX)),",
+            "after": "            Label(else.1),"
+          },
+          {
+            "line": 26,
+            "type": "modified",
+            "before": "            Ret",
+            "after": "            Label(end.2),"
+          },
+          {
+            "line": 27,
+            "type": "modified",
+            "before": "        ]",
+            "after": "            Label(continue_loop_st.0),"
+          },
+          {
+            "line": 28,
+            "type": "modified",
+            "before": "    )",
+            "after": "            Jmp(start_loop_st.0),"
+          },
+          {
+            "line": 29,
+            "type": "modified",
+            "before": ")",
+            "after": "            Label(break_loop_st.0),"
+          },
+          {
+            "line": 30,
+            "type": "added",
+            "before": "",
+            "after": "            Mov(Stack(-4), Reg(AX)),"
+          },
+          {
+            "line": 31,
+            "type": "added",
+            "before": "",
+            "after": "            Ret,"
+          },
+          {
+            "line": 32,
+            "type": "added",
+            "before": "",
+            "after": "            Mov(Imm(0), Reg(AX)),"
+          },
+          {
+            "line": 33,
+            "type": "added",
+            "before": "",
+            "after": "            Ret"
+          },
+          {
+            "line": 34,
+            "type": "added",
+            "before": "",
+            "after": "        ]"
+          },
+          {
+            "line": 35,
+            "type": "added",
+            "before": "",
+            "after": "    )"
+          },
+          {
+            "line": 36,
+            "type": "added",
+            "before": "",
+            "after": ")"
+          }
+        ]
+      }
+    }
+  ],
+  "index": {
+    "by_stage": {
+      "assembly_fixup": [
+        5,
+        6
+      ],
+      "tacky_generation": [
+        3
+      ],
+      "semantic_analysis": [
+        1,
+        2
+      ],
+      "parse": [
+        0
+      ],
+      "assembly_generation": [
+        4
+      ]
+    },
+    "by_ir_type": {
+      "C_AST": [
+        0,
+        1,
+        2
+      ],
+      "TACKY": [
+        3
+      ],
+      "ASM": [
+        4,
+        5,
+        6
+      ]
+    }
+  }
+}
